@@ -1,0 +1,4 @@
+hs: [5, 10,20,30, 100, 200, 300]
+epochs: 100
+search_space: 'small'
+learning_rate: 0.0000000000000001
