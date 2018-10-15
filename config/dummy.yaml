@@ -1,0 +1,4 @@
+hs: [1,2,3,4]
+epochs: 500
+search_space: 'small'
+learning_rate: 0.001

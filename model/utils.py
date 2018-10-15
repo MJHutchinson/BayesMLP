@@ -19,8 +19,9 @@ def test_model(model, data_gen, epochs, batch_size=100):
         accuracies.append(accuracy)
         print(f'\rEpoch {epoch}, cost: {cost}, accuracy: {accuracy}, train time: {train_time}, test time: {test_time}')
 
-    predictions = np.mean(model.prediction(x_train), 0)
-    plt.scatter(predictions, y_train)
+    predictions = np.mean(model.prediction(x_train, batch_size=batch_size), 0)
+    plt.scatter(y_train, predictions)
+    plt.plot([min(y_train), max(y_train)], [min(y_train), max(y_train)], color='r')
     plt.show()
 
     return {'costs': costs, 'accuracies': accuracies}

@@ -1,20 +1,27 @@
 import pickle
+import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from utils.utils import get_immediate_files
 
 log_dir = './results'
-data_set = 'bostonHousing'
+data_set = 'protein-tertiary-structure'
 
 results_dir = f'{log_dir}/{data_set}'
 
 files = get_immediate_files(results_dir)
+files = [f for f in files if f.split('.')[1]=='pkl']
 
 results = {}
+split = []
+columns = ['File', 'Network', 'Epochs', 'Costs', 'Accuracies']
+df = pd.DataFrame(columns=columns)
 
 for file in files:
     r = pickle.load(open(f'{results_dir}/{file}', 'rb'))
     results.update(r)
+    split.append(r)
+    print(r)
 
 
 def plot_training_curves(*input, legend=None):
@@ -63,6 +70,11 @@ def good_net(h):
 
 
 plot_training_curves(results)
-plot_best_vs_first(results, legend=['test'])
+# plot_best_vs_first(results)
+
+plot_best_vs_first(*split, legend=files)
+
+# plot_best_vs_first(split[1])
+# plot_training_curves(split[1])
 
 plt.show()

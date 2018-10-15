@@ -123,18 +123,39 @@ class Reg_NN(object):
             batch_x = cur_x_train[start_ind:end_ind, :]
             batch_y = cur_y_train[start_ind:end_ind, :]
             # Run optimization op (backprop) and cost op (to get loss value)
-            _, c = sess.run(
-                [self.train_step, self.cost],
+            _, c, pred, mse = sess.run(
+                [self.train_step, self.cost, self.pred, self.mse],
                 feed_dict={self.x: batch_x, self.y: batch_y})
             # Compute average loss
             avg_cost += c / total_batch
 
         return avg_cost
 
-    def prediction(self, x_test):
-        # Test model
-        prediction = self.sess.run([self.pred], feed_dict={self.x: x_test})[0]
-        return prediction
+    def prediction(self, x_test, batch_size=100):
+        sess = self.sess
+
+        N = x_test.shape[0]
+        if batch_size > N:
+            batch_size = N
+
+        preds = None
+        total_batch = int(np.ceil(N * 1.0 / batch_size))
+        # Loop over all batches
+        for i in range(total_batch):
+            start_ind = i * batch_size
+            end_ind = np.min([(i + 1) * batch_size, N])
+            batch_x = x_test[start_ind:end_ind, :]
+            # Run optimization op (backprop) and cost op (to get loss value)
+            pred = sess.run(
+                [self.pred],
+                feed_dict={self.x: batch_x})[0]
+            # Compute average loss
+            if preds is None:
+                preds = pred
+            else:
+                preds = np.append(preds, pred, axis=1)
+
+        return preds
 
     def accuracy(self, x_test, y_test, batch_size=100):
         sess = self.sess
@@ -145,27 +166,26 @@ class Reg_NN(object):
 
         perm_inds = list(range(x_test.shape[0]))
         np.random.shuffle(perm_inds)
-        cur_x_train = x_test[perm_inds]
-        cur_y_train = y_test[perm_inds]
+        cur_x_test = x_test[perm_inds]
+        cur_y_test = y_test[perm_inds]
 
-        se = 0.
+        mll = 0.
         total = 0.
         total_batch = int(np.ceil(N * 1.0 / batch_size))
         # Loop over all batches
         for i in range(total_batch):
             start_ind = i * batch_size
             end_ind = np.min([(i + 1) * batch_size, N])
-            batch_x = cur_x_train[start_ind:end_ind, :]
-            batch_y = cur_y_train[start_ind:end_ind, :]
+            batch_x = cur_x_test[start_ind:end_ind, :]
+            batch_y = cur_y_test[start_ind:end_ind, :]
             # Run optimization op (backprop) and cost op (to get loss value)
-            mse  = sess.run(
-                self.mse,
+            meanloglik  = sess.run(
+                self.loglik,
                 feed_dict={self.x: batch_x, self.y: batch_y})
             # Compute average loss
-            se += mse * (end_ind-start_ind)
-            total += end_ind-start_ind
+            mll += meanloglik/total_batch
 
-        return se/total
+        return mll
 
     def get_weights(self):
         weights = self.sess.run([self.weights])[0]
@@ -203,7 +223,8 @@ class BayesMLPRegression(Reg_NN):
         self.no_train_samples = no_train_samples
         self.no_pred_samples = no_pred_samples
         self.pred = self._prediction(self.x, self.no_pred_samples)
-        self.mse = self._loglik(self.x, self.y)
+        self.mse = self._mse(self.x, self.y)
+        self.loglik = self._loglik(self.x, self.y)
         self.cost = tf.div(self._KL_term(), training_size) - self._loglik(self.x, self.y)
 
         self.const_term = tf.constant(-0.5 * np.log(2*np.pi) - np.log(self.prior_var))
@@ -217,40 +238,70 @@ class BayesMLPRegression(Reg_NN):
         # this samples a layer at a time
     def _prediction_layer(self, inputs, no_samples):
         K = no_samples
+        N = tf.shape(inputs)[0]
         act = tf.tile(tf.expand_dims(inputs, 0), [K, 1, 1])
+        # for i in range(self.no_layers - 1):
+        #     din = self.size[i]
+        #     dout = self.size[i + 1]
+        #     eps_w = tf.random_normal((K, din, dout), 0, 1, dtype=tf.float32)
+        #     eps_b = tf.random_normal((K, 1, dout), 0, 1, dtype=tf.float32)
+        #
+        #     weights = tf.add(tf.multiply(eps_w, tf.exp(0.5 * self.W_v[i])), self.W_m[i])
+        #     biases = tf.add(tf.multiply(eps_b, tf.exp(0.5 * self.b_v[i])), self.b_m[i])
+        #     pre = tf.add(tf.einsum('mni,mio->mno', act, weights), biases)
+        #     act = tf.nn.relu(pre)
+        #
+        # din = self.size[-2]
+        # dout = self.size[-1]
+        # eps_w = tf.random_normal((K, din, dout), 0, 1, dtype=tf.float32)
+        # eps_b = tf.random_normal((K, 1, dout), 0, 1, dtype=tf.float32)
+        #
+        # weights = tf.add(tf.multiply(eps_w, tf.exp(0.5 * self.W_v[-1])), self.W_m[-1])
+        # biases = tf.add(tf.multiply(eps_b, tf.exp(0.5 * self.b_v[-1])), self.b_m[-1])
+        #
+        # act = tf.expand_dims(act, 3)
+        # weights = tf.expand_dims(weights, 1)
+        #
+        # pre = tf.add(tf.reduce_sum(act * weights, 2), biases)
+
         for i in range(self.no_layers - 1):
             din = self.size[i]
             dout = self.size[i + 1]
-            eps_w = tf.random_normal((K, din, dout), 0, 1, dtype=tf.float32)
-            eps_b = tf.random_normal((K, 1, dout), 0, 1, dtype=tf.float32)
 
-            weights = tf.add(tf.multiply(eps_w, tf.exp(0.5 * self.W_v[i])), self.W_m[i])
-            biases = tf.add(tf.multiply(eps_b, tf.exp(0.5 * self.b_v[i])), self.b_m[i])
-            pre = tf.add(tf.einsum('mni,mio->mno', act, weights), biases)
+            m_pre = tf.einsum('kni,io->kno', act, self.W_m[i])
+            v_pre = tf.einsum('kni,io->kno', act ** 2.0, tf.exp(self.W_v[i]))
+            eps_w = tf.random_normal([K, N, dout], 0.0, 1.0, dtype=tf.float32)
+            pre_W = eps_w * tf.sqrt(1e-9 + v_pre) + m_pre
+            eps_b = tf.random_normal([K, 1, dout], 0.0, 1.0, dtype=tf.float32)
+            pre_b = eps_b * tf.exp(0.5 * self.b_v[i]) + self.b_m[i]
+            pre = pre_W + pre_b
             act = tf.nn.relu(pre)
 
         din = self.size[-2]
         dout = self.size[-1]
-        eps_w = tf.random_normal((K, din, dout), 0, 1, dtype=tf.float32)
-        eps_b = tf.random_normal((K, 1, dout), 0, 1, dtype=tf.float32)
 
-        weights = tf.add(tf.multiply(eps_w, tf.exp(0.5 * self.W_v[-1])), self.W_m[-1])
-        biases = tf.add(tf.multiply(eps_b, tf.exp(0.5 * self.b_v[-1])), self.b_m[-1])
-
-        act = tf.expand_dims(act, 3)
-        weights = tf.expand_dims(weights, 1)
-
-        pre = tf.add(tf.reduce_sum(act * weights, 2), biases)
+        m_pre = tf.einsum('kni,io->kno', act, self.W_m[-1])
+        v_pre = tf.einsum('kni,io->kno', act ** 2.0, tf.exp(self.W_v[-1]))
+        eps_w = tf.random_normal([K, N, dout], 0.0, 1.0, dtype=tf.float32)
+        pre_W = eps_w * tf.sqrt(1e-9 + v_pre) + m_pre
+        eps_b = tf.random_normal([K, 1, dout], 0.0, 1.0, dtype=tf.float32)
+        pre_b = eps_b * tf.exp(0.5 * self.b_v[-1]) + self.b_m[-1]
+        pre = pre_W + pre_b
 
         return pre
 
-    # computes log likelihood of input for against target
-    def _loglik(self, inputs, targets):
+    def _mse(self, inputs, targets):
         pred = self._prediction(inputs, self.no_train_samples)
         targets = tf.tile(tf.expand_dims(targets, 0), [self.no_train_samples, 1, 1])
+        mse = tf.reduce_mean(tf.squared_difference(pred, targets))
+        return mse
+
+    # computes log likelihood of input for against target
+    def _loglik(self, inputs, targets):
+        mse = self._mse(inputs, targets)
         const_term = tf.constant(-0.5 * np.log(2*np.pi) - np.log(self.prior_var), dtype=tf.float32)
-        mse = -tf.reduce_mean(tf.squared_difference(pred, targets))/(2*self.prior_var**2)
-        return const_term + mse
+        mse_norm = -mse/(2*self.prior_var**2)
+        return const_term + mse_norm
 
     def _KL_term(self):
         kl = 0

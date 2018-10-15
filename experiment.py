@@ -7,8 +7,8 @@ from model.utils import test_model
 from utils.utils import num_to_name, get_search_space
 from data.data_loader import get_loader_by_name
 
-hidden_layers = 4
-data_set = 'concrete'
+hidden_layers = 2
+data_set = 'protein-tertiary-structure'
 log_dir = './results'
 config_dir = './config'
 
@@ -22,6 +22,10 @@ epochs = config['epochs']
 search_space = config['search_space']
 lr = config['learning_rate']
 hs = list(reversed(hs))
+
+print(f'Running experiment on {data_set} with parameters:\n'
+      f'{config}\n'
+      f'Saving results in {results_file}\n')
 
 data_loader = get_loader_by_name(data_set)
 input_size, train_length, output_size = data_loader.get_dims()

@@ -219,7 +219,6 @@ class BayesMLPClassification(Cla_NN):
         pred_classes = tf.argmax(tf.reduce_mean(tf.nn.softmax(self.pred), axis=0), axis=1)
         y_classes = tf.argmax(y_test, axis=1)
         correct = tf.equal(pred_classes, y_classes)
-        total = correct.shape[0]
         correct = tf.reduce_sum(tf.cast(correct, tf.float32))
         return correct
 
@@ -229,6 +228,7 @@ class BayesMLPClassification(Cla_NN):
         # this samples a layer at a time
     def _prediction_layer(self, inputs, no_samples):
         K = no_samples
+        N = tf.shape(inputs)[0]
         act = tf.tile(tf.expand_dims(inputs, 0), [K, 1, 1])
         for i in range(self.no_layers - 1):
             din = self.size[i]
@@ -238,7 +238,7 @@ class BayesMLPClassification(Cla_NN):
 
             weights = tf.add(tf.multiply(eps_w, tf.exp(0.5 * self.W_v[i])), self.W_m[i])
             biases = tf.add(tf.multiply(eps_b, tf.exp(0.5 * self.b_v[i])), self.b_m[i])
-            pre = tf.add(tf.einsum('mni,mio->mno', act, weights), biases)
+            pre = tf.add(tf.einsum('kni,kio->kno', act, weights), biases)
             act = tf.nn.relu(pre)
 
         din = self.size[-2]
@@ -253,6 +253,30 @@ class BayesMLPClassification(Cla_NN):
         weights = tf.expand_dims(weights, 1)
 
         pre = tf.add(tf.reduce_sum(act * weights, 2), biases)
+
+        # for i in range(self.no_layers - 1):
+        #     din = self.size[i]
+        #     dout = self.size[i + 1]
+        #
+        #     m_pre = tf.einsum('kni,io->kno', act, self.W_m[i])
+        #     v_pre = tf.einsum('kni,io->kno', act ** 2.0, tf.exp(self.W_v[i]))
+        #     eps_w = tf.random_normal([K, N, dout], 0.0, 1.0, dtype=tf.float32)
+        #     pre_W = eps_w * tf.sqrt(1e-9 + v_pre) + m_pre
+        #     eps_b = tf.random_normal([K, 1, dout], 0.0, 1.0, dtype=tf.float32)
+        #     pre_b = eps_b * tf.exp(0.5 * self.b_v[i]) + self.b_m[i]
+        #     pre = pre_W + pre_b
+        #     act = tf.nn.relu(pre)
+        #
+        # din = self.size[-2]
+        # dout = self.size[-1]
+        #
+        # m_pre = tf.einsum('kni,io->kno', act, self.W_m[-1])
+        # v_pre = tf.einsum('kni,io->kno', act ** 2.0, tf.exp(self.W_v[-1]))
+        # eps_w = tf.random_normal([K, N, dout], 0.0, 1.0, dtype=tf.float32)
+        # pre_W = eps_w * tf.sqrt(1e-9 + v_pre) + m_pre
+        # eps_b = tf.random_normal([K, 1, dout], 0.0, 1.0, dtype=tf.float32)
+        # pre_b = eps_b * tf.exp(0.5 * self.b_v[-1]) + self.b_m[-1]
+        # pre = pre_W + pre_b
 
         return pre
 
