@@ -8,7 +8,7 @@ def get_immediate_subdirectories(a_dir):
 
 def get_immediate_files(a_dir):
     return [name for name in os.listdir(a_dir)
-            if os.path.isfile(os.path.join(a_dir, name))]
+        if os.path.isfile(os.path.join(a_dir, name))]
 
 
 def num_to_name(number):
@@ -34,4 +34,15 @@ def get_search_space(search_space, hs, hidden_layers):
         return small_search_space(hs, hidden_layers)
     else:
         return []
+
+
+def parameter_combinations(hs, lrs, prior_vars):
+    output = []
+    for h in hs:
+        for lr in lrs:
+            for prior_var in prior_vars:
+                output.append((h, lr, prior_var))
+
+    return output
+
 

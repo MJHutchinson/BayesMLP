@@ -113,6 +113,8 @@ class Cla_NN(object):
         cur_y_train = y_train[perm_inds]
 
         avg_cost = 0.
+        avg_kl = 0.
+        avg_ll = 0.
         total_batch = int(np.ceil(N * 1.0 / batch_size))
         # Loop over all batches
         for i in range(total_batch):
@@ -121,18 +123,41 @@ class Cla_NN(object):
             batch_x = cur_x_train[start_ind:end_ind, :]
             batch_y = cur_y_train[start_ind:end_ind, :]
             # Run optimization op (backprop) and cost op (to get loss value)
-            _, c = sess.run(
-                [self.train_step, self.cost],
+            _, c, kl, ll = sess.run(
+                [self.train_step, self.cost, self.KL_term, self.loglik_term],
                 feed_dict={self.x: batch_x, self.y: batch_y})
             # Compute average loss
             avg_cost += c / total_batch
+            avg_kl += kl / total_batch
+            avg_ll += ll / total_batch
 
-        return avg_cost
+        return avg_cost, avg_kl, avg_ll
 
-    def prediction(self, x_test):
-        # Test model
-        prediction = self.sess.run([self.pred], feed_dict={self.x: x_test})[0]
-        return prediction
+    def prediction(self, x_test, batch_size=100):
+        sess = self.sess
+
+        N = x_test.shape[0]
+        if batch_size > N:
+            batch_size = N
+
+        preds = None
+        total_batch = int(np.ceil(N * 1.0 / batch_size))
+        # Loop over all batches
+        for i in range(total_batch):
+            start_ind = i * batch_size
+            end_ind = np.min([(i + 1) * batch_size, N])
+            batch_x = x_test[start_ind:end_ind, :]
+            # Run optimization op (backprop) and cost op (to get loss value)
+            pred = sess.run(
+                [self.pred],
+                feed_dict={self.x: batch_x})[0]
+            # Compute average loss
+            if preds is None:
+                preds = pred
+            else:
+                preds = np.append(preds, pred, axis=1)
+
+        return preds
 
     def prediction_prob(self, x_test):
         prob = self.sess.run([tf.nn.softmax(self.pred)], feed_dict={self.x: x_test})[0]
@@ -210,7 +235,10 @@ class BayesMLPClassification(Cla_NN):
         self.no_pred_samples = no_pred_samples
         self.pred = self._prediction(self.x, self.no_pred_samples)
         self.corr = self._predict_correct(self.x, self.y)
-        self.cost = tf.div(self._KL_term(), training_size) - self._loglik(self.x, self.y)
+
+        self.KL_term = tf.div(self._KL_term(), training_size)
+        self.loglik_term = - self._loglik(self.x, self.y)
+        self.cost = self.KL_term + self.loglik_term
 
         self.assign_optimizer(learning_rate)
         self.assign_session()
@@ -229,54 +257,54 @@ class BayesMLPClassification(Cla_NN):
     def _prediction_layer(self, inputs, no_samples):
         K = no_samples
         N = tf.shape(inputs)[0]
-        act = tf.tile(tf.expand_dims(inputs, 0), [K, 1, 1])
-        for i in range(self.no_layers - 1):
-            din = self.size[i]
-            dout = self.size[i + 1]
-            eps_w = tf.random_normal((K, din, dout), 0, 1, dtype=tf.float32)
-            eps_b = tf.random_normal((K, 1, dout), 0, 1, dtype=tf.float32)
-
-            weights = tf.add(tf.multiply(eps_w, tf.exp(0.5 * self.W_v[i])), self.W_m[i])
-            biases = tf.add(tf.multiply(eps_b, tf.exp(0.5 * self.b_v[i])), self.b_m[i])
-            pre = tf.add(tf.einsum('kni,kio->kno', act, weights), biases)
-            act = tf.nn.relu(pre)
-
-        din = self.size[-2]
-        dout = self.size[-1]
-        eps_w = tf.random_normal((K, din, dout), 0, 1, dtype=tf.float32)
-        eps_b = tf.random_normal((K, 1, dout), 0, 1, dtype=tf.float32)
-
-        weights = tf.add(tf.multiply(eps_w, tf.exp(0.5 * self.W_v[-1])), self.W_m[-1])
-        biases = tf.add(tf.multiply(eps_b, tf.exp(0.5 * self.b_v[-1])), self.b_m[-1])
-
-        act = tf.expand_dims(act, 3)
-        weights = tf.expand_dims(weights, 1)
-
-        pre = tf.add(tf.reduce_sum(act * weights, 2), biases)
-
+        # act = tf.tile(tf.expand_dims(inputs, 0), [K, 1, 1])
         # for i in range(self.no_layers - 1):
         #     din = self.size[i]
         #     dout = self.size[i + 1]
+        #     eps_w = tf.random_normal((K, din, dout), 0, 1, dtype=tf.float32)
+        #     eps_b = tf.random_normal((K, 1, dout), 0, 1, dtype=tf.float32)
         #
-        #     m_pre = tf.einsum('kni,io->kno', act, self.W_m[i])
-        #     v_pre = tf.einsum('kni,io->kno', act ** 2.0, tf.exp(self.W_v[i]))
-        #     eps_w = tf.random_normal([K, N, dout], 0.0, 1.0, dtype=tf.float32)
-        #     pre_W = eps_w * tf.sqrt(1e-9 + v_pre) + m_pre
-        #     eps_b = tf.random_normal([K, 1, dout], 0.0, 1.0, dtype=tf.float32)
-        #     pre_b = eps_b * tf.exp(0.5 * self.b_v[i]) + self.b_m[i]
-        #     pre = pre_W + pre_b
+        #     weights = tf.add(tf.multiply(eps_w, tf.exp(0.5 * self.W_v[i])), self.W_m[i])
+        #     biases = tf.add(tf.multiply(eps_b, tf.exp(0.5 * self.b_v[i])), self.b_m[i])
+        #     pre = tf.add(tf.einsum('kni,kio->kno', act, weights), biases)
         #     act = tf.nn.relu(pre)
         #
         # din = self.size[-2]
         # dout = self.size[-1]
+        # eps_w = tf.random_normal((K, din, dout), 0, 1, dtype=tf.float32)
+        # eps_b = tf.random_normal((K, 1, dout), 0, 1, dtype=tf.float32)
         #
-        # m_pre = tf.einsum('kni,io->kno', act, self.W_m[-1])
-        # v_pre = tf.einsum('kni,io->kno', act ** 2.0, tf.exp(self.W_v[-1]))
-        # eps_w = tf.random_normal([K, N, dout], 0.0, 1.0, dtype=tf.float32)
-        # pre_W = eps_w * tf.sqrt(1e-9 + v_pre) + m_pre
-        # eps_b = tf.random_normal([K, 1, dout], 0.0, 1.0, dtype=tf.float32)
-        # pre_b = eps_b * tf.exp(0.5 * self.b_v[-1]) + self.b_m[-1]
-        # pre = pre_W + pre_b
+        # weights = tf.add(tf.multiply(eps_w, tf.exp(0.5 * self.W_v[-1])), self.W_m[-1])
+        # biases = tf.add(tf.multiply(eps_b, tf.exp(0.5 * self.b_v[-1])), self.b_m[-1])
+        #
+        # act = tf.expand_dims(act, 3)
+        # weights = tf.expand_dims(weights, 1)
+        #
+        # pre = tf.add(tf.reduce_sum(act * weights, 2), biases)
+
+        for i in range(self.no_layers - 1):
+            din = self.size[i]
+            dout = self.size[i + 1]
+
+            m_pre = tf.einsum('kni,io->kno', act, self.W_m[i])
+            v_pre = tf.einsum('kni,io->kno', act ** 2.0, tf.exp(self.W_v[i]))
+            eps_w = tf.random_normal([K, N, dout], 0.0, 1.0, dtype=tf.float32)
+            pre_W = eps_w * tf.sqrt(1e-9 + v_pre) + m_pre
+            eps_b = tf.random_normal([K, 1, dout], 0.0, 1.0, dtype=tf.float32)
+            pre_b = eps_b * tf.exp(0.5 * self.b_v[i]) + self.b_m[i]
+            pre = pre_W + pre_b
+            act = tf.nn.relu(pre)
+
+        din = self.size[-2]
+        dout = self.size[-1]
+
+        m_pre = tf.einsum('kni,io->kno', act, self.W_m[-1])
+        v_pre = tf.einsum('kni,io->kno', act ** 2.0, tf.exp(self.W_v[-1]))
+        eps_w = tf.random_normal([K, N, dout], 0.0, 1.0, dtype=tf.float32)
+        pre_W = eps_w * tf.sqrt(1e-9 + v_pre) + m_pre
+        eps_b = tf.random_normal([K, 1, dout], 0.0, 1.0, dtype=tf.float32)
+        pre_b = eps_b * tf.exp(0.5 * self.b_v[-1]) + self.b_m[-1]
+        pre = pre_W + pre_b
 
         return pre
 

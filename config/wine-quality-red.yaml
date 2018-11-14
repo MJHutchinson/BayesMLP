@@ -1,4 +1,6 @@
-hs: [50, 100]
-epochs: 500
+hs: [10, 20, 30, 100]
+hidden_layers: 2
+epochs: 1000
 search_space: 'small'
-learning_rate: 0.001
+learning_rates: [0.001, 0.0001]
+prior_vars: [1]
