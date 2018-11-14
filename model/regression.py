@@ -67,9 +67,11 @@ class Reg_NN(object):
         with tf.name_scope('initialisation'):
             init = tf.global_variables_initializer()
             init2 = tf.local_variables_initializer()
+            config = tf.ConfigProto()
+            config.gpu_options.allow_growth=True
 
             # launch a session
-            self.sess = tf.Session()
+            self.sess = tf.Session(config=config)
             self.sess.run([init, init2])
 
     def train(self, x_train, y_train, no_epochs=100, batch_size=100, display_epoch=5):
