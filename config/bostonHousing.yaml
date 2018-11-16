@@ -1,4 +1,7 @@
-hs: [50, 100, 300, 500, 1000]
-epochs: 100
+hs: [1, 5, 10, 20, 30, 50,100]
+hidden_layers: 2
+epochs: 30000
 search_space: 'small'
-learning_rate: 0.0000000001
+learning_rates: [0.001, 0.0005, 0.0001]
+prior_vars: [0.0001, 0.01, 1]
+batch_size: 1000
