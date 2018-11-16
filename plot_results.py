@@ -2,7 +2,7 @@ import pickle
 from utils.utils import get_immediate_files, get_immediate_subdirectories
 from plot_functions import *
 
-log_dir = './results'
+log_dir = './remote_logs'
 data_set = 'wine-quality-red'
 experiment = None
 
