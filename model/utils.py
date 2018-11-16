@@ -34,7 +34,7 @@ def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, l
         summary = model.log_metrics(cost, ll, kl, logloss, rmse)
         summary_writer.add_summary(summary, epoch)
 
-        if epoch % log_freq == 0:print(f'\rEpoch {epoch:4.0f}, cost: {cost:14.4f}, KL term: {kl:10.4f}, train log likelihood term: {ll:10.4f}, test log likelihood: {logloss:10.4f}, test rmse: {rmse:10.4f}, log noise var: {vy:10f}, train time: {train_time:6.4f}, test time: {test_time:6.4f}')
+        if epoch % log_freq == 0:print(f'\rEpoch {epoch:4.0f}, cost: {cost:10.4f}, KL term: {kl:10.4f}, train log likelihood term: {ll:8.4f}, test log likelihood: {logloss:8.4f}, test rmse: {rmse:8.4f}, log noise var: {vy:8f}, train time: {train_time:6.4f}, test time: {test_time:6.4f}')
 
     # predictions = np.mean(model.prediction(x_train, batch_size=batch_size), 0)
     # plt.scatter(y_train, predictions)
