@@ -54,15 +54,19 @@ class Cla_NN(object):
         self.y = tf.placeholder(tf.float32, [None, output_size])
 
     def assign_optimizer(self, learning_rate=0.001):
-        self.train_step = tf.train.AdamOptimizer(learning_rate).minimize(self.cost)
+        with tf.name_scope('optimiser'):
+            self.train_step = tf.train.AdamOptimizer(learning_rate).minimize(self.cost)
 
     def assign_session(self):
         # Initializing the variables
-        init = tf.global_variables_initializer()
+        with tf.name_scope('initialisation'):
+            init = tf.global_variables_initializer()
+            config = tf.ConfigProto()
+            config.gpu_options.allow_growth = True
 
-        # launch a session
-        self.sess = tf.Session()
-        self.sess.run(init)
+            # launch a session
+            self.sess = tf.Session(config=config)
+            self.sess.run(init)
 
     def train(self, x_train, y_train, no_epochs=100, batch_size=100, display_epoch=5):
         N = x_train.shape[0]
@@ -287,65 +291,71 @@ class BayesMLPClassification(Cla_NN):
         # weights = tf.expand_dims(weights, 1)
         #
         # pre = tf.add(tf.reduce_sum(act * weights, 2), biases)
+        with tf.name_scope('model/'):
+            for i in range(self.no_layers - 1):
+                with tf.name_scope(f'layer_{i}/'):
+                    din = self.size[i]
+                    dout = self.size[i + 1]
 
-        for i in range(self.no_layers - 1):
-            din = self.size[i]
-            dout = self.size[i + 1]
+                    m_pre = tf.einsum('kni,io->kno', act, self.W_m[i])
+                    v_pre = tf.einsum('kni,io->kno', act ** 2.0, tf.exp(self.W_v[i]))
+                    eps_w = tf.random_normal([K, N, dout], 0.0, 1.0, dtype=tf.float32)
+                    pre_W = eps_w * tf.sqrt(1e-9 + v_pre) + m_pre
+                    eps_b = tf.random_normal([K, 1, dout], 0.0, 1.0, dtype=tf.float32)
+                    pre_b = eps_b * tf.exp(0.5 * self.b_v[i]) + self.b_m[i]
+                    pre = pre_W + pre_b
+                    act = tf.nn.relu(pre)
 
-            m_pre = tf.einsum('kni,io->kno', act, self.W_m[i])
-            v_pre = tf.einsum('kni,io->kno', act ** 2.0, tf.exp(self.W_v[i]))
-            eps_w = tf.random_normal([K, N, dout], 0.0, 1.0, dtype=tf.float32)
-            pre_W = eps_w * tf.sqrt(1e-9 + v_pre) + m_pre
-            eps_b = tf.random_normal([K, 1, dout], 0.0, 1.0, dtype=tf.float32)
-            pre_b = eps_b * tf.exp(0.5 * self.b_v[i]) + self.b_m[i]
-            pre = pre_W + pre_b
-            act = tf.nn.relu(pre)
+            with tf.name_scope(f'layer_{self.no_layers-1}/'):
+                din = self.size[-2]
+                dout = self.size[-1]
 
-        din = self.size[-2]
-        dout = self.size[-1]
+                m_pre = tf.einsum('kni,io->kno', act, self.W_m[-1])
+                v_pre = tf.einsum('kni,io->kno', act ** 2.0, tf.exp(self.W_v[-1]))
+                eps_w = tf.random_normal([K, N, dout], 0.0, 1.0, dtype=tf.float32)
+                pre_W = eps_w * tf.sqrt(1e-9 + v_pre) + m_pre
+                eps_b = tf.random_normal([K, 1, dout], 0.0, 1.0, dtype=tf.float32)
+                pre_b = eps_b * tf.exp(0.5 * self.b_v[-1]) + self.b_m[-1]
+                pre = pre_W + pre_b
 
-        m_pre = tf.einsum('kni,io->kno', act, self.W_m[-1])
-        v_pre = tf.einsum('kni,io->kno', act ** 2.0, tf.exp(self.W_v[-1]))
-        eps_w = tf.random_normal([K, N, dout], 0.0, 1.0, dtype=tf.float32)
-        pre_W = eps_w * tf.sqrt(1e-9 + v_pre) + m_pre
-        eps_b = tf.random_normal([K, 1, dout], 0.0, 1.0, dtype=tf.float32)
-        pre_b = eps_b * tf.exp(0.5 * self.b_v[-1]) + self.b_m[-1]
-        pre = pre_W + pre_b
-
-        return pre
+                return pre
 
     # computes log likelihood of input for against target
     def _loglik(self, inputs, targets):
-        pred = self._prediction(inputs, self.no_train_samples)
-        targets = tf.tile(tf.expand_dims(targets, 0), [self.no_train_samples, 1, 1])
-        log_lik = - tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=pred, labels=targets))
-        return log_lik
+        with tf.name_scope('loglik'):
+            pred = self._prediction(inputs, self.no_train_samples)
+            targets = tf.tile(tf.expand_dims(targets, 0), [self.no_train_samples, 1, 1])
+            log_lik = - tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=pred, labels=targets))
+            return log_lik
 
     def _test_loglik(self, inputs, targets):
-        pred = tf.reduce_mean(self._prediction(inputs, self.no_train_samples), axis=0)
-        log_lik = - tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=pred, labels=targets))
-        return log_lik
+        with tf.name_scope('test_loglik'):
+            pred = tf.reduce_mean(self._prediction(inputs, self.no_train_samples), axis=0)
+            log_lik = - tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=pred, labels=targets))
+            return log_lik
 
     def _KL_term(self):
-        kl = 0
-        for i in range(self.no_layers):
-            din = self.size[i]
-            dout = self.size[i + 1]
-            m, v = self.W_m[i], self.W_v[i]
-            m0, v0 = self.prior_W_m[i], self.prior_W_v[i]
-            const_term = -0.5 * dout * din
-            log_std_diff = 0.5 * tf.reduce_sum(np.log(v0) - v)
-            mu_diff_term = 0.5 * tf.reduce_sum((tf.exp(v) + (m0 - m) ** 2) / v0)
-            kl += const_term + log_std_diff + mu_diff_term
+        with tf.name_scope('kl'):
+            kl = 0
+            for i in range(self.no_layers):
+                with tf.name_scope(f'layer_{i}'):
+                    din = self.size[i]
+                    dout = self.size[i + 1]
+                    m, v = self.W_m[i], self.W_v[i]
+                    m0, v0 = self.prior_W_m[i], self.prior_W_v[i]
+                    const_term = -0.5 * dout * din
+                    log_std_diff = 0.5 * tf.reduce_sum(np.log(v0) - v)
+                    mu_diff_term = 0.5 * tf.reduce_sum((tf.exp(v) + (m0 - m) ** 2) / v0)
+                    kl += const_term + log_std_diff + mu_diff_term
 
-            m, v = self.b_m[i], self.b_v[i]
-            m0, v0 = self.prior_b_m[i], self.prior_b_v[i]
-            const_term = -0.5 * dout
-            log_std_diff = 0.5 * tf.reduce_sum(np.log(v0) - v)
-            mu_diff_term = 0.5 * tf.reduce_sum((tf.exp(v) + (m0 - m) ** 2) / v0)
-            kl += const_term + log_std_diff + mu_diff_term
+                    m, v = self.b_m[i], self.b_v[i]
+                    m0, v0 = self.prior_b_m[i], self.prior_b_v[i]
+                    const_term = -0.5 * dout
+                    log_std_diff = 0.5 * tf.reduce_sum(np.log(v0) - v)
+                    mu_diff_term = 0.5 * tf.reduce_sum((tf.exp(v) + (m0 - m) ** 2) / v0)
+                    kl += const_term + log_std_diff + mu_diff_term
 
-        return kl
+            return kl
 
     def create_weights(self, in_dim, hidden_size, out_dim, prev_weights, prev_variances):
         hidden_size = deepcopy(hidden_size)
@@ -357,34 +367,36 @@ class BayesMLPClassification(Cla_NN):
         b_m = []
         W_v = []
         b_v = []
-        for i in range(no_layers):
-            din = hidden_size[i]
-            dout = hidden_size[i + 1]
-            if prev_weights is None:
-                Wi_m_val = tf.truncated_normal([din, dout], stddev=0.1)
-                bi_m_val = tf.truncated_normal([dout], stddev=0.1)
-                Wi_v_val = tf.constant(-6.0, shape=[din, dout])
-                bi_v_val = tf.constant(-6.0, shape=[dout])
-            else:
-                Wi_m_val = prev_weights[0][i]
-                bi_m_val = prev_weights[1][i]
-                if prev_variances is None:
-                    Wi_v_val = tf.constant(-6.0, shape=[din, dout])
-                    bi_v_val = tf.constant(-6.0, shape=[dout])
-                else:
-                    Wi_v_val = prev_variances[0][i]
-                    bi_v_val = prev_variances[1][i]
+        with tf.name_scope('model/'):
+            for i in range(no_layers):
+                with tf.name_scope(f'layer_{i}/'):
+                    din = hidden_size[i]
+                    dout = hidden_size[i + 1]
+                    if prev_weights is None:
+                        Wi_m_val = tf.truncated_normal([din, dout], stddev=0.1)
+                        bi_m_val = tf.truncated_normal([dout], stddev=0.1)
+                        Wi_v_val = tf.constant(-6.0, shape=[din, dout])
+                        bi_v_val = tf.constant(-6.0, shape=[dout])
+                    else:
+                        Wi_m_val = prev_weights[0][i]
+                        bi_m_val = prev_weights[1][i]
+                        if prev_variances is None:
+                            Wi_v_val = tf.constant(-6.0, shape=[din, dout])
+                            bi_v_val = tf.constant(-6.0, shape=[dout])
+                        else:
+                            Wi_v_val = prev_variances[0][i]
+                            bi_v_val = prev_variances[1][i]
 
-            Wi_m = tf.Variable(Wi_m_val)
-            bi_m = tf.Variable(bi_m_val)
-            Wi_v = tf.Variable(Wi_v_val)
-            bi_v = tf.Variable(bi_v_val)
-            W_m.append(Wi_m)
-            b_m.append(bi_m)
-            W_v.append(Wi_v)
-            b_v.append(bi_v)
+                    Wi_m = tf.Variable(Wi_m_val)
+                    bi_m = tf.Variable(bi_m_val)
+                    Wi_v = tf.Variable(Wi_v_val)
+                    bi_v = tf.Variable(bi_v_val)
+                    W_m.append(Wi_m)
+                    b_m.append(bi_m)
+                    W_v.append(Wi_v)
+                    b_v.append(bi_v)
 
-        return [W_m, b_m], [W_v, b_v], hidden_size
+            return [W_m, b_m], [W_v, b_v], hidden_size
 
 
     def create_prior(self, in_dim, hidden_size, out_dim, prev_weights, prev_variances, prior_mean, prior_var):
