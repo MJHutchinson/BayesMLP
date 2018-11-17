@@ -66,7 +66,7 @@ print(f'Running experiment on {data_set} with parameters:\n'
 
 
 # Load in dataset and related info
-data_loader = data.ClassificationDataloader(data_dir=args.datadir)
+data_loader = data.ClassificationDataloader(pickle_name=data_set, data_dir=args.datadir)
 input_size, train_length, output_size = data_loader.get_dims()
 
 # Design search space for paramters
