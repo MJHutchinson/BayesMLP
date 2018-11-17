@@ -13,6 +13,9 @@ else:
     results_dir = f'{log_dir}/{data_set}/{experiment}'
 
 
+results_dir = './remote_logs/kin8nm/2018-11-16 10:20:26'
+
+
 files = get_immediate_files(results_dir)
 files = [f for f in files if f.split('.')[-1]=='pkl']
 
@@ -27,6 +30,6 @@ keys = ['costs', 'test_ll', 'rmses', 'noise_sigma', 'train_kl', 'train_ll']
 for key in keys:
     plot_training_curves(results, val=key)
 
-# plot_min_vs_first(results)
+plot_min_vs_first(results)
 
 plt.show()

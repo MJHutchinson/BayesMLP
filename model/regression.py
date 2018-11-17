@@ -352,12 +352,19 @@ class BayesMLPRegression(Reg_NN):
             return noise_term + se_norm_term + const_term
 
     def _test_loglik(self, pred, targets):
+        '''
+        Calculate per data point
+        note - does not un transform data before calculating - maybe it should?
+        :param pred: input predictions
+        :param targets: input targets
+        :return: average test time log likelihood for the inputs - E[p(yi | xi, w)] = 1/N * SUM(i, N)[log( 1/M *SUM(j, M)[p(yi | xi, wj)] )]
+        '''
         with tf.name_scope('test_loglik'):
             se = tf.squared_difference(pred, targets)
             probs = tf.div(1., tf.sqrt(tf.constant(2 * np.pi) * tf.exp(self.noise_var))) * tf.exp( tf.div(se, 2 * tf.exp(self.noise_var)) )
             probs = tf.reduce_mean(probs, axis=0)
             log_probs = tf.log(probs)
-            return tf.reduce_sum(log_probs)
+            return tf.reduce_mean(log_probs)
             # const_term = - 0.5 * tf.log(tf.constant(2* np.pi))
             # noise_term = - 0.5 * self.noise_var
             # se_norm_term = - tf.reduce_mean(tf.div(se , (2 * tf.exp(self.noise_var))))

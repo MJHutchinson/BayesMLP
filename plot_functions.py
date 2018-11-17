@@ -35,16 +35,15 @@ def plot_training_curves_rv(input, legend=None, rolling_av_len=5):
 
 
 
-def plot_cost_curves(*input, legend=None):
+def plot_cost_curves(*input, legend=None, key='rmse'):
     _, ax = plt.subplots(1, 1)
     ax.set_xlabel('Epoch')
     ax.set_ylabel('Cost')
     legend = []
     for results in input:
-        for key in results.keys():
-            result = results[key]['results']
-            ax.plot(result['costs'])
-            legend.append(key)
+        result = results['results']
+        ax.plot(result['costs'])
+        legend.append(key)
 
     ax.legend(legend)
 
@@ -54,21 +53,17 @@ def plot_min_vs_first(input, val = 'costs', legend=None):
     ax.set_xlabel(f'First epoch {val}')
     ax.set_ylabel(f'Minimum {val}')
 
+    initial_accs = []
+    best_accs = []
 
-    for results in input:
+    for result in input:
 
-        initial_accs = []
-        best_accs = []
-        hiddens = []
+        r = result['results'][val]
+        initial_accs.append(r[0])
+        best_accs.append(min(r))
 
-        for key in results.keys():
-            result = results[key]['results']
-            initial_accs.append(result[val][0])
-            best_accs.append(min(result[val]))
-            hiddens.append(key)
-
-        ax.scatter(initial_accs, best_accs)
-        ax.plot(np.unique(initial_accs), np.poly1d(np.polyfit(initial_accs, best_accs, 1))(np.unique(initial_accs)))
+    ax.scatter(initial_accs, best_accs)
+    ax.plot(np.unique(initial_accs), np.poly1d(np.polyfit(initial_accs, best_accs, 1))(np.unique(initial_accs)))
 
     if legend is not None:
         ax.legend(legend)
