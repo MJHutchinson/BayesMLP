@@ -84,4 +84,5 @@ def test_model_classification(model, data_gen, epochs, batch_size=100, log_freq=
 
     summary_writer.close()
 
-    return {'costs': costs, 'accuracies': accuracies}
+    return {'costs': costs, 'test_ll': test_ll, 'accuracies': accuracies, 'train_ll': train_ll,
+            'train_kl': train_kl}

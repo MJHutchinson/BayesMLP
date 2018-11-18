@@ -68,6 +68,47 @@ def plot_min_vs_first(input, val = 'costs', legend=None):
     if legend is not None:
         ax.legend(legend)
 
+
+def plot_max_vs_first(input, val = 'costs', legend=None):
+    _, ax = plt.subplots(1, 1)
+    ax.set_xlabel(f'First epoch {val}')
+    ax.set_ylabel(f'Maximum {val}')
+
+    initial_accs = []
+    best_accs = []
+
+    for result in input:
+
+        r = result['results'][val]
+        initial_accs.append(r[0])
+        best_accs.append(max(r))
+
+    ax.scatter(initial_accs, best_accs)
+    ax.plot(np.unique(initial_accs), np.poly1d(np.polyfit(initial_accs, best_accs, 1))(np.unique(initial_accs)))
+
+    if legend is not None:
+        ax.legend(legend)
+
+def plot_last_vs_first(input, val = 'costs', legend=None):
+    _, ax = plt.subplots(1, 1)
+    ax.set_xlabel(f'First epoch {val}')
+    ax.set_ylabel(f'Final epoch {val}')
+
+    initial_accs = []
+    best_accs = []
+
+    for result in input:
+
+        r = result['results'][val]
+        initial_accs.append(r[0])
+        best_accs.append(r[-1])
+
+    ax.scatter(initial_accs, best_accs)
+    ax.plot(np.unique(initial_accs), np.poly1d(np.polyfit(initial_accs, best_accs, 1))(np.unique(initial_accs)))
+
+    if legend is not None:
+        ax.legend(legend)
+
 def rank_best_value(input, n=10, value = 'accuracies', minimum=False):
     print(f'{"Minimum" if minimum else "Maximum"} {value} (limited to {n})')
     for results in input:
