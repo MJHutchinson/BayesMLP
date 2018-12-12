@@ -108,3 +108,7 @@ venv.bak/
 
 # results
 results/
+
+# logs
+remote_logs/
+figs/
