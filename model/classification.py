@@ -245,7 +245,7 @@ class BayesMLPClassification(Cla_NN):
 
         self.KL_term = tf.div(self._KL_term(), training_size)
         self.loglik_term = - self._loglik(self.x, self.y)
-        self.test_loglik_term = self._test_loglik(self.x, self.y)
+        self.test_loglik_term = - self._test_loglik(self.x, self.y)
         self.cost = self.KL_term + self.loglik_term
 
         self.assign_optimizer(learning_rate)
@@ -444,6 +444,8 @@ class BayesMLPClassification(Cla_NN):
             test_logloss_summary  = tf.summary.scalar('test logloss',   self.test_logloss)
             test_accuracy_summary = tf.summary.scalar('test accuracy',  self.test_accuracy)
 
+            tf.distributions.Normal
+
             self.performance_metrics = tf.summary.merge_all()
 
     def log_metrics(self, train_cost, train_logloss, train_kl, test_logloss, test_accuracy):
@@ -454,3 +456,7 @@ class BayesMLPClassification(Cla_NN):
             self.test_logloss: test_logloss,
             self.test_accuracy: test_accuracy
         })
+
+import tensorflow_probability as tfp
+
+tfp.layers.DenseFlipout

@@ -11,7 +11,7 @@ from utils.utils import num_to_name, get_search_space, parameter_combinations
 from data.data_loader import get_loader_by_name
 
 # Script parameters
-data_set = 'bostonHousing'
+data_set = 'dummy'
 log_dir = './results'
 config_dir = './config'
 common_name = None

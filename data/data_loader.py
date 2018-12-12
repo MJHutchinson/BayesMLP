@@ -80,13 +80,15 @@ class DummyDataloader(RegressionDataloader):
     def __init__(self):
         self.pickle_name = 'dummy'
 
-        a = 1000
-        b = 500
+        a = 2
+        b = 1
+
+        noise = 0.01
 
         self.X_train = np.expand_dims(np.random.uniform(0,10, 10000), 1)
-        self.Y_train = self.X_train * a + b + np.expand_dims(np.random.normal(0, 1, 10000), 1)
+        self.Y_train = self.X_train * a + b + np.expand_dims(np.random.normal(0, noise, 10000), 1)
         self.X_test = np.expand_dims(np.random.uniform(0,10, 1000), 1)
-        self.Y_test = self.X_test * a + b + np.expand_dims(np.random.normal(0, 1, 1000), 1)
+        self.Y_test = self.X_test * a + b + np.expand_dims(np.random.normal(0, noise, 1000), 1)
 
         self.X_means = np.expand_dims(np.mean(self.X_train, axis=0), 0)
         self.Y_means = np.expand_dims(np.mean(self.Y_train, axis=0), 0)
@@ -130,7 +132,7 @@ class Kin8nmDataloader(RegressionDataloader):
     def get_batch_size(self, max_hidden_layer_size):
         return 1000
 
-
+''#'#'#
 class MnistDataloader(ClassificationDataloader):
     def __init__(self):
         super().__init__('mnist')

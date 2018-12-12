@@ -75,10 +75,10 @@ for idx, (network, lr, prior_var) in enumerate(param_space):
     print(f'running model {(network, lr, prior_var)}, parameter set {idx+1} of {len(param_space)}')
 
     # Create model with designated parameters
-    model = BayesMLPClassification(input_size, h, output_size, train_length, no_pred_samples=10, learning_rate=lr, prior_var=prior_var)
+    model = BayesMLPClassification(input_size, h, output_size, train_length, no_pred_samples=100, learning_rate=lr, prior_var=prior_var)
 
     # Run a standard test on the model, logging training info etc
-    result = test_model_classification(model, data_loader, epochs, batch_size, log_freq=100, log_dir=logs_dir)
+    result = test_model_classification(model, data_loader, epochs, batch_size, log_freq=1, log_dir=logs_dir)
 
     # Close model session! Important - releases VRAM, otherwise memory errors
     model.close_session()

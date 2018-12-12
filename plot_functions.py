@@ -12,7 +12,7 @@ def plot_training_curves(input, val = 'accuracies', legend=None):
     for results in input:
         result = results['results']
         ax.plot(result[val])
-        legend.append(f'{results["hidden_sizes"]}_{results["learning_rate"]}_{results["prior_var"]}')
+        legend.append(f'{results["hidden_sizes"]} lr: {results["learning_rate"]} prior width: {results["prior_var"]}')
 
     ax.legend(legend)
 
@@ -69,6 +69,28 @@ def plot_min_vs_first(input, val = 'costs', legend=None):
         ax.legend(legend)
 
 
+def plot_min_vs_i(input, i, val = 'costs', legend=None):
+    _, ax = plt.subplots(1, 1)
+    ax.set_xlabel(f'Epoch {i+1} {val}')
+    ax.set_ylabel(f'Minimum {val}')
+    ax.set_title(f'Plot of epoch {i+1} {val} vs minimum {val}')
+
+    initial_accs = []
+    best_accs = []
+
+    for result in input:
+
+        r = result['results'][val]
+        initial_accs.append(r[i])
+        best_accs.append(min(r))
+
+    ax.scatter(initial_accs, best_accs)
+    # ax.plot(np.unique(initial_accs), np.poly1d(np.polyfit(initial_accs, best_accs, 1))(np.unique(initial_accs)))
+
+    if legend is not None:
+        ax.legend(legend)
+
+
 def plot_max_vs_first(input, val = 'costs', legend=None):
     _, ax = plt.subplots(1, 1)
     ax.set_xlabel(f'First epoch {val}')
@@ -85,6 +107,32 @@ def plot_max_vs_first(input, val = 'costs', legend=None):
 
     ax.scatter(initial_accs, best_accs)
     ax.plot(np.unique(initial_accs), np.poly1d(np.polyfit(initial_accs, best_accs, 1))(np.unique(initial_accs)))
+
+    if legend is not None:
+        ax.legend(legend)
+
+
+def plot_max_vs_i(input, i, val = 'costs', legend=None):
+    _, ax = plt.subplots(1, 1)
+    ax.set_xlabel(f'Epoch {i+1} {val}')
+    ax.set_ylabel(f'Maximum {val}')
+    ax.set_title(f'Plot of epoch {i+1} {val} vs maximum {val}')
+
+
+    initial_accs = []
+    best_accs = []
+    legend = []
+
+    for result in input:
+
+        r = result['results'][val]
+        initial_accs.append(r[i])
+        best_accs.append(max(r))
+        ax.scatter(r[i], max(r))
+        legend.append(f'{result["hidden_sizes"]} lr: {result["learning_rate"]} prior width: {result["prior_var"]}')
+
+    # ax.scatter(initial_accs, best_accs)
+    # ax.plot(np.unique(initial_accs), np.poly1d(np.polyfit(initial_accs, best_accs, 1))(np.unique(initial_accs)))
 
     if legend is not None:
         ax.legend(legend)
@@ -111,16 +159,15 @@ def plot_last_vs_first(input, val = 'costs', legend=None):
 
 def rank_best_value(input, n=10, value = 'accuracies', minimum=False):
     print(f'{"Minimum" if minimum else "Maximum"} {value} (limited to {n})')
+    pairs = []
     for results in input:
-        pairs = []
-        for i, key in enumerate(results.keys()):
-            pairs.append((key, min(results[key]['results'][value]) if minimum else max(results[key]['results'][value])))
+        pairs.append((results['hidden_sizes'], min(results['results'][value]) if minimum else max(results['results'][value])))
 
-        pairs = sorted(pairs, key = lambda t: t[1], reverse=not minimum)
+    pairs = sorted(pairs, key = lambda t: t[1], reverse=not minimum)
 
-        for i, pair in enumerate(pairs):
-            if i<10:
-                print(f'{pair[0]}: {value}: {pair[1]}')
+    for i, pair in enumerate(pairs):
+        if i<10:
+            print(f'{pair[0]}: {value}: {pair[1]}')
 
     print('\n')
 
