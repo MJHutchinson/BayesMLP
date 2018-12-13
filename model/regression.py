@@ -57,8 +57,8 @@ class Reg_NN(object):
         self.x = tf.placeholder(tf.float32, [None, input_size], name='x')
         self.y = tf.placeholder(tf.float32, [None, output_size], name='y')
 
-        self.y_mu = tf.constant(y_mu, dtype=tf.float32)
-        self.y_sigma = tf.constant(y_sigma, dtype=tf.float32)
+        self.y_mu = tf.constant(y_mu, dtype=tf.float32, name='y_mu')
+        self.y_sigma = tf.constant(y_sigma, dtype=tf.float32, name='y_sigma')
 
     def assign_optimizer(self, learning_rate=0.001):
         with tf.name_scope('optimiser'):
@@ -223,7 +223,7 @@ class BayesMLPRegression(Reg_NN):
     def __init__(self, input_size, hidden_size, output_size, training_size, y_mu, y_sigma,
                  no_train_samples=10, no_pred_samples=100, prev_means=None, prev_log_variances=None,
                  learning_rate=0.001,
-                 prior_mean=0., prior_var=1., type = 'proper'):
+                 prior_mean=0., prior_var=1.):
 
         super(BayesMLPRegression, self).__init__(input_size, hidden_size, output_size, training_size, y_mu, y_sigma)
 
@@ -251,7 +251,7 @@ class BayesMLPRegression(Reg_NN):
         self.prior_mean = prior_mean
         self.prior_var = prior_var
 
-        self.noise_var = tf.Variable(initial_value=-6., name='log_noise_variance') #
+        self.noise_var = tf.Variable(initial_value=-6., name='log_noise_variance')
 
         self.no_layers = len(self.size)-1
         self.no_train_samples = no_train_samples
@@ -259,15 +259,21 @@ class BayesMLPRegression(Reg_NN):
 
         self.pred = self._prediction(self.x, self.no_pred_samples)
 
-        self.rmse = self._rmse(self.pred, self.y)
+        self.pred_actual = self.pred * self.y_sigma + self.y_mu
+        self.targ_actual = self.y * self.y_sigma + self.y_mu
+
+        self.rmse = self._rmse(self.pred_actual, self.targ_actual)
+
+        # self.loglik = self._loglik(self.pred_actual, self.targ_actual)
+        # self.test_loglik = self._test_loglik(self.pred_actual, self.targ_actual)
+
         self.loglik = self._loglik(self.pred, self.y)
         self.test_loglik = self._test_loglik(self.pred, self.y)
+
         self.KL = tf.div(self._KL_term(), training_size)
 
-        if type is not 'rmse':
-            self.cost = -self.loglik + self.KL
-        else:
-            self.cost = self.rmse
+        self.cost = -self.loglik + self.KL
+        # self.cost = self.rmse
 
         self.assign_optimizer(learning_rate)
         self.assign_session()
@@ -333,14 +339,12 @@ class BayesMLPRegression(Reg_NN):
 
                 return pre
 
-    def _rmse(self, pred, targets):
+    def _rmse(self, preds, targets):
         with tf.name_scope('rmse'):
-            pred_mean = tf.reduce_mean(pred, axis=0)
+            # pred_actual = pred_mean * self.y_sigma + self.y_mu
+            # targets_actual = targets * self.y_sigma + self.y_mu
 
-            pred_actual = pred_mean * self.y_sigma + self.y_mu
-            targets_actual = targets * self.y_sigma + self.y_mu
-
-            rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(pred_actual, targets_actual)))
+            rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(preds, targets)))
             return rmse
 
     # computes log likelihood of input for against target

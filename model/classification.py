@@ -222,7 +222,7 @@ class BayesMLPClassification(Cla_NN):
     def __init__(self, input_size, hidden_size, output_size, training_size,
                  no_train_samples=10, no_pred_samples=100, prev_means=None, prev_log_variances=None,
                  learning_rate=0.001,
-                 prior_mean=0, prior_var=1):
+                 prior_mean=0, prior_var=1, activation=tf.nn.relu):
         super(BayesMLPClassification, self).__init__(input_size, hidden_size, output_size, training_size)
 
         m, v, self.size = self.create_weights(input_size, hidden_size, output_size, prev_means, prev_log_variances)
@@ -239,6 +239,8 @@ class BayesMLPClassification(Cla_NN):
         self.no_layers = len(self.size) - 1
         self.no_train_samples = no_train_samples
         self.no_pred_samples = no_pred_samples
+
+        self.activation = activation
 
         self.pred = self._prediction(self.x, self.no_pred_samples)
         self.corr = self._predict_correct(self.x, self.y)
@@ -304,7 +306,8 @@ class BayesMLPClassification(Cla_NN):
                     eps_b = tf.random_normal([K, 1, dout], 0.0, 1.0, dtype=tf.float32)
                     pre_b = eps_b * tf.exp(0.5 * self.b_v[i]) + self.b_m[i]
                     pre = pre_W + pre_b
-                    act = tf.nn.relu(pre)
+                    # act = tf.nn.relu(pre)
+                    act = self.activation(pre)
 
             with tf.name_scope(f'layer_{self.no_layers-1}/'):
                 din = self.size[-2]
