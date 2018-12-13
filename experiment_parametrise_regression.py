@@ -85,7 +85,7 @@ for idx, (network, lr, prior_var) in enumerate(param_space):
     print(f'running model {(network, lr, prior_var)}, parameter set {idx+1} of {len(param_space)}')
 
     # Create model with designated parameters
-    model = BayesMLPRegression(input_size, h, output_size, train_length, y_mu, y_sigma, no_pred_samples=10, learning_rate=lr, prior_var=prior_var, type=type)
+    model = BayesMLPRegression(input_size, h, output_size, train_length, y_mu, y_sigma, no_pred_samples=10, learning_rate=lr, prior_var=prior_var)
 
     # Run a standard test on the model, logging training info etc
     result = test_model_regression(model, data_loader, epochs, batch_size, log_freq=100, log_dir=logs_dir)
