@@ -334,7 +334,6 @@ class BayesMLPRegression(Reg_NN):
                 return pre
 
     def _rmse(self, pred, targets):
-        # pred = self._prediction(inputs, self.no_train_samples)
         with tf.name_scope('rmse'):
             pred_mean = tf.reduce_mean(pred, axis=0)
 
