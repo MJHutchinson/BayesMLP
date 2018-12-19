@@ -98,6 +98,7 @@ def test_model_classification(model, data_gen, epochs, batch_size=100, log_freq=
     return {'costs': costs, 'test_ll': test_ll, 'accuracies': accuracies, 'train_ll': train_ll,
             'train_kl': train_kl}
 
+
 def get_activation(name):
     if name == 'relu':
         return tf.nn.relu

@@ -6,7 +6,7 @@ import shutil
 import tensorflow as tf
 import argparse
 from model.classification import BayesMLPClassification
-from model.utils import test_model_classification
+from model.utils import test_model_classification, get_activation
 from utils.utils import num_to_name, get_search_space, parameter_combinations
 import data.data_loader as data
 
@@ -81,7 +81,7 @@ param_space = parameter_combinations(search_space, lrs, prior_vars)
 # Loop over parameter space
 for idx, (network, lr, prior_var) in enumerate(param_space):
 
-    for activation in model_config['activation']:
+    for activation in model_config['activations']:
 
         h = [i for i in network] # Tuple to list
         batch_size = data_loader.get_batch_size(max(h))
