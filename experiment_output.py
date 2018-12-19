@@ -11,7 +11,9 @@ data_set = 'bostonHousing'
 
 # results_dir = f'{log_dir}/{data_set}'
 # results_dir = './protein-tertiary-structure/2018-11-16 10:15:58'
-results_dir = './results/bostonHousing/2018-11-30 13:37:07'
+# results_dir = './results/bostonHousing/2018-11-30 13:37:07'
+results_dir = './remote_logs/wine-quality-red/2018-11-16 03:39:14'
+# results_dir = './remote_logs/bostonHousing/2018-11-18 10:42:12'
 
 files = get_immediate_files(results_dir)
 files = [f for f in files if f.split('.')[-1]=='pkl']

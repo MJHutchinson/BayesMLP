@@ -60,7 +60,7 @@ flags.DEFINE_integer("max_steps",
                      default=6000,
                      help="Number of training steps to run.")
 flags.DEFINE_integer("batch_size",
-                     default=128,
+                     default=900,
                      help="Batch size.")
 flags.DEFINE_string("data_dir",
                     default=os.path.join(os.getenv("TEST_TMPDIR", "/tmp"),
@@ -280,11 +280,11 @@ def main(argv):
             Multilayer(),
             tfp.layers.DenseLocalReparameterization(400, activation=tf.nn.relu),
             tfp.layers.DenseLocalReparameterization(400, activation=tf.nn.relu),
-            tfp.layers.DenseLocalReparameterization(10,  activation=tf.nn.relu)
+            tfp.layers.DenseLocalReparameterization(10)
         ])
 
-    logits = neural_net(images)
-    labels_distribution = tfd.Categorical(logits=logits)
+  logits = neural_net(images)
+  labels_distribution = tfd.Categorical(logits=logits)
 
   label_mult = Multilayer()
   labels = label_mult(labels)
@@ -351,7 +351,9 @@ def main(argv):
                                           feed_dict={handle: heldout_handle})
         heldout_lp = np.mean(np.log(mean_probs[np.arange(mean_probs.shape[0]),
                                                label_vals.flatten()]))
-        print(" ... Held-out nats: {:.3f}".format(heldout_lp))
+        classes = np.argmax(mean_probs, axis=1)
+        heldout_accuracy = (classes == label_vals).sum()/len(label_vals)
+        print(" ... Held-out nats: {:.3f}, Held-out accuracy: {:.3f}".format(heldout_lp, heldout_accuracy))
 
         qm_vals, qs_vals = sess.run((qmeans, qstds))
 
