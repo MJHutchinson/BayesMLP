@@ -20,7 +20,11 @@ common_name = None
 # Set up loggin directory and grab the config file
 date_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-results_dir = f'{log_dir}/{data_set}/{date_time}'
+if common_name is not None:
+    results_dir = f'{log_dir}/{data_set}/{common_name}-{date_time}'
+else:
+    results_dir = f'{log_dir}/{data_set}/{date_time}'
+
 latest_dir = f'{log_dir}/{data_set}/latest'
 config_file = f'{config_dir}/{data_set}.yaml'
 

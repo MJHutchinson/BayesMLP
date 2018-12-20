@@ -67,7 +67,7 @@ param_space = parameter_combinations(search_space, lrs, prior_vars)
 # Loop over parameter space
 for idx, (network, lr, prior_var) in enumerate(param_space):
 
-    for activation in config['activation']:
+    for activation in config['activations']:
 
         h = [i for i in network] # Tuple to list
         batch_size = data_loader.get_batch_size(max(h))

@@ -16,6 +16,7 @@ parser.add_argument('-c', '--config', required=True)
 parser.add_argument('-ds', '--dataset', required=True)
 parser.add_argument('-ld', '--logdir', default='./results')
 parser.add_argument('-dd', '--datadir', default='./data_dir')
+parser.add_argument('-cm', '--commonname', default=None)
 
 args = parser.parse_args()
 
@@ -24,12 +25,16 @@ model_config = yaml.load(open(args.config, 'rb'))
 # Script parameters
 data_set = args.dataset
 log_dir = args.logdir
-common_name = None
+common_name = args.commonname
 
 # Set up loggin directory and grab the config file
 date_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-results_dir = f'{log_dir}/{data_set}/{date_time}'
+if common_name is not None:
+    results_dir = f'{log_dir}/{data_set}/{common_name}-{date_time}'
+else:
+    results_dir = f'{log_dir}/{data_set}/{date_time}'
+
 latest_dir = f'{log_dir}/{data_set}/latest'
 
 #####
