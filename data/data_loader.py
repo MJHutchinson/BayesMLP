@@ -84,12 +84,14 @@ class DummyDataloader(RegressionDataloader):
         b = 1
         c = 3
 
+        len = 10000
+
         noise = 0.01
 
-        self.X_train = np.expand_dims(np.random.uniform(0,10, 1000), 1)
-        self.Y_train = (self.X_train ** 2 * a) + (self.X_train * b) + c + np.expand_dims(np.random.normal(0, noise, 1000), 1)
-        self.X_test = np.expand_dims(np.random.uniform(0,10, 1000), 1)
-        self.Y_test = (self.X_test ** 2 * a) + (self.X_test * b) + c + np.expand_dims(np.random.normal(0, noise, 1000), 1)
+        self.X_train = np.expand_dims(np.random.uniform(0,10, len), 1)
+        self.Y_train = (self.X_train ** 2 * a) + (self.X_train * b) + c + np.expand_dims(np.random.normal(0, noise, len), 1)
+        self.X_test = np.expand_dims(np.random.uniform(0,10, len), 1)
+        self.Y_test = (self.X_test ** 2 * a) + (self.X_test * b) + c + np.expand_dims(np.random.normal(0, noise, len), 1)
 
         self.X_means = 0.5 * (np.expand_dims(np.max(self.X_train, axis=0), 0) + np.expand_dims(np.min(self.X_train, axis=0), 0))  # np.expand_dims(np.mean(self.X_train, axis=0), 0)
         self.Y_means = 0.5 * (np.expand_dims(np.max(self.Y_train, axis=0), 0) + np.expand_dims(np.min(self.Y_train, axis=0), 0))  # np.expand_dims(np.mean(self.Y_train, axis=0), 0)

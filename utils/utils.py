@@ -27,7 +27,7 @@ def small_search_space(hs, hidden_layers):
     return sorted(search_space, key=lambda t: t[0], reverse=True)
 
 
-def get_search_space(search_space, hs, hidden_layers):
+def gen_hidden_combinations(search_space, hs, hidden_layers):
     if search_space == 'full':
         return full_search_space(hs, hidden_layers)
     elif search_space == 'small':

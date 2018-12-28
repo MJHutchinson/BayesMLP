@@ -5,9 +5,9 @@ import yaml
 import shutil
 import tensorflow as tf
 import argparse
-from model.regression import BayesMLPRegression
-from model.utils import test_model_regression
-from utils.utils import num_to_name, get_search_space, parameter_combinations
+from model.classification import BayesMLPClassification
+from model.utils import test_model_classification
+from utils.utils import num_to_name, gen_hidden_combinations, parameter_combinations
 import data.data_loader as data
 
 parser = argparse.ArgumentParser(description='Script for dispatching train runs of BNNs over larger search spaces')
@@ -16,7 +16,7 @@ parser.add_argument('-c', '--config', required=True)
 parser.add_argument('-ds', '--dataset', required=True)
 parser.add_argument('-ld', '--logdir', default='./results')
 parser.add_argument('-dd', '--datadir', default='./data_dir')
-parser.add_argument('-cm', '--commonname', default=None)
+parser.add_argument('-cn', '--common_name', default=None)
 
 args = parser.parse_args()
 
@@ -25,13 +25,13 @@ model_config = yaml.load(open(args.config, 'rb'))
 # Script parameters
 data_set = args.dataset
 log_dir = args.logdir
-common_name = args.commonname
+common_name = args.common_name
 
 # Set up loggin directory and grab the config file
 date_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 if common_name is not None:
-    results_dir = f'{log_dir}/{data_set}/{common_name}-{date_time}'
+    results_dir = f'{log_dir}/{data_set}/{common_name}_{date_time}'
 else:
     results_dir = f'{log_dir}/{data_set}/{date_time}'
 
@@ -71,13 +71,11 @@ print(f'Running experiment on {data_set} with parameters:\n'
 
 
 # Load in dataset and related info
-data_loader = data.RegressionDataloader(data_set, args.datadir)
+data_loader = data.ClassificationDataloader(pickle_name=data_set, data_dir=args.datadir)
 input_size, train_length, output_size = data_loader.get_dims()
-_, _, y_mu, y_sigma = data_loader.get_transforms()
-
 
 # Design search space for paramters
-search_space = get_search_space(search_space, hs, hidden_layers)
+search_space = gen_hidden_combinations(search_space, hs, hidden_layers)
 param_space = parameter_combinations(search_space, lrs, prior_vars)
 
 # Loop over parameter space
@@ -90,10 +88,10 @@ for idx, (network, lr, prior_var) in enumerate(param_space):
     print(f'running model {(network, lr, prior_var)}, parameter set {idx+1} of {len(param_space)}')
 
     # Create model with designated parameters
-    model = BayesMLPRegression(input_size, h, output_size, train_length, y_mu, y_sigma, no_pred_samples=100, learning_rate=lr, prior_var=prior_var)
+    model = BayesMLPClassification(input_size, h, output_size, train_length, no_pred_samples=10, learning_rate=lr, prior_var=prior_var)
 
     # Run a standard test on the model, logging training info etc
-    result = test_model_regression(model, data_loader, epochs, batch_size, log_freq=100, log_dir=logs_dir)
+    result = test_model_classification(model, data_loader, epochs, batch_size, log_freq=1, log_dir=logs_dir)
 
     # Close model session! Important - releases VRAM, otherwise memory errors
     model.close_session()

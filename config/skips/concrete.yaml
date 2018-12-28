@@ -1,0 +1,8 @@
+hs: [25,30,35]
+hidden_layers: 2
+epochs: 30000
+search_space: 'small'
+learning_rates: [0.001]
+prior_vars: [1.]
+batch_size: 500
+skips: [[(0,1), (0,2), (1,2)], [(0,1), (0,2),], [(0,1), (1,2)], [(0,2), (1,2)], [(0,3)], [(0,2)], [(0,1)], []]

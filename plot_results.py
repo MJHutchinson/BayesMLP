@@ -13,7 +13,7 @@ else:
     results_dir = f'{log_dir}/{data_set}/{experiment}'
 
 
-results_dir = './remote_logs/kin8nm/2018-11-16 10:20:26'
+results_dir = './remote_logs/bostonHousing/christsmas-sweep-1-2018-12-20 19:33:57'
 
 
 files = get_immediate_files(results_dir)

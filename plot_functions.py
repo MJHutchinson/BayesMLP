@@ -176,8 +176,8 @@ def rank_final_value(*input, n=10, value = 'accuracies', minimum=False):
     print(f'{"Minimum" if minimum else "Maximum"} final {value} (limited to {n})')
     for results in input:
         pairs = []
-        for i, key in enumerate(results.keys()):
-            pairs.append((key, results[key]['results'][value][-1]))
+        for result in results:
+            pairs.append((f'{result["hidden_sizes"]} lr: {result["learning_rate"]} prior width: {result["prior_var"]}', result['results'][value][-1]))
 
         pairs = sorted(pairs, key = lambda t: t[1], reverse=not minimum)
 

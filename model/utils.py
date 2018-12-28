@@ -44,6 +44,8 @@ def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, l
 
         if epoch % log_freq == 0:
             print(f'\rEpoch {epoch:4.0f}, cost: {cost:10.4f}, KL term: {kl:10.4f}, train log likelihood term: {ll:8.4f}, test log likelihood: {logloss:8.4f}, test rmse: {rmse:8.4f}, log noise var: {vy:8f}, train time: {train_time:6.4f}, test time: {test_time:6.4f}')
+
+        if epoch % (log_freq * 10) == 0:
             predictions = np.mean(model.prediction(x_train, batch_size=batch_size), 0)
             plt.figure()
             plt.scatter(y_train, predictions)
@@ -63,6 +65,8 @@ def test_model_classification(model, data_gen, epochs, batch_size=100, log_freq=
     x_train, y_train, x_test, y_test = data_gen.get_data()
 
     summary_writer = tf.summary.FileWriter(log_dir, graph=model.sess.graph)
+    fig_dir = f'{log_dir}/figs'
+    os.mkdir(fig_dir)
 
     costs = []
     test_ll = []
@@ -88,10 +92,14 @@ def test_model_classification(model, data_gen, epochs, batch_size=100, log_freq=
 
         if epoch % log_freq == 0:print(f'\rEpoch {epoch:4.0f}, cost: {cost:14.4f}, KL term: {kl:10.4f}, log likelihood part: {ll:10.4f}, accuracy: {accuracy:10.4f}, train time: {train_time:6.4f}, test time: {test_time:6.4f}')
 
-    # predictions = np.mean(model.prediction(x_train, batch_size=batch_size), 0)
-    # plt.scatter(y_train, predictions)
-    # plt.plot([min(y_train), max(y_train)], [min(y_train), max(y_train)], color='r')
-    # plt.show()
+        if epoch % (log_freq * 10) == 0:
+            predictions = np.mean(model.prediction(x_train, batch_size=batch_size), 0)
+            plt.scatter(y_train, predictions)
+            plt.xlabel('actuals')
+            plt.ylabel('predictions')
+            plt.plot([min(y_train), max(y_train)], [min(y_train), max(y_train)], color='r')
+            plt.savefig(f'{fig_dir}/{epoch}.png')
+            plt.close()
 
     summary_writer.close()
 
