@@ -82,7 +82,6 @@ skips = model_config['skips']
 for idx, (network, lr, prior_var) in enumerate(param_space):
 
     h = [i for i in network]  # Tuple to list
-    batch_size = data_loader.get_batch_size(max(h))
 
     for idy, skip in enumerate(skips):
 

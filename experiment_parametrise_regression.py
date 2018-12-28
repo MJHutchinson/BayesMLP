@@ -64,7 +64,6 @@ lrs = model_config['learning_rates']
 prior_vars = model_config['prior_vars']
 batch_size = model_config['batch_size']
 
-
 print(f'Running experiment on {data_set} with parameters:\n'
       f'{model_config}\n'
       f'Saving results in {results_dir}\n')
@@ -84,7 +83,6 @@ param_space = parameter_combinations(search_space, lrs, prior_vars)
 for idx, (network, lr, prior_var) in enumerate(param_space):
 
     h = [i for i in network]  # Tuple to list
-    batch_size = data_loader.get_batch_size(max(h))
 
     # Create model with designated parameters
     model = BayesMLPRegression(input_size, h, output_size, train_length, y_mu, y_sigma, no_train_samples=10,
