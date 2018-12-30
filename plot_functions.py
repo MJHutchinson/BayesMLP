@@ -177,7 +177,7 @@ def rank_final_value(*input, n=10, value = 'accuracies', minimum=False):
     for results in input:
         pairs = []
         for result in results:
-            pairs.append((f'{result["hidden_sizes"]} lr: {result["learning_rate"]} prior width: {result["prior_var"]}', result['results'][value][-1]))
+            pairs.append((f'{result["hidden_sizes"]} lr: {result["learning_rate"]} prior width: {result["prior_var"]}', np.mean(result['results'][value][-20:])))
 
         pairs = sorted(pairs, key = lambda t: t[1], reverse=not minimum)
 

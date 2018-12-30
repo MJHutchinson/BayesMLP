@@ -10,10 +10,14 @@ log_dir = './remote_logs'
 data_set = 'bostonHousing'
 
 # results_dir = f'{log_dir}/{data_set}'
-# results_dir = './remote_logs/concrete/christsmas-sweep-1-2018-12-20 19:33:57'
 # results_dir = './remote_logs/bostonHousing/christsmas-sweep-1-2018-12-20 19:33:57'
-results_dir = './remote_logs/wine-quality-red/christsmas-sweep-1-2018-12-20 19:33:57'
+# results_dir = './remote_logs/concrete/christsmas-sweep-1-2018-12-20 19:33:57'
+# results_dir = './remote_logs/kin8nm/christsmas-sweep-1-2018-12-20 19:33:57'
+# results_dir = './remote_logs/naval-propulsion-plant/christsmas-sweep-1-2018-12-20 19:33:57'
+# results_dir = './remote_logs/power-plant/christsmas-sweep-1-2018-12-20 19:33:57'
 # results_dir = './remote_logs/protein-tertiary-structure/christsmas-sweep-1-2018-12-20 19:33:57'
+# results_dir = './remote_logs/wine-quality-red/christsmas-sweep-1-2018-12-20 19:33:57'
+results_dir = './remote_logs/yacht/christsmas-sweep-1-2018-12-20 19:33:57'
 
 files = get_immediate_files(results_dir)
 files = [f for f in files if f.split('.')[-1]=='pkl']

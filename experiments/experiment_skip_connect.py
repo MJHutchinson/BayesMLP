@@ -5,15 +5,19 @@ import yaml
 import shutil
 import tensorflow as tf
 import argparse
-from model.regression import BayesMLPRegression, BaysMLPRegressionTFP, BayesSkipMLPRegression
+from model.regression import BayesMLPRegression, BaysMLPRegressionTFP, BayesSkipMLPRegression, BayesMLPNNRegression
 from model.utils import test_model_regression
 from utils.utils import num_to_name, gen_hidden_combinations, parameter_combinations
 import data.data_loader as data
+from model.neural_network_representation import MultiLayerPerceptron, get_mlp_layer_labels
+from utils.general_utils import get_dok_mat_with_set_coords, _set_coords_to_val
+from scipy.sparse import dok_matrix
+from data.data_loader import RegressionDataloader
 
 # Script parameters
-data_set = 'dummy'
+data_set = 'wine-quality-red'
 log_dir = '../results'
-config_dir = '../config'
+config_dir = '../config/skips'
 data_dir = '../data_dir'
 common_name = 'Skip_test'
 
@@ -51,15 +55,15 @@ epochs = config['epochs']
 search_space = config['search_space']
 lrs = config['learning_rates']
 prior_vars = config['prior_vars']
-
+batch_size = config['batch_size']
+skips = config['skips']
 
 print(f'Running experiment on {data_set} with parameters:\n'
       f'{config}\n'
       f'Saving results in {results_dir}\n')
 
-
 # Load in dataset and related info
-data_loader = data.DummyDataloader()
+data_loader = data.RegressionDataloader(data_set, '../data_dir')
 input_size, train_length, output_size = data_loader.get_dims()
 _, _, y_mu, y_sigma = data_loader.get_transforms()
 
@@ -69,19 +73,33 @@ search_space = gen_hidden_combinations(search_space, hs, hidden_layers)
 param_space = parameter_combinations(search_space, lrs, prior_vars)
 
 # Loop over parameter space
-skips = [[(0,1), (0,2), (1,2)], [(0,1), (0,2),], [(0,1), (1,2)], [(0,2), (1,2)], [(0,1)], [(0,2)], [(0,1)], []]
-
-# Loop over parameter space
 for idx, (network, lr, prior_var) in enumerate(param_space):
 
     h = [i for i in network]  # Tuple to list
-    batch_size = data_loader.get_batch_size(max(h))
 
     for idy, skip in enumerate(skips):
 
+        all_layer_labels = get_mlp_layer_labels('reg')
+
+        layer_labels = ['ip'] + ['relu'] * len(h) + ['linear', 'op']
+        num_units_each_layer = [None] + h + [None, None]
+
+
+        def get_feedforward_adj_mat(num_layers):
+            """ Returns an adjacency matrix for a feed forward network. """
+            ret = dok_matrix((num_layers, num_layers))
+            for i in range(num_layers - 1):
+                ret[i, i + 1] = 1
+            return ret
+
+        A = get_feedforward_adj_mat(len(layer_labels))
+        _set_coords_to_val(A, skip, 1)
+
+        nn = MultiLayerPerceptron('reg', layer_labels, A, num_units_each_layer, all_layer_labels)
+
         # Create model with designated parameters
-        model = BayesSkipMLPRegression(input_size, h, skip, output_size, train_length, y_mu, y_sigma, no_train_samples=10,
-                                   no_pred_samples=100, learning_rate=lr, prior_var=prior_var)
+        model = BayesMLPNNRegression(input_size, nn, train_length, y_mu, y_sigma, no_train_samples=10,
+                                     no_pred_samples=100, learning_rate=lr, prior_var=prior_var)
 
         print(f'running model {model}, parameter set {idx+idy+1} of {len(param_space)*len(skip)}')
 
