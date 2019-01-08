@@ -30,7 +30,7 @@ def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, l
         logloss, rmse = model.accuracy(x_test, y_test, batch_size=batch_size)
         test_time = time.time() - train_time - t
 
-        vy = model.sess.run(model.noise_var)
+        vy = model.sess.run(model.output_sigma)
 
         costs.append(cost)
         test_ll.append(logloss)

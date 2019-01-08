@@ -4,4 +4,4 @@ epochs: 30000
 search_space: 'small'
 learning_rates: [0.001]
 prior_vars: [0.1, 1., 10.]
-batch_size: 2000
+batch_size: 500

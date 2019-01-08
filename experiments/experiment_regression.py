@@ -8,12 +8,12 @@ import argparse
 from model.regression import BayesMLPRegression, BaysMLPRegressionTFP
 from model.utils import test_model_regression
 from utils.utils import num_to_name, gen_hidden_combinations, parameter_combinations
-from data.data_loader import get_loader_by_name
+from data.data_loader import RegressionDataloader
 
 # Script parameters
-data_set = 'dummy'
-log_dir = './results'
-config_dir = './config'
+data_set = 'wine-quality-red'
+log_dir = '../results'
+config_dir = '../config'
 common_name = None
 
 config_file = f'{config_dir}/{data_set}.yaml'
@@ -58,8 +58,9 @@ print(f'Running experiment on {data_set} with parameters:\n'
 
 
 # Load in dataset and related info
-data_loader = get_loader_by_name(data_set)
+data_loader = RegressionDataloader(pickle_name=data_set, data_dir='../data_dir')
 input_size, train_length, output_size = data_loader.get_dims()
+batch_size = config['batch_size']
 _, _, y_mu, y_sigma = data_loader.get_transforms()
 
 
@@ -71,7 +72,6 @@ param_space = parameter_combinations(search_space, lrs, prior_vars)
 for idx, (network, lr, prior_var) in enumerate(param_space):
 
     h = [i for i in network] # Tuple to list
-    batch_size = data_loader.get_batch_size(max(h))
 
     # Create model with designated parameters
     model = BayesMLPRegression(input_size, h, output_size, train_length, y_mu, y_sigma, no_train_samples=10, no_pred_samples=100, learning_rate=lr, prior_var=prior_var)

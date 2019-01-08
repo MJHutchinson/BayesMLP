@@ -31,45 +31,63 @@ def get_layer_parents(adjList, lidx):
     # Return all parents (layer indices in list) for layer lidx
     return [e[0] for e in adjList if e[1] == lidx]
 
-# variable initialization functions
-def weight_variable(shape, init_weights=None):
-    if init_weights is not None:
-        initial = tf.constant(init_weights)
-    else:
-        initial = tf.truncated_normal(shape, stddev=0.1)
-    return tf.Variable(initial)
+
+def _rmse(preds, targets):
+    with tf.name_scope('rmse'):
+        rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(preds, targets)))
+        return rmse
 
 
-def bias_variable(shape):
-    initial = tf.constant(0.1, shape=shape)
-    return tf.Variable(initial)
+def _loglik(pred, targets, noise_std):
+    with tf.name_scope('loglik'):
+        # se = tf.squared_difference(pred, targets)
+        # const_term = - 0.5 * tf.log(tf.constant(2 * np.pi))
+        # noise_term = - 0.5 * self.noise_var
+        # se_norm_term = - tf.reduce_mean(se/(2* tf.exp(self.noise_var)))
+        # return noise_term + se_norm_term + const_term
+        log_probs = distributions.Normal(loc=targets, scale=noise_std).log_prob(pred)
+        return tf.reduce_mean(log_probs)
 
 
-def small_variable(shape):
-    initial = tf.constant(-6.0, shape=shape)
-    return tf.Variable(initial)
+def _test_loglik(pred, targets, noise_std):
+    with tf.name_scope('test_loglik'):
+        # se = tf.squared_difference(pred, targets)
+        # probs = tf.div(1., tf.sqrt(tf.constant(2 * np.pi) * tf.exp(log_variance))) * tf.exp(-tf.div(se, 2 * tf.exp(log_variance)))
+        # probs = tf.reduce_mean(probs, axis=0)
+        # log_probs = tf.log(probs)
+        # return tf.reduce_mean(log_probs)
+        log_probs = distributions.Normal(loc=targets, scale=noise_std).log_prob(pred)
+        log_probs = tf.reduce_logsumexp(log_probs, axis=0) - tf.log(tf.to_float(tf.shape(log_probs)[0]))
+        return tf.reduce_mean(log_probs)
 
 
-def zero_variable(shape):
-    initial = tf.zeros(shape=shape)
-    return tf.Variable(initial)
+def _KL_term(weights, prior):
+        W_m, W_v = weights[0][0], weights[1][0]
+        b_m, b_v = weights[0][1], weights[1][1]
 
+        prior_W_m, prior_W_v = prior[0][0], prior[1][0]
+        prior_b_m, prior_b_v = prior[0][1], prior[1][1]
 
-def _create_weights_mf(in_dim, hidden_size, out_dim, init_weights=None, init_variances=None):
-    size = deepcopy(hidden_size)
-    size.append(out_dim)
-    size.insert(0, in_dim)
-    no_params = 0
-    for i in range(len(size) - 1):
-        no_weights = size[i] * size[i + 1]
-        no_biases = size[i + 1]
-        no_params += (no_weights + no_biases)
-    m_weights = weight_variable([no_params], init_weights)
-    if init_variances is None:
-        v_weights = small_variable([no_params])
-    else:
-        v_weights = tf.Variable(tf.constant(init_variances, dtype=tf.float32))
-    return no_params, m_weights, v_weights, size
+        with tf.name_scope('kl'):
+            kl = 0
+            for i in range(len(weights)):
+                with tf.name_scope(f'layer_{i}'):
+
+                    m, v = W_m[i], W_v[i]
+                    m0, v0 = prior_W_m[i], prior_W_v[i]
+
+                    prior_dist = distributions.Normal(m0, tf.sqrt(v0))
+                    weights_dist = distributions.Normal(m, tf.exp(0.5 * v))
+                    kl += tf.reduce_sum(distributions.kl_divergence(weights_dist, prior_dist))
+
+                    m, v = b_m[i], b_v[i]
+                    m0, v0 = prior_b_m[i], prior_b_v[i]
+
+                    prior_dist = distributions.Normal(m0, tf.sqrt(v0))
+                    weights_dist = distributions.Normal(m, tf.exp(0.5 * v))
+                    kl += tf.reduce_sum(distributions.kl_divergence(weights_dist, prior_dist))
+
+            return kl
 
 
 class Reg_NN(object):
@@ -245,6 +263,32 @@ class Reg_NN(object):
         s = s[:-1]
         return s
 
+    def make_metrics(self):
+        with tf.name_scope('performance'):
+            self.train_cost    = tf.placeholder(tf.float32, shape=None, name='train_cost_summary')
+            self.train_logloss = tf.placeholder(tf.float32, shape=None, name='train_logloss_summary')
+            self.train_kl      = tf.placeholder(tf.float32, shape=None, name='train_kl_summary')
+            self.test_logloss  = tf.placeholder(tf.float32, shape=None, name='test_logloss_summary')
+            self.test_rmse     = tf.placeholder(tf.float32, shape=None, name='test_rmse_summary')
+
+            train_cost_summary    = tf.summary.scalar('train_cost',     self.train_cost)
+            train_logloss_summary = tf.summary.scalar('train_logloss',  self.train_logloss)
+            train_kl_summary      = tf.summary.scalar('train_kl',       self.train_kl)
+            test_logloss_summary  = tf.summary.scalar('test_logloss',   self.test_logloss)
+            test_rmse_summary     = tf.summary.scalar('test_rmse',      self.test_rmse)
+            noise_var_summary     = tf.summary.scalar('homoskedastic_noise', self.output_sigma)
+
+            self.performance_metrics = tf.summary.merge_all()
+
+    def log_metrics(self, train_cost, train_logloss, train_kl, test_logloss, test_rmse):
+        return self.sess.run(self.performance_metrics, feed_dict={
+            self.train_cost:train_cost,
+            self.train_logloss: train_logloss,
+            self.train_kl: train_kl,
+            self.test_logloss: test_logloss,
+            self.test_rmse: test_rmse
+        })
+
 
 """ Neural Network MLP Model """
 
@@ -262,7 +306,8 @@ class BaysMLPRegressionTFP(Reg_NN):
         self.prior_mean = prior_mean
         self.prior_var = prior_var
 
-        self.noise_var = tf.Variable(initial_value=-6., name='log_noise_variance')
+        self.output_log_variance = tf.Variable(initial_value=-6., name='log_noise_variance')
+        self.output_sigma = tf.exp(self.output_log_variance)
 
         self.no_train_samples = no_train_samples
         self.no_pred_samples = no_pred_samples
@@ -291,21 +336,6 @@ class BaysMLPRegressionTFP(Reg_NN):
 
         return output
 
-    def _rmse(self, preds, targets):
-        with tf.name_scope('rmse'):
-            rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(preds, targets)))
-            return rmse
-
-    def _loglik(self, pred, targets):
-        with tf.name_scope('loglik'):
-            log_probs = distributions.Normal(targets, tf.exp(0.5 * self.noise_var)).log_prob(pred)
-            return tf.reduce_mean(log_probs)
-
-    def _test_loglik(self, pred, targets):
-        with tf.name_scope('test_loglik'):
-            log_probs = distributions.Normal(loc=targets, scale=tf.exp(0.5 * self.noise_var)).log_prob(pred)
-            log_probs = tf.reduce_logsumexp(log_probs, axis=0) - tf.log(tf.to_float(tf.shape(log_probs)[0]))
-            return tf.reduce_mean(log_probs)
 
     def _build_model(self, hidden_size, output_size):
         layers = []
@@ -325,7 +355,7 @@ class BaysMLPRegressionTFP(Reg_NN):
         self.pred_train_actual = self.pred_train * self.y_sigma + self.y_mu
         self.targ_train_actual = self.y * self.y_sigma + self.y_mu
 
-        self.loglik = self._loglik(self.pred_train, self.y)
+        self.loglik = _loglik(self.pred_train, self.y, self.output_sigma)
         self.KL = tf.div(sum(self.model.losses), self.training_size)
 
         self.cost = -self.loglik + self.KL
@@ -336,8 +366,8 @@ class BaysMLPRegressionTFP(Reg_NN):
         self.pred_test_actual = self.pred_test * self.y_sigma + self.y_mu
         self.targ_test_actual = self.y * self.y_sigma + self.y_mu
 
-        self.rmse = self._rmse(self.pred_test_actual, self.targ_test_actual)
-        self.test_loglik = self._test_loglik(self.pred_test, self.y)
+        self.rmse = _rmse(self.pred_test_actual, self.targ_test_actual)
+        self.test_loglik = _test_loglik(self.pred_test, self.y, self.output_sigma)
 
     def make_metrics(self):
         with tf.name_scope('performance'):
@@ -391,11 +421,13 @@ class BayesMLPRegression(Reg_NN):
         m, v = self.create_prior(input_size, hidden_size, output_size, prev_means, prev_log_variances, prior_mean, prior_var)
         self.prior_W_m, self.prior_b_m = m[0], m[1]
         self.prior_W_v, self.prior_b_v = v[0], v[1]
+        self.priors = [m, v]
 
         self.prior_mean = prior_mean
         self.prior_var = prior_var
 
-        self.noise_var = tf.Variable(initial_value=-6., name='log_noise_variance')
+        self.output_log_variance = tf.Variable(initial_value=-6., name='log_noise_variance')
+        self.output_sigma = tf.exp(self.output_log_variance)
 
         self.no_layers = len(self.size)-1
         self.no_train_samples = no_train_samples
@@ -408,8 +440,8 @@ class BayesMLPRegression(Reg_NN):
         self.pred_train_actual = self.pred_train * self.y_sigma + self.y_mu
         self.targ_train_actual = self.y * self.y_sigma + self.y_mu
 
-        self.loglik = self._loglik(self.pred_train, self.y)
-        self.KL = tf.div(self._KL_term(), self.training_size)
+        self.loglik = _loglik(self.pred_train, self.y, self.output_sigma)
+        self.KL = tf.div(_KL_term(self.weights, self.priors), self.training_size)
 
         self.cost = -self.loglik + self.KL
 
@@ -419,8 +451,8 @@ class BayesMLPRegression(Reg_NN):
         self.pred_test_actual = self.pred_test * self.y_sigma + self.y_mu
         self.targ_test_actual = self.y * self.y_sigma + self.y_mu
 
-        self.rmse = self._rmse(self.pred_test_actual, self.targ_test_actual)
-        self.test_loglik = self._test_loglik(self.pred_test, self.y)
+        self.rmse = _rmse(self.pred_test_actual, self.targ_test_actual)
+        self.test_loglik = _test_loglik(self.pred_test, self.y, self.output_sigma)
 
         self.assign_optimizer(learning_rate)
         self.assign_session()
@@ -435,29 +467,7 @@ class BayesMLPRegression(Reg_NN):
             K = no_samples
             N = tf.shape(inputs)[0]
             act = tf.tile(tf.expand_dims(inputs, 0), [K, 1, 1])
-        # for i in range(self.no_layers - 1):
-        #     din = self.size[i]
-        #     dout = self.size[i + 1]
-        #     eps_w = tf.random_normal((K, din, dout), 0, 1, dtype=tf.float32)
-        #     eps_b = tf.random_normal((K, 1, dout), 0, 1, dtype=tf.float32)
-        #
-        #     weights = tf.add(tf.multiply(eps_w, tf.exp(0.5 * self.W_v[i])), self.W_m[i])
-        #     biases = tf.add(tf.multiply(eps_b, tf.exp(0.5 * self.b_v[i])), self.b_m[i])
-        #     pre = tf.add(tf.einsum('mni,mio->mno', act, weights), biases)
-        #     act = tf.nn.relu(pre)
-        #
-        # din = self.size[-2]
-        # dout = self.size[-1]
-        # eps_w = tf.random_normal((K, din, dout), 0, 1, dtype=tf.float32)
-        # eps_b = tf.random_normal((K, 1, dout), 0, 1, dtype=tf.float32)
-        #
-        # weights = tf.add(tf.multiply(eps_w, tf.exp(0.5 * self.W_v[-1])), self.W_m[-1])
-        # biases = tf.add(tf.multiply(eps_b, tf.exp(0.5 * self.b_v[-1])), self.b_m[-1])
-        #
-        # act = tf.expand_dims(act, 3)
-        # weights = tf.expand_dims(weights, 1)
-        #
-        # pre = tf.add(tf.reduce_sum(act * weights, 2), biases)
+
         with tf.name_scope('model/'):
             for i in range(self.no_layers - 1):
                 with tf.name_scope(f'layer_{i}/'):
@@ -486,44 +496,6 @@ class BayesMLPRegression(Reg_NN):
                 pre = pre_W + pre_b
 
                 return pre
-
-    def _rmse(self, preds, targets):
-        with tf.name_scope('rmse'):
-            # pred_actual = pred_mean * self.y_sigma + self.y_mu
-            # targets_actual = targets * self.y_sigma + self.y_mu
-
-            rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(preds, targets)))
-            return rmse
-
-    # computes log likelihood of input for against target
-    def _loglik(self, pred, targets):
-        with tf.name_scope('loglik'):
-            # se = tf.squared_difference(pred, targets)
-            # const_term = - 0.5 * tf.log(tf.constant(2 * np.pi))
-            # noise_term = - 0.5 * self.noise_var
-            # se_norm_term = - tf.reduce_mean(se/(2* tf.exp(self.noise_var)))
-            # return noise_term + se_norm_term + const_term
-            log_probs = distributions.Normal(targets, tf.exp(0.5 * self.noise_var)).log_prob(pred)
-            return tf.reduce_mean(log_probs)
-
-    def _test_loglik(self, pred, targets):
-        '''
-        Calculate per data point
-        note - does not un transform data before calculating - maybe it should?
-        :param pred: input predictions
-        :param targets: input targets
-        :return: average test time log likelihood for the inputs - E[p(yi | xi, w)] = 1/N * SUM(i, N)[log( 1/M *SUM(j, M)[p(yi | xi, wj)] )]
-        '''
-        with tf.name_scope('test_loglik'):
-            # se = tf.squared_difference(pred, targets)
-            # probs = tf.div(1., tf.sqrt(tf.constant(2 * np.pi) * tf.exp(self.noise_var))) * tf.exp(-tf.div(se, 2 * tf.exp(self.noise_var)))
-            # probs = tf.reduce_mean(probs, axis=0)
-            # log_probs = tf.log(probs)
-            # return tf.reduce_mean(log_probs)
-            log_probs = distributions.Normal(loc=targets, scale=tf.exp(0.5 * self.noise_var)).log_prob(pred)
-            log_probs = tf.reduce_logsumexp(log_probs, axis=0) - tf.log(tf.to_float(tf.shape(log_probs)[0]))
-            return tf.reduce_mean(log_probs)
-
 
     def _KL_term(self):
         with tf.name_scope('kl'):
@@ -638,33 +610,6 @@ class BayesMLPRegression(Reg_NN):
 
         return [W_m, b_m], [W_v, b_v]
 
-    def make_metrics(self):
-        with tf.name_scope('performance'):
-            self.train_cost    = tf.placeholder(tf.float32, shape=None, name='train_cost_summary')
-            self.train_logloss = tf.placeholder(tf.float32, shape=None, name='train_logloss_summary')
-            self.train_kl      = tf.placeholder(tf.float32, shape=None, name='train_kl_summary')
-            self.test_logloss  = tf.placeholder(tf.float32, shape=None, name='test_logloss_summary')
-            self.test_rmse     = tf.placeholder(tf.float32, shape=None, name='test_rmse_summary')
-
-            train_cost_summary    = tf.summary.scalar('train cost',     self.train_cost)
-            train_logloss_summary = tf.summary.scalar('train logloss',  self.train_logloss)
-            train_kl_summary      = tf.summary.scalar('train kl',       self.train_kl)
-            test_logloss_summary  = tf.summary.scalar('test logloss',   self.test_logloss)
-            test_rmse_summary     = tf.summary.scalar('test rmse',      self.test_rmse)
-            noise_var_summary     = tf.summary.scalar('homoskedastic noise', tf.exp(0.5*self.noise_var))
-
-            self.performance_metrics = tf.summary.merge_all()
-
-    def log_metrics(self, train_cost, train_logloss, train_kl, test_logloss, test_rmse):
-        return self.sess.run(self.performance_metrics, feed_dict={
-            self.train_cost:train_cost,
-            self.train_logloss: train_logloss,
-            self.train_kl: train_kl,
-            self.test_logloss: test_logloss,
-            self.test_rmse: test_rmse
-        })
-
-
 """ Bayesian MLP Model with optional skips """
 
 
@@ -691,11 +636,11 @@ class BayesSkipMLPRegression(Reg_NN):
         m, v = self.create_prior(input_size, hidden_size, skips, output_size, prev_means, prev_log_variances, prior_mean, prior_var)
         self.prior_W_m, self.prior_b_m = m[0], m[1]
         self.prior_W_v, self.prior_b_v = v[0], v[1]
+        self.priors = [m, v]
 
-        self.prior_mean = prior_mean
-        self.prior_var = prior_var
 
-        self.noise_var = tf.Variable(initial_value=-6., name='log_noise_variance')
+        self.output_log_variance = tf.Variable(initial_value=-6., name='log_noise_variance')
+        self.output_sigma = tf.exp(self.output_log_variance)
 
         self.no_layers = len(self.size)-1
         self.no_train_samples = no_train_samples
@@ -703,16 +648,18 @@ class BayesSkipMLPRegression(Reg_NN):
         self.training_size = training_size
         self.skips = skips
 
+
         # def train predictions and training metric production
-        self.pred_train = self._prediction(self.x, self.no_train_samples)
+        self.pred_train = self._prediction(self.x, no_train_samples)
 
         self.pred_train_actual = self.pred_train * self.y_sigma + self.y_mu
         self.targ_train_actual = self.y * self.y_sigma + self.y_mu
 
-        self.loglik = self._loglik(self.pred_train, self.y)
-        self.KL = tf.div(self._KL_term(), self.training_size)
+        self.loglik = _loglik(self.pred_train, self.y, self.output_sigma)
+        self.KL = tf.div(_KL_term(self.weights, self.priors), self.training_size)
 
         self.cost = -self.loglik + self.KL
+
 
         # def test predictions and testing metrics
         self.pred_test  = self._prediction(self.x, self.no_pred_samples)
@@ -720,8 +667,9 @@ class BayesSkipMLPRegression(Reg_NN):
         self.pred_test_actual = self.pred_test * self.y_sigma + self.y_mu
         self.targ_test_actual = self.y * self.y_sigma + self.y_mu
 
-        self.rmse = self._rmse(self.pred_test_actual, self.targ_test_actual)
-        self.test_loglik = self._test_loglik(self.pred_test, self.y)
+        self.rmse = _rmse(self.pred_test_actual, self.targ_test_actual)
+        self.test_loglik = _test_loglik(self.pred_test, self.y, self.output_sigma)
+
 
         self.assign_optimizer(learning_rate)
         self.assign_session()
@@ -737,29 +685,7 @@ class BayesSkipMLPRegression(Reg_NN):
             N = tf.shape(inputs)[0]
             act = tf.tile(tf.expand_dims(inputs, 0), [K, 1, 1])
         act_prev = [act]
-        # for i in range(self.no_layers - 1):
-        #     din = self.size[i]
-        #     dout = self.size[i + 1]
-        #     eps_w = tf.random_normal((K, din, dout), 0, 1, dtype=tf.float32)
-        #     eps_b = tf.random_normal((K, 1, dout), 0, 1, dtype=tf.float32)
-        #
-        #     weights = tf.add(tf.multiply(eps_w, tf.exp(0.5 * self.W_v[i])), self.W_m[i])
-        #     biases = tf.add(tf.multiply(eps_b, tf.exp(0.5 * self.b_v[i])), self.b_m[i])
-        #     pre = tf.add(tf.einsum('mni,mio->mno', act, weights), biases)
-        #     act = tf.nn.relu(pre)
-        #
-        # din = self.size[-2]
-        # dout = self.size[-1]
-        # eps_w = tf.random_normal((K, din, dout), 0, 1, dtype=tf.float32)
-        # eps_b = tf.random_normal((K, 1, dout), 0, 1, dtype=tf.float32)
-        #
-        # weights = tf.add(tf.multiply(eps_w, tf.exp(0.5 * self.W_v[-1])), self.W_m[-1])
-        # biases = tf.add(tf.multiply(eps_b, tf.exp(0.5 * self.b_v[-1])), self.b_m[-1])
-        #
-        # act = tf.expand_dims(act, 3)
-        # weights = tf.expand_dims(weights, 1)
-        #
-        # pre = tf.add(tf.reduce_sum(act * weights, 2), biases)
+
         with tf.name_scope('model/'):
             for i in range(self.no_layers - 1):
                 with tf.name_scope(f'layer_{i}/'):
@@ -807,43 +733,6 @@ class BayesSkipMLPRegression(Reg_NN):
                 pre = pre_W + pre_b
 
                 return pre
-
-    def _rmse(self, preds, targets):
-        with tf.name_scope('rmse'):
-            # pred_actual = pred_mean * self.y_sigma + self.y_mu
-            # targets_actual = targets * self.y_sigma + self.y_mu
-
-            rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(preds, targets)))
-            return rmse
-
-    # computes log likelihood of input for against target
-    def _loglik(self, pred, targets):
-        with tf.name_scope('loglik'):
-            # se = tf.squared_difference(pred, targets)
-            # const_term = - 0.5 * tf.log(tf.constant(2 * np.pi))
-            # noise_term = - 0.5 * self.noise_var
-            # se_norm_term = - tf.reduce_mean(se/(2* tf.exp(self.noise_var)))
-            # return noise_term + se_norm_term + const_term
-            log_probs = distributions.Normal(targets, tf.exp(0.5 * self.noise_var)).log_prob(pred)
-            return tf.reduce_mean(log_probs)
-
-    def _test_loglik(self, pred, targets):
-        '''
-        Calculate per data point
-        note - does not un transform data before calculating - maybe it should?
-        :param pred: input predictions
-        :param targets: input targets
-        :return: average test time log likelihood for the inputs - E[p(yi | xi, w)] = 1/N * SUM(i, N)[log( 1/M *SUM(j, M)[p(yi | xi, wj)] )]
-        '''
-        with tf.name_scope('test_loglik'):
-            # se = tf.squared_difference(pred, targets)
-            # probs = tf.div(1., tf.sqrt(tf.constant(2 * np.pi) * tf.exp(self.noise_var))) * tf.exp(-tf.div(se, 2 * tf.exp(self.noise_var)))
-            # probs = tf.reduce_mean(probs, axis=0)
-            # log_probs = tf.log(probs)
-            # return tf.reduce_mean(log_probs)
-            log_probs = distributions.Normal(loc=targets, scale=tf.exp(0.5 * self.noise_var)).log_prob(pred)
-            log_probs = tf.reduce_logsumexp(log_probs, axis=0) - tf.log(tf.to_float(tf.shape(log_probs)[0]))
-            return tf.reduce_mean(log_probs)
 
 
     def _KL_term(self):
@@ -966,33 +855,6 @@ class BayesSkipMLPRegression(Reg_NN):
 
         return [W_m, b_m], [W_v, b_v]
 
-    def make_metrics(self):
-        with tf.name_scope('performance'):
-            self.train_cost    = tf.placeholder(tf.float32, shape=None, name='train_cost_summary')
-            self.train_logloss = tf.placeholder(tf.float32, shape=None, name='train_logloss_summary')
-            self.train_kl      = tf.placeholder(tf.float32, shape=None, name='train_kl_summary')
-            self.test_logloss  = tf.placeholder(tf.float32, shape=None, name='test_logloss_summary')
-            self.test_rmse     = tf.placeholder(tf.float32, shape=None, name='test_rmse_summary')
-
-            train_cost_summary    = tf.summary.scalar('train cost',     self.train_cost)
-            train_logloss_summary = tf.summary.scalar('train logloss',  self.train_logloss)
-            train_kl_summary      = tf.summary.scalar('train kl',       self.train_kl)
-            test_logloss_summary  = tf.summary.scalar('test logloss',   self.test_logloss)
-            test_rmse_summary     = tf.summary.scalar('test rmse',      self.test_rmse)
-            noise_var_summary     = tf.summary.scalar('homoskedastic noise', tf.exp(0.5*self.noise_var))
-
-            self.performance_metrics = tf.summary.merge_all()
-
-    def log_metrics(self, train_cost, train_logloss, train_kl, test_logloss, test_rmse):
-        return self.sess.run(self.performance_metrics, feed_dict={
-            self.train_cost:train_cost,
-            self.train_logloss: train_logloss,
-            self.train_kl: train_kl,
-            self.test_logloss: test_logloss,
-            self.test_rmse: test_rmse
-        })
-
-
 """ Bayes MLP for regression built from NN representation from OTTOMAN paper """
 
 class BayesMLPNNRegression(Reg_NN):
@@ -1004,28 +866,31 @@ class BayesMLPNNRegression(Reg_NN):
         super(BayesMLPNNRegression, self).__init__(input_size, 0, 1, training_size, y_mu, y_sigma)
 
         self.config = {
-            'hidden_size': nn.num_units_in_each_layer,
+            'hidden_sizes': nn.num_units_in_each_layer,
             'con_mat': nn.conn_mat,
             'learning_rate': learning_rate,
             'prior_var': prior_var
         }
 
-        self.prior_mean = prior_mean
-        self.prior_var = prior_var
 
-        self.noise_var = tf.Variable(initial_value=-6., name='log_noise_variance')
+        m_w, v_w, m_p, v_p = self.create_weights_prior(self.x, nn)
 
-        W_m_w, b_m_w, W_v_w, b_v_w, W_m_p, b_m_p, W_v_p, b_v_p = self.create_weights_prior(self.x, nn)
+        self.W_m, self.b_m = m_w[0], m_w[1]
+        self.W_v, self.b_v = v_w[0], v_w[1]
 
-        self.W_m, self.b_m = W_m_w, b_m_w
-        self.W_v, self.b_v = W_v_w, b_v_w
+        self.prior_W_m, self.prior_b_m = m_p[0], m_p[1]
+        self.prior_W_v, self.prior_b_v = v_p[0], v_p[1]
 
-        self.prior_W_m, self.prior_b_m = W_m_p, b_m_p
-        self.prior_W_v, self.prior_b_v = W_v_p, b_v_p
+        self.weights = [m_w, v_w]
+        self.priors =  [m_p, v_p]
 
         self.no_train_samples = no_train_samples
         self.no_pred_samples = no_pred_samples
         self.training_size = training_size
+
+        self.output_log_variance = tf.Variable(initial_value=-6., name='log_noise_variance')
+        self.output_sigma = tf.exp(self.output_log_variance)
+
 
         # def train predictions and training metric production
         self.pred_train = self._prediction(self.x, nn, self.no_train_samples)
@@ -1033,10 +898,11 @@ class BayesMLPNNRegression(Reg_NN):
         self.pred_train_actual = self.pred_train * self.y_sigma + self.y_mu
         self.targ_train_actual = self.y * self.y_sigma + self.y_mu
 
-        self.loglik = self._loglik(self.pred_train, self.y)
-        self.KL = tf.div(self._KL_term(), self.training_size)
+        self.loglik = _loglik(self.pred_train, self.y, self.output_sigma)
+        self.KL = tf.div(_KL_term(self.weights, self.priors), self.training_size)
 
         self.cost = -self.loglik + self.KL
+
 
         # def test predictions and testing metrics
         self.pred_test  = self._prediction(self.x, nn, self.no_pred_samples)
@@ -1044,8 +910,9 @@ class BayesMLPNNRegression(Reg_NN):
         self.pred_test_actual = self.pred_test * self.y_sigma + self.y_mu
         self.targ_test_actual = self.y * self.y_sigma + self.y_mu
 
-        self.rmse = self._rmse(self.pred_test_actual, self.targ_test_actual)
-        self.test_loglik = self._test_loglik(self.pred_test, self.y)
+        self.rmse = _rmse(self.pred_test_actual, self.targ_test_actual)
+        self.test_loglik = _test_loglik(self.pred_test, self.y, self.output_sigma)
+
 
         self.assign_optimizer(learning_rate)
         self.assign_session()
@@ -1088,49 +955,27 @@ class BayesMLPNNRegression(Reg_NN):
                     act = pre
                 prev_acts.append(act)
 
-        lidx += 1
-
-        plist = get_layer_parents(nn.conn_mat.keys(), lidx)
-        # get parent layer output sizes and sum
-        parent_acts = [prev_acts[i] for i in plist]
-
-        scalar_mult = tf.Variable(1. / len(plist), tf.float32)  ### NEED TO VERIFY FLOAT 32
-        act = tf.scalar_mul(scalar_mult, tf.add_n(parent_acts))
-
-        dout = 1
-
         with tf.name_scope(f'layer_{lidx}/'):
-            m_pre = tf.einsum('kni,io->kno', act, self.W_m[-1])
-            v_pre = tf.einsum('kni,io->kno', act ** 2.0, tf.exp(self.W_v[-1]))
-            eps_w = tf.random_normal([K, N, dout], 0.0, 1.0, dtype=tf.float32)
-            pre_W = eps_w * tf.sqrt(1e-9 + v_pre) + m_pre
-            eps_b = tf.random_normal([K, 1, dout], 0.0, 1.0, dtype=tf.float32)
-            pre_b = eps_b * tf.exp(0.5 * self.b_v[-1]) + self.b_m[-1]
-            pre = pre_W + pre_b
+            lidx += 1
+
+            plist = get_layer_parents(nn.conn_mat.keys(), lidx)
+            # get parent layer output sizes and sum
+            parent_acts = [prev_acts[i] for i in plist]
+
+            scalar_mult = tf.Variable(1. / len(plist), tf.float32)  ### NEED TO VERIFY FLOAT 32
+            act = tf.scalar_mul(scalar_mult, tf.add_n(parent_acts))
+
+            # dout = 1
+            # m_pre = tf.einsum('kni,io->kno', act, self.W_m[-1])
+            # v_pre = tf.einsum('kni,io->kno', act ** 2.0, tf.exp(self.W_v[-1]))
+            # eps_w = tf.random_normal([K, N, dout], 0.0, 1.0, dtype=tf.float32)
+            # pre_W = eps_w * tf.sqrt(1e-9 + v_pre) + m_pre
+            # eps_b = tf.random_normal([K, 1, dout], 0.0, 1.0, dtype=tf.float32)
+            # pre_b = eps_b * tf.exp(0.5 * self.b_v[-1]) + self.b_m[-1]
+            # pre = pre_W + pre_b
             act = pre
 
         return act
-
-    def _rmse(self, preds, targets):
-        with tf.name_scope('rmse'):
-            # pred_actual = pred_mean * self.y_sigma + self.y_mu
-            # targets_actual = targets * self.y_sigma + self.y_mu
-
-            rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(preds, targets)))
-            return rmse
-
-    # computes log likelihood of input for against target
-    def _loglik(self, pred, targets):
-        with tf.name_scope('loglik'):
-            log_probs = distributions.Normal(targets, tf.exp(0.5 * self.noise_var)).log_prob(pred)
-            return tf.reduce_mean(log_probs)
-
-    def _test_loglik(self, pred, targets):
-        with tf.name_scope('test_loglik'):
-            log_probs = distributions.Normal(loc=targets, scale=tf.exp(0.5 * self.noise_var)).log_prob(pred)
-            log_probs = tf.reduce_logsumexp(log_probs, axis=0) - tf.log(tf.to_float(tf.shape(log_probs)[0]))
-            return tf.reduce_mean(log_probs)
-
 
     def _KL_term(self):
         with tf.name_scope('kl'):
@@ -1251,31 +1096,4 @@ class BayesMLPNNRegression(Reg_NN):
             W_v_p.append(Wi_v)
             b_v_p.append(bi_v)
 
-        return W_m_w, b_m_w, W_v_w, b_v_w, W_m_p, b_m_p, W_v_p, b_v_p
-
-
-    def make_metrics(self):
-        with tf.name_scope('performance'):
-            self.train_cost    = tf.placeholder(tf.float32, shape=None, name='train_cost_summary')
-            self.train_logloss = tf.placeholder(tf.float32, shape=None, name='train_logloss_summary')
-            self.train_kl      = tf.placeholder(tf.float32, shape=None, name='train_kl_summary')
-            self.test_logloss  = tf.placeholder(tf.float32, shape=None, name='test_logloss_summary')
-            self.test_rmse     = tf.placeholder(tf.float32, shape=None, name='test_rmse_summary')
-
-            train_cost_summary    = tf.summary.scalar('train_cost',     self.train_cost)
-            train_logloss_summary = tf.summary.scalar('train_logloss',  self.train_logloss)
-            train_kl_summary      = tf.summary.scalar('train_kl',       self.train_kl)
-            test_logloss_summary  = tf.summary.scalar('test_logloss',   self.test_logloss)
-            test_rmse_summary     = tf.summary.scalar('test_rmse',      self.test_rmse)
-            noise_var_summary     = tf.summary.scalar('homoskedastic_noise', tf.exp(0.5*self.noise_var))
-
-            self.performance_metrics = tf.summary.merge_all()
-
-    def log_metrics(self, train_cost, train_logloss, train_kl, test_logloss, test_rmse):
-        return self.sess.run(self.performance_metrics, feed_dict={
-            self.train_cost:train_cost,
-            self.train_logloss: train_logloss,
-            self.train_kl: train_kl,
-            self.test_logloss: test_logloss,
-            self.test_rmse: test_rmse
-        })
+        return [W_m_w, b_m_w], [W_v_w, b_v_w], [W_m_p, b_m_p], [W_v_p, b_v_p]

@@ -15,9 +15,11 @@ data_set = 'bostonHousing'
 # results_dir = './remote_logs/kin8nm/christsmas-sweep-1-2018-12-20 19:33:57'
 # results_dir = './remote_logs/naval-propulsion-plant/christsmas-sweep-1-2018-12-20 19:33:57'
 # results_dir = './remote_logs/power-plant/christsmas-sweep-1-2018-12-20 19:33:57'
-# results_dir = './remote_logs/protein-tertiary-structure/christsmas-sweep-1-2018-12-20 19:33:57'
+results_dir = './remote_logs/protein-tertiary-structure/christsmas-sweep-1-2018-12-20 19:33:57'
 # results_dir = './remote_logs/wine-quality-red/christsmas-sweep-1-2018-12-20 19:33:57'
-results_dir = './remote_logs/yacht/christsmas-sweep-1-2018-12-20 19:33:57'
+# results_dir = './remote_logs/yacht/christsmas-sweep-1-2018-12-20 19:33:57'
+
+# results_dir = './remote_logs/bostonHousing/skips-2018-12-30 14:59:52'
 
 files = get_immediate_files(results_dir)
 files = [f for f in files if f.split('.')[-1]=='pkl']
@@ -27,9 +29,9 @@ split = []
 
 for file in files:
     r = pickle.load(open(f'{results_dir}/{file}', 'rb'))
-    if (r['prior_var'] == 1):
-        results.update(r)
-        split.append(r)
+    # if (r['prior_var'] == 1):
+    results.update(r)
+    split.append(r)
 
 keys = ['costs', 'test_ll', 'rmses', 'noise_sigma', 'train_kl', 'train_ll']
 # keys = ['costs', 'accuracies']
