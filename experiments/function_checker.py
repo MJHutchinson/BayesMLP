@@ -150,7 +150,7 @@ if __name__ == '__main__':
     pred = np.array([[1, 1, 1, 1],
                      [2, 2, 2, 2]])
 
-    targ = np.array([[1, 1, 1, 1],
+    targ = np.array([[1, 1, 3, 3],
                      [2, 2, 2, 2]])
 
     print(test.get(pred, targ, noise_var))

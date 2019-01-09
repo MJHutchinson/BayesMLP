@@ -14,14 +14,14 @@ def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, l
     costs = []
     test_ll = []
     rmses = []
-    noise_var = []
+    noise_sigma = []
     train_ll = []
     train_kl = []
 
     for epoch in range(epochs):
         if epoch == 0:
             logloss, rmse = model.accuracy(x_test, y_test, batch_size=batch_size)
-            print(f'\rInitial: {epoch:4.0f}test log likelihood: {logloss:8.4f}, test rmse: {rmse:8.4f}')
+            print(f'Initial: {epoch:4.0f} test log likelihood: {logloss:8.4f}, test rmse: {rmse:8.4f}')
 
 
         t = time.time()
@@ -35,7 +35,7 @@ def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, l
         costs.append(cost)
         test_ll.append(logloss)
         rmses.append(rmse)
-        noise_var.append(vy)
+        noise_sigma.append(vy)
         train_ll.append(ll)
         train_kl.append(kl)
 
@@ -43,12 +43,15 @@ def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, l
         summary_writer.add_summary(summary, epoch)
 
         if epoch % log_freq == 0:
-            print(f'\rEpoch {epoch:4.0f}, cost: {cost:10.4f}, KL term: {kl:10.4f}, train log likelihood term: {ll:8.4f}, test log likelihood: {logloss:8.4f}, test rmse: {rmse:8.4f}, log noise var: {vy:8f}, train time: {train_time:6.4f}, test time: {test_time:6.4f}')
+            print(f'\rEpoch {epoch:4.0f}, cost: {cost:10.4f}, KL term: {kl:10.4f}, train log likelihood term: {ll:8.4f}, test log likelihood: {logloss:8.4f}, test rmse: {rmse:8.4f}, noise sigma: {vy:8f}, train time: {train_time:6.4f}, test time: {test_time:6.4f}')
 
         if epoch % (log_freq * 10) == 0:
-            predictions = np.mean(model.prediction(x_train, batch_size=batch_size), 0)
+            predictions_train = np.mean(model.prediction(x_train, batch_size=batch_size), 0)
+            predictions_test = np.mean(model.prediction(x_test, batch_size=batch_size), 0)
             plt.figure()
-            plt.scatter(y_train, predictions)
+            plt.scatter(y_train, predictions_train)
+            plt.scatter(y_test, predictions_test)
+            plt.legend(['Train', 'Test'])
             plt.xlabel('actuals')
             plt.ylabel('predictions')
             plt.title(f'epcoh {epoch}')
@@ -58,7 +61,7 @@ def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, l
 
     summary_writer.close()
 
-    return {'costs': costs, 'test_ll': test_ll, 'rmses': rmses, 'noise_sigma': noise_var, 'train_ll': train_ll, 'train_kl': train_kl}
+    return {'costs': costs, 'test_ll': test_ll, 'rmses': rmses, 'noise_sigma': noise_sigma, 'train_ll': train_ll, 'train_kl': train_kl}
 
 
 def test_model_classification(model, data_gen, epochs, batch_size=100, log_freq=1, log_dir='logs'):

@@ -12,6 +12,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
+INITIAL_LOG_NOISE = -1.
+
 activation_dict = {'relu':tf.nn.relu,
                 'elu':tf.nn.elu,
                 'crelu':tf.nn.crelu,
@@ -70,7 +72,7 @@ def _KL_term(weights, prior):
 
         with tf.name_scope('kl'):
             kl = 0
-            for i in range(len(weights)):
+            for i in range(len(W_m)):
                 with tf.name_scope(f'layer_{i}'):
 
                     m, v = W_m[i], W_v[i]
@@ -306,7 +308,7 @@ class BaysMLPRegressionTFP(Reg_NN):
         self.prior_mean = prior_mean
         self.prior_var = prior_var
 
-        self.output_log_variance = tf.Variable(initial_value=-6., name='log_noise_variance')
+        self.output_log_variance = tf.Variable(initial_value=INITIAL_LOG_NOISE, name='log_noise_variance')
         self.output_sigma = tf.exp(self.output_log_variance)
 
         self.no_train_samples = no_train_samples
@@ -369,32 +371,6 @@ class BaysMLPRegressionTFP(Reg_NN):
         self.rmse = _rmse(self.pred_test_actual, self.targ_test_actual)
         self.test_loglik = _test_loglik(self.pred_test, self.y, self.output_sigma)
 
-    def make_metrics(self):
-        with tf.name_scope('performance'):
-            self.train_cost    = tf.placeholder(tf.float32, shape=None, name='train_cost_summary')
-            self.train_logloss = tf.placeholder(tf.float32, shape=None, name='train_logloss_summary')
-            self.train_kl      = tf.placeholder(tf.float32, shape=None, name='train_kl_summary')
-            self.test_logloss  = tf.placeholder(tf.float32, shape=None, name='test_logloss_summary')
-            self.test_rmse     = tf.placeholder(tf.float32, shape=None, name='test_rmse_summary')
-
-            train_cost_summary    = tf.summary.scalar('train cost',     self.train_cost)
-            train_logloss_summary = tf.summary.scalar('train logloss',  self.train_logloss)
-            train_kl_summary      = tf.summary.scalar('train kl',       self.train_kl)
-            test_logloss_summary  = tf.summary.scalar('test logloss',   self.test_logloss)
-            test_rmse_summary     = tf.summary.scalar('test rmse',      self.test_rmse)
-            noise_var_summary     = tf.summary.scalar('homoskedastic noise', tf.exp(0.5*self.noise_var))
-
-            self.performance_metrics = tf.summary.merge_all()
-
-    def log_metrics(self, train_cost, train_logloss, train_kl, test_logloss, test_rmse):
-        return self.sess.run(self.performance_metrics, feed_dict={
-            self.train_cost:train_cost,
-            self.train_logloss: train_logloss,
-            self.train_kl: train_kl,
-            self.test_logloss: test_logloss,
-            self.test_rmse: test_rmse
-        })
-
 
 """ Bayesian MLP Model """
 
@@ -426,13 +402,14 @@ class BayesMLPRegression(Reg_NN):
         self.prior_mean = prior_mean
         self.prior_var = prior_var
 
-        self.output_log_variance = tf.Variable(initial_value=-6., name='log_noise_variance')
-        self.output_sigma = tf.exp(self.output_log_variance)
-
         self.no_layers = len(self.size)-1
         self.no_train_samples = no_train_samples
         self.no_pred_samples = no_pred_samples
         self.training_size = training_size
+
+        self.output_log_variance = tf.Variable(initial_value=INITIAL_LOG_NOISE, name='log_noise_variance')
+        self.output_sigma = tf.exp(self.output_log_variance)
+
 
         # def train predictions and training metric production
         self.pred_train = self._prediction(self.x, self.no_train_samples)
@@ -445,6 +422,7 @@ class BayesMLPRegression(Reg_NN):
 
         self.cost = -self.loglik + self.KL
 
+
         # def test predictions and testing metrics
         self.pred_test  = self._prediction(self.x, self.no_pred_samples)
 
@@ -453,6 +431,7 @@ class BayesMLPRegression(Reg_NN):
 
         self.rmse = _rmse(self.pred_test_actual, self.targ_test_actual)
         self.test_loglik = _test_loglik(self.pred_test, self.y, self.output_sigma)
+
 
         self.assign_optimizer(learning_rate)
         self.assign_session()
@@ -639,7 +618,7 @@ class BayesSkipMLPRegression(Reg_NN):
         self.priors = [m, v]
 
 
-        self.output_log_variance = tf.Variable(initial_value=-6., name='log_noise_variance')
+        self.output_log_variance = tf.Variable(initial_value=INITIAL_LOG_NOISE, name='log_noise_variance')
         self.output_sigma = tf.exp(self.output_log_variance)
 
         self.no_layers = len(self.size)-1
@@ -873,7 +852,7 @@ class BayesMLPNNRegression(Reg_NN):
         }
 
 
-        m_w, v_w, m_p, v_p = self.create_weights_prior(self.x, nn)
+        m_w, v_w, m_p, v_p = self.create_weights_prior(self.x, nn, prior_mean, prior_var)
 
         self.W_m, self.b_m = m_w[0], m_w[1]
         self.W_v, self.b_v = v_w[0], v_w[1]
@@ -888,7 +867,7 @@ class BayesMLPNNRegression(Reg_NN):
         self.no_pred_samples = no_pred_samples
         self.training_size = training_size
 
-        self.output_log_variance = tf.Variable(initial_value=-6., name='log_noise_variance')
+        self.output_log_variance = tf.Variable(initial_value=INITIAL_LOG_NOISE, name='log_noise_variance')
         self.output_sigma = tf.exp(self.output_log_variance)
 
 
@@ -905,7 +884,7 @@ class BayesMLPNNRegression(Reg_NN):
 
 
         # def test predictions and testing metrics
-        self.pred_test  = self._prediction(self.x, nn, self.no_pred_samples)
+        self.pred_test = self._prediction(self.x, nn, self.no_pred_samples)
 
         self.pred_test_actual = self.pred_test * self.y_sigma + self.y_mu
         self.targ_test_actual = self.y * self.y_sigma + self.y_mu
@@ -931,16 +910,19 @@ class BayesMLPNNRegression(Reg_NN):
         prev_acts = [act]
 
         for lidx in range(1, nn.num_internal_layers+1):
-            with tf.name_scope(f'layer_{lidx}/'):
-                plist = get_layer_parents(nn.conn_mat.keys(), lidx)
-                # get parent layer output sizes and sum
-                parent_acts = [prev_acts[i] for i in plist]
-                act = tf.concat(parent_acts, -1)
 
-                dout = nn.num_units_in_each_layer[lidx]
-                if dout == None: dout = 1
-                activation = nn.layer_labels[lidx]
-                activation = activation_dict[activation]
+            plist = get_layer_parents(nn.conn_mat.keys(), lidx)
+            # get parent layer output sizes and sum
+            parent_acts = [prev_acts[i] for i in plist]
+
+            dout = nn.num_units_in_each_layer[lidx]
+            if dout == None: dout = 1
+            layer_label = nn.layer_labels[lidx]
+            activation = activation_dict[layer_label]
+
+            with tf.name_scope(f'layer_{lidx}_{layer_label}_{dout}/'):
+
+                act = tf.concat(parent_acts, -1)
 
                 m_pre = tf.einsum('kni,io->kno', act, self.W_m[lidx-1])
                 v_pre = tf.einsum('kni,io->kno', act ** 2.0, tf.exp(self.W_v[lidx-1]))
@@ -955,8 +937,11 @@ class BayesMLPNNRegression(Reg_NN):
                     act = pre
                 prev_acts.append(act)
 
-        with tf.name_scope(f'layer_{lidx}/'):
-            lidx += 1
+        lidx += 1
+
+        layer_label = nn.layer_labels[lidx]
+
+        with tf.name_scope(f'layer_{lidx}_{layer_label}/'):
 
             plist = get_layer_parents(nn.conn_mat.keys(), lidx)
             # get parent layer output sizes and sum
@@ -973,7 +958,6 @@ class BayesMLPNNRegression(Reg_NN):
             # eps_b = tf.random_normal([K, 1, dout], 0.0, 1.0, dtype=tf.float32)
             # pre_b = eps_b * tf.exp(0.5 * self.b_v[-1]) + self.b_m[-1]
             # pre = pre_W + pre_b
-            act = pre
 
         return act
 
@@ -999,7 +983,7 @@ class BayesMLPNNRegression(Reg_NN):
 
             return kl
 
-    def create_weights_prior(self, input, nn):
+    def create_weights_prior(self, input, nn, prior_mean, prior_var):
 
         W_m_w = []
         b_m_w = []
@@ -1019,11 +1003,15 @@ class BayesMLPNNRegression(Reg_NN):
             parent_outs = [douts[i] for i in plist]
             din = sum(parent_outs)
             # get number of units in layer
+
             dout = nn.num_units_in_each_layer[lidx]
-            if dout is None: dout = 1
+            if dout == None: dout = 1
             douts.append(dout)
 
-            with tf.name_scope(f'layer_{lidx}/'):
+            layer_label = nn.layer_labels[lidx]
+            activation = activation_dict[layer_label]
+
+            with tf.name_scope(f'layer_{lidx}_{layer_label}_{dout}/'):
                 # make weights
                 Wi_m_val = tf.truncated_normal([din, dout], stddev=0.1)
                 bi_m_val = tf.truncated_normal([dout], stddev=0.1)
@@ -1047,53 +1035,14 @@ class BayesMLPNNRegression(Reg_NN):
 
                 # make prior
 
-                Wi_m = self.prior_mean
-                bi_m = self.prior_mean
-                Wi_v = self.prior_var
-                bi_v = self.prior_var
+                Wi_m = prior_mean
+                bi_m = prior_mean
+                Wi_v = prior_var
+                bi_v = prior_var
 
                 W_m_p.append(Wi_m)
                 b_m_p.append(bi_m)
                 W_v_p.append(Wi_v)
                 b_v_p.append(bi_v)
-
-        plist = get_layer_parents(nn.conn_mat.keys(), lidx+1)
-        parent_outs = [douts[i] for i in plist]
-        din = din = sum(parent_outs)
-        dout = 1
-
-        with tf.name_scope(f'layer_{lidx+1}/'):
-            # make weights
-            Wi_m_val = tf.truncated_normal([din, dout], stddev=0.1)
-            bi_m_val = tf.truncated_normal([dout], stddev=0.1)
-            Wi_v_val = tf.constant(-11.0, shape=[din, dout])
-            bi_v_val = tf.constant(-11.0, shape=[dout])
-
-            Wi_m = tf.Variable(Wi_m_val, name='W_mean')
-            bi_m = tf.Variable(bi_m_val, name='b_mean')
-            Wi_v = tf.Variable(Wi_v_val, name='W_var')
-            bi_v = tf.Variable(bi_v_val, name='b_var')
-
-            W_m_w.append(Wi_m)
-            b_m_w.append(bi_m)
-            W_v_w.append(Wi_v)
-            b_v_w.append(bi_v)
-
-            tf.summary.histogram("weights_mean", Wi_m)
-            tf.summary.histogram("bias_mean", bi_m)
-            tf.summary.histogram("weights_variance", Wi_v)
-            tf.summary.histogram("bais_variance", bi_v)
-
-            # make prior
-
-            Wi_m = self.prior_mean
-            bi_m = self.prior_mean
-            Wi_v = self.prior_var
-            bi_v = self.prior_var
-
-            W_m_p.append(Wi_m)
-            b_m_p.append(bi_m)
-            W_v_p.append(Wi_v)
-            b_v_p.append(bi_v)
 
         return [W_m_w, b_m_w], [W_v_w, b_v_w], [W_m_p, b_m_p], [W_v_p, b_v_p]
