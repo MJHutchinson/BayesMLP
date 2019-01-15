@@ -1,6 +1,6 @@
 hidden_sizes: [10, 30, 50, 100]
-hidden_layers: 2
-epochs: 30000
+hidden_layers: [2]
+epochs: 50000
 search_space: 'small'
 learning_rates: [0.001]
 prior_vars: [0.1, 1., 10.]

@@ -1,5 +1,5 @@
 hidden_sizes: [1, 3, 5, 7, 10, 30, 50, 70, 100]
-hidden_layers: 2
+hidden_layers: [2]
 epochs: 50000
 search_space: 'small'
 learning_rates: [0.001]

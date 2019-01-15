@@ -92,7 +92,7 @@ for idx, (hidden_layer, hidden_size, lr, prior_var) in enumerate(param_space):
     name = f'{model}'
     log_dir = f'{results_dir}/logs/{name}'
 
-    result = test_model_regression(model, data_loader, epochs, batch_size, log_freq=100, log_dir=log_dir, verbose=True)
+    result = test_model_regression(model, data_loader, epochs, batch_size, log_freq=100, log_dir=log_dir, verbose=False)
     model.close_session()
     tf.reset_default_graph()
 
