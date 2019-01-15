@@ -7,7 +7,7 @@ import tensorflow as tf
 import argparse
 from model.classification import BayesMLPClassification
 from model.utils import test_model_classification, get_activation
-from utils.utils import num_to_name, gen_hidden_combinations, parameter_combinations
+from utils.file_utils import num_to_name, gen_hidden_combinations, parameter_combinations
 import data.data_loader as data
 # Script parameters
 

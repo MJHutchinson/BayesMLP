@@ -13,7 +13,7 @@ from model.neural_network_representation import MultiLayerPerceptron, get_mlp_la
 from model.regression import BayesMLPNNRegression
 from model.utils import test_model_regression
 from utils.general_utils import _set_coords_to_val
-from utils.utils import gen_hidden_combinations, parameter_combinations
+from utils.file_utils import gen_hidden_combinations, parameter_combinations
 
 parser = argparse.ArgumentParser(description='Script for dispatching train runs of BNNs over larger search spaces')
 

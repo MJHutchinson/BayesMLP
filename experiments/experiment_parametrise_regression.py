@@ -5,9 +5,9 @@ import yaml
 import shutil
 import tensorflow as tf
 import argparse
-from model.classification import BayesMLPClassification
-from model.utils import test_model_classification
-from utils.utils import num_to_name, gen_hidden_combinations, parameter_combinations
+from model.regression import BayesMLPRegression
+from model.utils import test_model_regression
+from utils.file_utils import num_to_name, gen_hidden_combinations, parameter_combinations
 import data.data_loader as data
 
 parser = argparse.ArgumentParser(description='Script for dispatching train runs of BNNs over larger search spaces')
@@ -16,7 +16,7 @@ parser.add_argument('-c', '--config', required=True)
 parser.add_argument('-ds', '--dataset', required=True)
 parser.add_argument('-ld', '--logdir', default='./results')
 parser.add_argument('-dd', '--datadir', default='./data_dir')
-parser.add_argument('-cn', '--common_name', default=None)
+parser.add_argument('-cm', '--commonname', default=None)
 
 args = parser.parse_args()
 
@@ -25,13 +25,13 @@ model_config = yaml.load(open(args.config, 'rb'))
 # Script parameters
 data_set = args.dataset
 log_dir = args.logdir
-common_name = args.common_name
+common_name = args.commonname
 
-# Set up loggin directory and grab the config file
+# Set up logging directory and grab the config file
 date_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 if common_name is not None:
-    results_dir = f'{log_dir}/{data_set}/{common_name}_{date_time}'
+    results_dir = f'{log_dir}/{data_set}/{common_name}-{date_time}'
 else:
     results_dir = f'{log_dir}/{data_set}/{date_time}'
 
@@ -64,15 +64,16 @@ lrs = model_config['learning_rates']
 prior_vars = model_config['prior_vars']
 batch_size = model_config['batch_size']
 
-
 print(f'Running experiment on {data_set} with parameters:\n'
       f'{model_config}\n'
       f'Saving results in {results_dir}\n')
 
 
 # Load in dataset and related info
-data_loader = data.ClassificationDataloader(pickle_name=data_set, data_dir=args.datadir)
+data_loader = data.RegressionDataloader(data_set, args.datadir)
 input_size, train_length, output_size = data_loader.get_dims()
+_, _, y_mu, y_sigma = data_loader.get_transforms()
+
 
 # Design search space for paramters
 search_space = gen_hidden_combinations(search_space, hs, hidden_layers)
@@ -81,25 +82,28 @@ param_space = parameter_combinations(search_space, lrs, prior_vars)
 # Loop over parameter space
 for idx, (network, lr, prior_var) in enumerate(param_space):
 
-    h = [i for i in network] # Tuple to list
-
-    logs_dir = f'{results_dir}/logs/hidden_{h}_lr_{lr}_prior_var_{prior_var}'
-
-    print(f'running model {(network, lr, prior_var)}, parameter set {idx+1} of {len(param_space)}')
+    h = [i for i in network]  # Tuple to list
 
     # Create model with designated parameters
-    model = BayesMLPClassification(input_size, h, output_size, train_length, no_pred_samples=10, learning_rate=lr, prior_var=prior_var)
+    model = BayesMLPRegression(input_size, h, output_size, train_length, y_mu, y_sigma, no_train_samples=10,
+                               no_pred_samples=100, learning_rate=lr, prior_var=prior_var)
+
+    print(f'running model {model}, parameter set {idx+1} of {len(param_space)}')
+
+    logs_dir = f'{results_dir}/logs/{model}'
 
     # Run a standard test on the model, logging training info etc
-    result = test_model_classification(model, data_loader, epochs, batch_size, log_freq=1, log_dir=logs_dir)
+    result = test_model_regression(model, data_loader, epochs, batch_size, log_freq=100, log_dir=logs_dir)
 
     # Close model session! Important - releases VRAM, otherwise memory errors
     model.close_session()
     tf.reset_default_graph()
 
     # Dump results to a sensibly named file
-    result = {'hidden_sizes': h, 'learning_rate': lr, 'prior_var': prior_var, 'batch_size': batch_size, 'epochs': epochs, 'results': result}
-    result_file = f'{results_dir}/hidden_{h}_lr_{lr}_prior_var_{prior_var}_epochs_{epochs}.pkl'
+    model_config = model.get_config()
+    train_config = {'batch_size': batch_size, 'epochs': epochs, 'results': result}
+    result = {**model_config, **train_config, 'results': result}
+    result_file = f'{results_dir}/{model}.pkl'
 
     with open(result_file, 'wb') as h:
         pickle.dump(result, h)

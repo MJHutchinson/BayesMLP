@@ -2,7 +2,7 @@ import pickle
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from utils.utils import get_immediate_files
+from utils.file_utils import get_immediate_files
 from plot_functions import *
 
 log_dir = './results'

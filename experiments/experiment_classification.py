@@ -7,13 +7,13 @@ import tensorflow as tf
 import argparse
 from model.classification import BayesMLPClassification
 from model.utils import test_model_classification
-from utils.utils import num_to_name, gen_hidden_combinations, parameter_combinations
+from utils.file_utils import num_to_name, gen_hidden_combinations, parameter_combinations
 import data.data_loader as data
 # Script parameters
 
 data_set = 'mnist'
-log_dir = './results'
-config_dir = './config'
+log_dir = '../results'
+config_dir = '../config'
 common_name = None
 
 
@@ -68,7 +68,7 @@ param_space = parameter_combinations(search_space, lrs, prior_vars)
 for idx, (network, lr, prior_var) in enumerate(param_space):
 
     h = [i for i in network] # Tuple to list
-    batch_size = data_loader.get_batch_size(max(h))
+    batch_size = config['batch_size']
 
     logs_dir = f'{results_dir}/logs/hidden_{h}_lr_{lr}_prior_var_{prior_var}'
 

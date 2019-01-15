@@ -2,7 +2,7 @@ import pickle
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from utils.utils import get_immediate_files
+from utils.file_utils import get_immediate_files
 from plot_functions import *
 
 # log_dir = './results'
@@ -15,9 +15,9 @@ data_set = 'bostonHousing'
 # results_dir = './remote_logs/kin8nm/christsmas-sweep-1-2018-12-20 19:33:57'
 # results_dir = './remote_logs/naval-propulsion-plant/christsmas-sweep-1-2018-12-20 19:33:57'
 # results_dir = './remote_logs/power-plant/christsmas-sweep-1-2018-12-20 19:33:57'
-results_dir = './remote_logs/protein-tertiary-structure/christsmas-sweep-1-2018-12-20 19:33:57'
+# results_dir = './remote_logs/protein-tertiary-structure/christsmas-sweep-1-2018-12-20 19:33:57'
 # results_dir = './remote_logs/wine-quality-red/christsmas-sweep-1-2018-12-20 19:33:57'
-# results_dir = './remote_logs/yacht/christsmas-sweep-1-2018-12-20 19:33:57'
+results_dir = './remote_logs/yacht/christsmas-sweep-1-2018-12-20 19:33:57'
 
 # results_dir = './remote_logs/bostonHousing/skips-2018-12-30 14:59:52'
 

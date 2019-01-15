@@ -1,8 +1,8 @@
-hs: [200, 400, 800]
+hs: [400]
 hidden_layers: 2
-epochs: 500
+epochs: 2
 search_space: 'small'
 learning_rates: [0.001]
 prior_vars: [1.]
-activations: ['relu', 'tanh', 'sigmoid']
+activations: ['relu']
 batch_size: 900

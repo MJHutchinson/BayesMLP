@@ -1,7 +1,7 @@
 import pickle
 from model.classification import BayesMLPClassification
 from model.utils import test_model
-from utils.utils import num_to_name
+from utils.file_utils import num_to_name
 import itertools
 from data.data_loader import MnistDataloader
 

@@ -12,7 +12,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
-INITIAL_LOG_NOISE = -1.
+INITIAL_LOG_NOISE = -6.
 
 activation_dict = {'relu':tf.nn.relu,
                 'elu':tf.nn.elu,
@@ -34,10 +34,10 @@ def get_layer_parents(adjList, lidx):
     return [e[0] for e in adjList if e[1] == lidx]
 
 
-def _rmse(preds, targets):
-    with tf.name_scope('rmse'):
-        rmse = tf.sqrt(tf.reduce_mean(tf.squared_difference(preds, targets)))
-        return rmse
+def _mse(preds, targets):
+    with tf.name_scope('mse'):
+        mse = tf.reduce_mean(tf.squared_difference(preds, targets))
+        return mse
 
 
 def _loglik(pred, targets, noise_std):
@@ -118,33 +118,11 @@ class Reg_NN(object):
             self.sess.run([init, init2])
 
     def train(self, x_train, y_train, no_epochs=100, batch_size=100, display_epoch=5):
-        N = x_train.shape[0]
-        if batch_size > N:
-            batch_size = N
 
-        sess = self.sess
         costs = []
         # Training cycle
         for epoch in range(no_epochs):
-            perm_inds = list(range(x_train.shape[0]))
-            np.random.shuffle(perm_inds)
-            cur_x_train = x_train[perm_inds]
-            cur_y_train = y_train[perm_inds]
-
-            avg_cost = 0.
-            total_batch = int(np.ceil(N * 1.0 / batch_size))
-            # Loop over all batches
-            for i in range(total_batch):
-                start_ind = i * batch_size
-                end_ind = np.min([(i + 1) * batch_size, N])
-                batch_x = cur_x_train[start_ind:end_ind, :]
-                batch_y = cur_y_train[start_ind:end_ind, :]
-                # Run optimization op (backprop) and cost op (to get loss value)
-                _, c = sess.run(
-                    [self.train_step, self.cost],
-                    feed_dict={self.x: batch_x, self.y: batch_y})
-                # Compute average loss
-                avg_cost += c / total_batch
+            avg_cost, avg_kl, avg_ll = self.train_one(x_train, y_train)
             # Display logs per epoch step
             if epoch % display_epoch == 0:
                 print("Epoch:", '%04d' % (epoch + 1), "cost=", \
@@ -226,7 +204,7 @@ class Reg_NN(object):
         cur_y_test = y_test[perm_inds]
 
         ll = 0.
-        rmse = 0.
+        mse = 0.
         total_batch = int(np.ceil(N * 1.0 / batch_size))
         # Loop over all batches
         for i in range(total_batch):
@@ -235,16 +213,16 @@ class Reg_NN(object):
             batch_x = cur_x_test[start_ind:end_ind, :]
             batch_y = cur_y_test[start_ind:end_ind, :]
             # Run optimization op (backprop) and cost op (to get loss value)
-            _ll, _rmse = sess.run(
-                [self.test_loglik, self.rmse],
+            _ll, _mse = sess.run(
+                [self.test_loglik, self.mse],
                 feed_dict={self.x: batch_x, self.y: batch_y})
 
             # Compute average loss
             fraction = (end_ind - start_ind) / N
             ll += _ll * fraction
-            rmse += _rmse * fraction
+            mse += _mse * fraction
 
-        return ll, rmse
+        return ll, np.sqrt(mse)
 
     def get_weights(self):
         weights = self.sess.run([self.weights])[0]
@@ -273,12 +251,12 @@ class Reg_NN(object):
             self.test_logloss  = tf.placeholder(tf.float32, shape=None, name='test_logloss_summary')
             self.test_rmse     = tf.placeholder(tf.float32, shape=None, name='test_rmse_summary')
 
-            train_cost_summary    = tf.summary.scalar('train_cost',     self.train_cost)
-            train_logloss_summary = tf.summary.scalar('train_logloss',  self.train_logloss)
-            train_kl_summary      = tf.summary.scalar('train_kl',       self.train_kl)
-            test_logloss_summary  = tf.summary.scalar('test_logloss',   self.test_logloss)
-            test_rmse_summary     = tf.summary.scalar('test_rmse',      self.test_rmse)
-            noise_var_summary     = tf.summary.scalar('homoskedastic_noise', self.output_sigma)
+            train_cost_summary    = tf.summary.scalar('metrics/train_cost',     self.train_cost)
+            train_logloss_summary = tf.summary.scalar('metrics/train_logloss',  self.train_logloss)
+            train_kl_summary      = tf.summary.scalar('metrics/train_kl',       self.train_kl)
+            test_logloss_summary  = tf.summary.scalar('metrics/test_logloss',   self.test_logloss)
+            test_rmse_summary     = tf.summary.scalar('metrics/test_rmse',      self.test_rmse)
+            noise_var_summary     = tf.summary.scalar('parameters/homoskedastic_noise', self.output_sigma)
 
             self.performance_metrics = tf.summary.merge_all()
 
@@ -368,7 +346,7 @@ class BaysMLPRegressionTFP(Reg_NN):
         self.pred_test_actual = self.pred_test * self.y_sigma + self.y_mu
         self.targ_test_actual = self.y * self.y_sigma + self.y_mu
 
-        self.rmse = _rmse(self.pred_test_actual, self.targ_test_actual)
+        self.mse = _mse(self.pred_test_actual, self.targ_test_actual)
         self.test_loglik = _test_loglik(self.pred_test, self.y, self.output_sigma)
 
 
@@ -408,7 +386,7 @@ class BayesMLPRegression(Reg_NN):
         self.training_size = training_size
 
         self.output_log_variance = tf.Variable(initial_value=INITIAL_LOG_NOISE, name='log_noise_variance')
-        self.output_sigma = tf.exp(self.output_log_variance)
+        self.output_sigma = tf.exp(0.5 * self.output_log_variance)
 
 
         # def train predictions and training metric production
@@ -417,7 +395,7 @@ class BayesMLPRegression(Reg_NN):
         self.pred_train_actual = self.pred_train * self.y_sigma + self.y_mu
         self.targ_train_actual = self.y * self.y_sigma + self.y_mu
 
-        self.loglik = _loglik(self.pred_train, self.y, self.output_sigma)
+        self.loglik = _loglik(self.pred_train_actual, self.targ_train_actual, self.output_sigma)
         self.KL = tf.div(_KL_term(self.weights, self.priors), self.training_size)
 
         self.cost = -self.loglik + self.KL
@@ -429,8 +407,8 @@ class BayesMLPRegression(Reg_NN):
         self.pred_test_actual = self.pred_test * self.y_sigma + self.y_mu
         self.targ_test_actual = self.y * self.y_sigma + self.y_mu
 
-        self.rmse = _rmse(self.pred_test_actual, self.targ_test_actual)
-        self.test_loglik = _test_loglik(self.pred_test, self.y, self.output_sigma)
+        self.mse = _mse(self.pred_test_actual, self.targ_test_actual)
+        self.test_loglik = _test_loglik(self.pred_test_actual, self.targ_test_actual, self.output_sigma)
 
 
         self.assign_optimizer(learning_rate)
@@ -619,7 +597,7 @@ class BayesSkipMLPRegression(Reg_NN):
 
 
         self.output_log_variance = tf.Variable(initial_value=INITIAL_LOG_NOISE, name='log_noise_variance')
-        self.output_sigma = tf.exp(self.output_log_variance)
+        self.output_sigma = tf.exp(0.5 * self.output_log_variance)
 
         self.no_layers = len(self.size)-1
         self.no_train_samples = no_train_samples
@@ -646,7 +624,7 @@ class BayesSkipMLPRegression(Reg_NN):
         self.pred_test_actual = self.pred_test * self.y_sigma + self.y_mu
         self.targ_test_actual = self.y * self.y_sigma + self.y_mu
 
-        self.rmse = _rmse(self.pred_test_actual, self.targ_test_actual)
+        self.mse = _mse(self.pred_test_actual, self.targ_test_actual)
         self.test_loglik = _test_loglik(self.pred_test, self.y, self.output_sigma)
 
 
@@ -868,7 +846,7 @@ class BayesMLPNNRegression(Reg_NN):
         self.training_size = training_size
 
         self.output_log_variance = tf.Variable(initial_value=INITIAL_LOG_NOISE, name='log_noise_variance')
-        self.output_sigma = tf.exp(self.output_log_variance)
+        self.output_sigma = tf.exp(0.5 * self.output_log_variance)
 
 
         # def train predictions and training metric production
@@ -889,7 +867,7 @@ class BayesMLPNNRegression(Reg_NN):
         self.pred_test_actual = self.pred_test * self.y_sigma + self.y_mu
         self.targ_test_actual = self.y * self.y_sigma + self.y_mu
 
-        self.rmse = _rmse(self.pred_test_actual, self.targ_test_actual)
+        self.mse = _mse(self.pred_test_actual, self.targ_test_actual)
         self.test_loglik = _test_loglik(self.pred_test, self.y, self.output_sigma)
 
 

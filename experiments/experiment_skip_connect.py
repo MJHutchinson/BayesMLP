@@ -7,7 +7,7 @@ import tensorflow as tf
 import argparse
 from model.regression import BayesMLPRegression, BaysMLPRegressionTFP, BayesSkipMLPRegression, BayesMLPNNRegression
 from model.utils import test_model_regression
-from utils.utils import num_to_name, gen_hidden_combinations, parameter_combinations
+from utils.file_utils import num_to_name, gen_hidden_combinations, parameter_combinations
 import data.data_loader as data
 from model.neural_network_representation import MultiLayerPerceptron, get_mlp_layer_labels
 from utils.general_utils import get_dok_mat_with_set_coords, _set_coords_to_val

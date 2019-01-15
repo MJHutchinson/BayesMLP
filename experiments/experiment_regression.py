@@ -7,11 +7,14 @@ import tensorflow as tf
 import argparse
 from model.regression import BayesMLPRegression, BaysMLPRegressionTFP
 from model.utils import test_model_regression
-from utils.utils import num_to_name, gen_hidden_combinations, parameter_combinations
+from utils.file_utils import num_to_name, gen_hidden_combinations, parameter_combinations
 from data.data_loader import RegressionDataloader
 
 # Script parameters
-data_set = 'wine-quality-red'
+# data_set = 'protein-tertiary-structure'
+# data_set = 'wine-quality-red'
+# data_set = 'bostonHousing'
+data_set = 'yacht'
 log_dir = '../results'
 config_dir = '../config'
 common_name = None
