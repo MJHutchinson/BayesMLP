@@ -90,7 +90,7 @@ for idx, (hidden_layer, hidden_size, lr, prior_var, data_multiple) in enumerate(
 
     print(f'{args.dataset} - running {model}. Parameter set {idx+1} of {len(param_space)}')
 
-    name = f'{model}'
+    name = f'data_multiply_{data_multiple}_{model}'
     log_dir = f'{results_dir}/logs/{name}'
 
     result = test_model_regression(model, data_loader, epochs, batch_size, log_freq=100, log_dir=log_dir, verbose=False)
