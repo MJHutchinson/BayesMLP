@@ -384,7 +384,7 @@ class BayesMLPRegression(Reg_NN):
         self.no_pred_samples = no_pred_samples
         self.training_size = training_size
 
-        self.output_log_variance = tf.Variable(initial_value=np.log(initial_output_noise), name='log_noise_variance')
+        self.output_log_variance = tf.Variable(initial_value=np.log(initial_output_noise, dtype=np.float32), name='log_noise_variance')
         self.output_sigma = tf.exp(0.5 * self.output_log_variance)
 
 
