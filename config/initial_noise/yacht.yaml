@@ -1,9 +1,9 @@
-hidden_sizes: [50]
+hidden_sizes: [30]
 hidden_layers: [2]
-epochs: 50000
+epochs: 30000
 search_space: 'small'
 learning_rates: [0.001]
 prior_vars: [1.]
 batch_size: 1000
 
-data_multiples: [0.1, 0.5, 1, 5, 10]
+initial_noises: [0.0025, 0.025, 0.25, 0.5, 1., 2., 4.]

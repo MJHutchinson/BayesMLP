@@ -356,8 +356,7 @@ class BaysMLPRegressionTFP(Reg_NN):
 class BayesMLPRegression(Reg_NN):
     def __init__(self, input_size, hidden_size, output_size, training_size, y_mu, y_sigma,
                  no_train_samples=10, no_pred_samples=100, prev_means=None, prev_log_variances=None,
-                 learning_rate=0.001,
-                 prior_mean=0., prior_var=1.):
+                 learning_rate=0.001, prior_mean=0., prior_var=1., initial_output_noise=np.exp(-6)):
 
         super(BayesMLPRegression, self).__init__(input_size, hidden_size, output_size, training_size, y_mu, y_sigma)
 
@@ -385,7 +384,7 @@ class BayesMLPRegression(Reg_NN):
         self.no_pred_samples = no_pred_samples
         self.training_size = training_size
 
-        self.output_log_variance = tf.Variable(initial_value=INITIAL_LOG_NOISE, name='log_noise_variance')
+        self.output_log_variance = tf.Variable(initial_value=np.log(initial_output_noise), name='log_noise_variance')
         self.output_sigma = tf.exp(0.5 * self.output_log_variance)
 
 

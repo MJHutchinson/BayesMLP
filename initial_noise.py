@@ -63,7 +63,7 @@ learning_rates = experiment_config['learning_rates']
 prior_vars = experiment_config['prior_vars']
 
 # Additional variable
-data_multiples = experiment_config['data_multiples']
+initial_noises = experiment_config['initial_noises']
 
 # Training parameters
 batch_size = experiment_config['batch_size']
@@ -81,18 +81,18 @@ input_size, train_length, output_size = data_loader.get_dims()
 _, _, y_mu, y_sigma = data_loader.get_transforms()
 
 # Design search space for paramters
-param_space = list(itertools.product(hidden_layers, hidden_sizes, learning_rates, prior_vars, data_multiples))
+param_space = list(itertools.product(hidden_layers, hidden_sizes, learning_rates, prior_vars, initial_noises))
 
 # Loop over parameter space
-for idx, (hidden_layer, hidden_size, lr, prior_var, data_multiple) in enumerate(param_space):
+for idx, (hidden_layer, hidden_size, lr, prior_var, initial_noise) in enumerate(param_space):
 
     hidden_configuration = [hidden_size] * hidden_layer
 
-    model = BayesMLPRegression(input_size, hidden_configuration, output_size, train_length*data_multiple, y_mu, y_sigma, prior_var=prior_var)
+    model = BayesMLPRegression(input_size, hidden_configuration, output_size, train_length, y_mu, y_sigma, prior_var=prior_var, initial_output_noise=initial_noise)
 
     print(f'{args.dataset} - running {model}. Parameter set {idx+1} of {len(param_space)}')
 
-    name = f'data_multiply_{data_multiple}_{model}'
+    name = f'initial_noise_{initial_noise}_{model}'
     log_dir = f'{results_dir}/logs/{name}'
 
     result = test_model_regression(model, data_loader, epochs, batch_size, log_freq=100, log_dir=log_dir, verbose=False)
