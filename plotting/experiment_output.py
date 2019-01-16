@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from utils.file_utils import get_immediate_files
-from plot_functions import *
+from utils.plot_utils import *
 
 # log_dir = './results'
 log_dir = './remote_logs'
@@ -17,7 +17,11 @@ data_set = 'bostonHousing'
 # results_dir = './remote_logs/power-plant/christsmas-sweep-1-2018-12-20 19:33:57'
 # results_dir = './remote_logs/protein-tertiary-structure/christsmas-sweep-1-2018-12-20 19:33:57'
 # results_dir = './remote_logs/wine-quality-red/christsmas-sweep-1-2018-12-20 19:33:57'
-results_dir = './remote_logs/yacht/christsmas-sweep-1-2018-12-20 19:33:57'
+results_dir = './remote_logs_clean/bostonHousing/initial-noise'
+# results_dir = './remote_logs_clean/wine-quality-red/initial-noise'
+# results_dir = './remote_logs_clean/yacht/initial-noise'
+
+
 
 # results_dir = './remote_logs/bostonHousing/skips-2018-12-30 14:59:52'
 
@@ -33,14 +37,14 @@ for file in files:
     results.update(r)
     split.append(r)
 
-keys = ['costs', 'test_ll', 'rmses', 'noise_sigma', 'train_kl', 'train_ll']
+metric_keys = ['elbo', 'test_ll', 'test_rmse', 'noise_sigma', 'train_kl', 'train_ll']
 # keys = ['costs', 'accuracies']
-for key in keys:
+for key in metric_keys:
     plot_training_curves(split, val=key)
 #
-plot_min_vs_i(split, 0)
-plot_min_vs_i(split, 4)
-plot_min_vs_i(split, 9)
+plot_min_vs_i(split, 0, val='elbo')
+plot_min_vs_i(split, 4, val='elbo')
+plot_min_vs_i(split, 9, val='elbo')
 
 # plot_max_vs_i(split, 0, val='accuracies')
 # plot_max_vs_i(split, 4, val='accuracies')
@@ -48,7 +52,7 @@ plot_min_vs_i(split, 9)
 
 
 rank_final_value(split, value='test_ll', minimum=False)
-rank_final_value(split, value='rmses', minimum=True)
+rank_final_value(split, value='test_rmse', minimum=True)
 
 
 # plot_min_vs_first(split, val='rmses')
