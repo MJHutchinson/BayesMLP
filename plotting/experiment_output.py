@@ -20,7 +20,9 @@ data_set = 'bostonHousing'
 results_dir = './remote_logs_clean/bostonHousing/initial-noise'
 # results_dir = './remote_logs_clean/wine-quality-red/initial-noise'
 # results_dir = './remote_logs_clean/yacht/initial-noise'
-
+# results_dir = './remote_logs/wine-quality-red/christsmas-sweep-3-2019-01-09 08:51:54'
+# results_dir = './remote_logs/protein-tertiary-structure/christsmas-sweep-3-2019-01-09 08:51:54'
+# results_dir = './remote_logs/bostonHousing/christsmas-sweep-3-2019-01-09 08:51:54'
 
 
 # results_dir = './remote_logs/bostonHousing/skips-2018-12-30 14:59:52'
@@ -38,13 +40,17 @@ for file in files:
     split.append(r)
 
 metric_keys = ['elbo', 'test_ll', 'test_rmse', 'noise_sigma', 'train_kl', 'train_ll']
+# metric_keys = ['costs', 'test_ll', 'rmses', 'noise_sigma', 'train_kl', 'train_ll']
+
+legend = [f'{result["hidden_size"]} {result["prior_var"]}' for result in split]
+
 # keys = ['costs', 'accuracies']
 for key in metric_keys:
-    plot_training_curves(split, val=key)
+    plot_training_curves(split, val=key, rolling_av_len=30, title=key.replace("_", " "), legend=legend)
 #
-plot_min_vs_i(split, 0, val='elbo')
-plot_min_vs_i(split, 4, val='elbo')
-plot_min_vs_i(split, 9, val='elbo')
+# plot_min_vs_i(split, 0, val='elbo')
+# plot_min_vs_i(split, 4, val='elbo')
+# plot_min_vs_i(split, 9, val='elbo')
 
 # plot_max_vs_i(split, 0, val='accuracies')
 # plot_max_vs_i(split, 4, val='accuracies')
@@ -53,6 +59,9 @@ plot_min_vs_i(split, 9, val='elbo')
 
 rank_final_value(split, value='test_ll', minimum=False)
 rank_final_value(split, value='test_rmse', minimum=True)
+
+# rank_final_value(split, value='test_ll', minimum=False)
+# rank_final_value(split, value='rmses', minimum=True)
 
 
 # plot_min_vs_first(split, val='rmses')

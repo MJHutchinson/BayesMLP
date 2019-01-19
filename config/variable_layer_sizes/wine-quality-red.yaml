@@ -1,6 +1,6 @@
-hidden_sizes_1: [20, 50, 80]
-hidden_sizes_2: [0, 10, 20, 50, 80, 100]
-epochs: 50000
+hidden_sizes_1: [50]
+hidden_sizes_2: [50]
+epochs: 1000
 search_space: 'small'
 learning_rates: [0.001]
 prior_vars: [1.]

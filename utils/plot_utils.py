@@ -2,12 +2,13 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 
-# plt.style.use('ggplot')
+plt.style.use('bmh')
 
 plt.rcParams["font.family"] = "serif"
+plt.rcParams["text.usetex"] = True
 
 
-def plot_training_curves(input, val = 'accuracies', legend=None, title=None):
+def plot_training_curves(input, val='accuracies', rolling_av_len=None, legend=None, title=None):
     fig, ax = plt.subplots(1, 1)
     ax.set_xlabel('Epoch')
     if title is None:
@@ -17,14 +18,23 @@ def plot_training_curves(input, val = 'accuracies', legend=None, title=None):
         ax.set_ylabel(title)
         # ax.set_title(title)
 
-    if legend is None:
-        legend = []
+    # if legend is None:
+    #     legend = []
     for results in input:
-        result = results['results']
-        ax.plot(result[val])
-        # legend.append(f'{results["hidden_size"]} lr: {results["lr"]} prior width: {results["prior_var"]}')
+        if rolling_av_len is None:
+            result = results['results']
+            ax.plot(result[val])
+            # legend.append(f'{results["hidden_size"]} lr: {results["lr"]} prior width: {results["prior_var"]}')
+        else:
+            vals = result = results['results'][val]
+            smoothed_vals = [0] * (len(vals) - rolling_av_len)
+            for i, _ in enumerate(smoothed_vals):
+                smoothed_vals[i] = sum(vals[i:i+rolling_av_len])/rolling_av_len
+            ax.plot(smoothed_vals)
 
-    # ax.legend(legend)
+    if legend is not None:
+        ax.legend(legend)
+
     return fig, ax
 
 def plot_training_curves_rv(input, legend=None, rolling_av_len=5):
@@ -46,15 +56,16 @@ def plot_training_curves_rv(input, legend=None, rolling_av_len=5):
 
 
 
-def plot_cost_curves(*input, legend=None, key='rmse'):
+def plot_cost_curves(*input, legend=None, key='rmse', rolling_av=None):
     _, ax = plt.subplots(1, 1)
     ax.set_xlabel('Epoch')
     ax.set_ylabel('Cost')
     legend = []
     for results in input:
-        result = results['results']
-        ax.plot(result['costs'])
-        legend.append(key)
+        if rolling_av is None:
+            result = results['results']
+            ax.plot(result['costs'])
+            legend.append(key)
 
     ax.legend(legend)
 
@@ -199,7 +210,7 @@ def plot_xy(x, y, x_lablel='', y_label='', legend=None):
         ax.legend(legend)
 
 
-def plot_dict(x_dict, y_dict, x_lablel='', y_label='', title=None,  log_scale=False, legend=None):
+def plot_dict(x_dict, y_dict, x_lablel='', y_label='', title=None,  log_scale=False, use_legend=True):
     fig, ax = plt.subplots(1, 1)
     ax.set_xlabel(x_lablel)
     ax.set_ylabel(y_label)
@@ -207,10 +218,16 @@ def plot_dict(x_dict, y_dict, x_lablel='', y_label='', title=None,  log_scale=Fa
     if log_scale: ax.set_xscale('log')
 
     legend = list(x_dict.keys())
+
     try:
-        legend = [float(l) for l in legend]
+        legend = [int(l) for l in legend]
     except ValueError:
-        pass
+        try:
+            legend = [float(l) for l in legend]
+        except ValueError:
+            pass
+
+
 
     legend = sorted(legend)
 
@@ -219,7 +236,7 @@ def plot_dict(x_dict, y_dict, x_lablel='', y_label='', title=None,  log_scale=Fa
             key = repr(key)
         ax.scatter(x_dict[key], y_dict[key])
 
-    if legend is not None:
+    if use_legend:
         ax.legend(legend)
 
     if title is not None:
