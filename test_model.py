@@ -16,9 +16,13 @@ from scipy.sparse import dok_matrix
 '''Test a model to check perfomance'''
 
 # Set up logging directory and grab the config file
-logdir = './results'
+# logdir = './results'
+# datadir = './data_dir'
+
+logdir = '/scratch/mjh252/logs/tests/'
+datadir = '/scratch/mjh252/data/UCL/'
+
 dataset = 'wine-quality-red'
-datadir = './data_dir'
 date_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 commonname = 'model_test'
