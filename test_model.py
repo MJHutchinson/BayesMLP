@@ -45,7 +45,7 @@ prior_vars = [1.]
 
 # Training parameters
 batch_size = 1000
-epochs = 50000
+epochs = 100000
 
 print(f'Running experiment on {dataset}:\n '
       f'Saving results in {results_dir}\n')
@@ -65,7 +65,7 @@ for idx, (hidden_layer, hidden_size, lr, prior_var) in enumerate(param_space):
 
     hidden_configuration = [hidden_size] * hidden_layer
 
-    for j in range(5):
+    for j in range(20):
         # model = BayesMLPRegression(input_size, hidden_configuration, output_size, train_length, y_mu, y_sigma, prior_var=prior_var)
 
         all_layer_labels = get_mlp_layer_labels('reg')
