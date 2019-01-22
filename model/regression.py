@@ -1040,7 +1040,7 @@ class BayesMLPRegressionHyperprior(Reg_NN):
 
         super(BayesMLPRegressionHyperprior, self).__init__(input_size, hidden_size, output_size, training_size, y_mu, y_sigma)
 
-        self.hidden_sizes = deepcopy(hidden_size)
+        self.hidden_size = deepcopy(hidden_size)
         self.learning_rate = learning_rate
         self.prior_var = prior_var
         self.sizes = [input_size] + deepcopy(hidden_size) + [output_size]
