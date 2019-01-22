@@ -1,4 +1,4 @@
-hs: [50]
+ hs: [50]
 hidden_layers: 2
 epochs: 30000
 search_space: 'small'

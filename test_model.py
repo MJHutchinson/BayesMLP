@@ -130,3 +130,44 @@ for idx, (hidden_layer, hidden_size, lr, prior_var) in enumerate(param_space):
             pickle.dump(output, h)
 
 
+        model = BayesMLPRegressionHyperprior(input_size, hidden_configuration, output_size, train_length, y_mu, y_sigma, prior_var=prior_var, hyperprior=False)
+
+        print(f'{dataset} - running {model}. Parameter set {idx + 1} of {len(param_space)}')
+
+        name = f'{j}-{model}'
+        log_dir = f'{results_dir}/logs/{name}'
+
+        result = test_model_regression(model, data_loader, epochs, batch_size, log_freq=100, log_dir=log_dir,
+                                       verbose=True)
+        model.close_session()
+        tf.reset_default_graph()
+
+        model_config = model.get_config()
+        train_config = {'batch_size': batch_size, 'epochs': epochs, 'results': result}
+        output = {**model_config, **train_config, 'results': result}
+
+        result_file = f'{results_dir}/{name}.pkl'
+        with open(result_file, 'wb') as h:
+            pickle.dump(output, h)
+
+        model = BayesMLPRegressionHyperprior(input_size, hidden_configuration, output_size, train_length, y_mu, y_sigma, prior_var=prior_var, hyperprior=True)
+
+        print(f'{dataset} - running {model}. Parameter set {idx + 1} of {len(param_space)}')
+
+        name = f'{j}-{model}'
+        log_dir = f'{results_dir}/logs/{name}'
+
+        result = test_model_regression(model, data_loader, epochs, batch_size, log_freq=100, log_dir=log_dir,
+                                       verbose=True)
+        model.close_session()
+        tf.reset_default_graph()
+
+        model_config = model.get_config()
+        train_config = {'batch_size': batch_size, 'epochs': epochs, 'results': result}
+        output = {**model_config, **train_config, 'results': result}
+
+        result_file = f'{results_dir}/{name}.pkl'
+        with open(result_file, 'wb') as h:
+            pickle.dump(output, h)
+
+
