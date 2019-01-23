@@ -1146,7 +1146,7 @@ class BayesMLPRegressionHyperprior(Reg_NN):
     def create_parameters(self):
         self.W = []; self.b = []
         with tf.name_scope('model/'):
-            for i, din, dout in enumerate(self.sizes[:-1], self.sizes[1:]):
+            for i, (din, dout) in enumerate(zip(self.sizes[:-1], self.sizes[1:])):
                 with tf.name_scope(f'layer_{i}/'):
                     self.W.append(make_weight_parameter([din, dout], self.prior_var, self.hyperprior))
                     self.b.append(make_weight_parameter([dout], self.prior_var, self.hyperprior))
