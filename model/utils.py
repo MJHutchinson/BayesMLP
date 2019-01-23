@@ -3,10 +3,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 import os
+import pickle
 
 
-def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, log_dir='logs', verbose=True):
+def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, results_dir='./results', name_prefix=None, verbose=True):
     x_train, y_train, x_test, y_test = data_gen.get_data()
+
+    if name_prefix is None:
+        name = f'{model}'
+    else:
+        name = f'{name_prefix}_{model}'
+
+    log_dir = f'{results_dir}/logs/{name}'
 
     summary_writer = tf.summary.FileWriter(log_dir, graph=model.sess.graph)
     fig_dir = f'{log_dir}/figs'
@@ -62,7 +70,17 @@ def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, l
 
     summary_writer.close()
 
-    return {'elbo': elbos, 'test_ll': test_lls, 'test_rmse': rmses, 'noise_sigma': noise_sigmas, 'train_ll': train_lls, 'train_kl': train_kls}
+    result = {'elbo': elbos, 'test_ll': test_lls, 'test_rmse': rmses, 'noise_sigma': noise_sigmas, 'train_ll': train_lls, 'train_kl': train_kls}
+
+    model_config = model.get_config()
+    train_config = {'batch_size': batch_size, 'epochs': epochs, 'results': result}
+    output = {**model_config, **train_config, 'results': result}
+
+    result_file = f'{results_dir}/{name}.pkl'
+    with open(result_file, 'wb') as h:
+        pickle.dump(output, h)
+
+    return result
 
 
 def test_model_classification(model, data_gen, epochs, batch_size=100, log_freq=1, log_dir='logs'):

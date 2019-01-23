@@ -28,8 +28,6 @@ class RegressionDataloader():
         self.X_train_transform, self.Y_train_transform = self.transform(self.X_train, self.Y_train)
         self.X_test_transform, self.Y_test_transform = self.transform(self.X_test, self.Y_test)
 
-        self.classes = self.Y_train.shape[1]
-
     def transform(self, X, Y):
         return (X-self.X_means)/self.X_sigmas, (Y - self.Y_means)/self.Y_sigmas
 
@@ -38,7 +36,7 @@ class RegressionDataloader():
 
     def get_dims(self):
         # Get data input and output dimensions
-        return self.X_train.shape[1], self.X_train.shape[0], self.classes
+        return self.X_train.shape[1], self.X_train.shape[0], self.Y_train.shape[1]
 
     def get_data(self):
         return self.X_train_transform, self.Y_train_transform, self.X_test_transform, self.Y_test_transform
@@ -49,6 +47,26 @@ class RegressionDataloader():
 
     def get_batch_size(self, max_hidden_layer_size):
         return NotImplementedError
+
+    @property
+    def input_size(self):
+        return self.X_train.shape[1]
+
+    @property
+    def output_size(self):
+        return self.Y_train.shape[1]
+
+    @property
+    def train_length(self):
+        return self.X_train.shape[0]
+
+    @property
+    def y_mu(self):
+        return self.Y_means
+
+    @property
+    def y_sigma(self):
+        return self.Y_sigmas
 
 
 class ClassificationDataloader():

@@ -1137,7 +1137,7 @@ class BayesMLPRegressionHyperprior(Reg_NN):
     def _KL_term(self):
         with tf.name_scope('kl'):
             kl = 0
-            for i, weight, bias in enumerate(zip(self.W, self.b)):
+            for i, (weight, bias) in enumerate(zip(self.W, self.b)):
                 with tf.name_scope(f'layer_{i}'):
                     kl += weight.KL()
                     kl += bias.KL()

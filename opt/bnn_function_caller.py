@@ -1,6 +1,10 @@
 import os
+import model.run_model_tensorflow
+
 from opt.nn_function_caller import NNFunctionCaller
 from data.data_loader import RegressionDataloader
+from time import sleep
+
 
 _MAX_TRIES = 3
 _SLEEP_BETWEEN_TRIES_SECS = 3
@@ -14,10 +18,6 @@ def get_default_params():
     }
 
 
-def build_model(nn):
-    pass
-
-
 class BNNMLPFunctionCaller(NNFunctionCaller):
 
     def __init__(self, *args, **kwargs):
@@ -27,12 +27,20 @@ class BNNMLPFunctionCaller(NNFunctionCaller):
         self.reporter.writeln('Loader data ' + self.train_params.data_set)
         self.reporter.writeln('Training data shape: ' + 'x: ' + self.data_loader.X_train.shape + ', y: ' + self.data_loader.Y_train.shape)
         self.reporter.writeln('Training data shape: ' + 'x: ' + self.data_loader.X_test.shape + ', y: ' + self.data_loader.Y_test.shape)
-        if not hasattr(self.train_params, 'tf_params'):
-            self.train_params = get_default_params()
 
-    def _eval_validation_score(self, qinfo, nn):
+        if not hasattr(self.train_params, 'tf_params'):
+            self.train_params.tf_params = get_default_params()
+
+        self.train_params.tf_params['metric'] = self.train_params.metric
+
+    def _eval_validation_score(self, nn, qinfo):
         os.environ['CUDA_VISIBLE_DEVICES'] = str(qinfo.worker_id)
         num_tries = 0
 
         while num_tries < _MAX_TRIES:
-            valid_score = 
+            try:
+                model.run_model_tensorflow.compute_validation_error(nn, self.data_loader, self.train_params.tf_params, qinfo.worker_id, qinfo.log_dir)
+            except:
+                sleep(_SLEEP_BETWEEN_TRIES_SECS)
+                num_tries += 1
+                self.reporter.writeln(f'********* Failed to try {num_tries} with gpu {qinfo.worker_id}')

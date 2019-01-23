@@ -60,7 +60,7 @@ class NNFunctionCaller(FunctionCaller):
       ret = self._eval_synthetic_function(nn, qinfo)
     else:
       try:
-        self.tmp_dir = tempfile.mkdtemp(dir=self.root_tmp_dir)
+        # self.tmp_dir = tempfile.mkdtemp(dir=self.root_tmp_dir)
         ret = self._eval_validation_score(nn, qinfo)
       except Exception as exc:
         self.reporter.writeln('Exception when evaluating %s: %s'%(nn, exc))
@@ -70,10 +70,10 @@ class NNFunctionCaller(FunctionCaller):
     qinfo.true_val = qinfo.val
     qinfo.point = nn
     self._write_result_to_file(ret, qinfo.result_file)
-    try:
-      shutil.rmtree(self.tmp_dir)
-    except:
-      pass
+    # try:
+    #   shutil.rmtree(self.tmp_dir)
+    # except:
+    #   pass
     return ret
 
   def _eval_synthetic_function(self, nn, qinfo):
