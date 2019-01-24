@@ -36,15 +36,18 @@ tf_params = {
 
 GPU_IDS = [0]
 
-EXP_DIR = f'/scratch/mjh252/logs/{DATASET}/multithreading-test_{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
+# EXP_DIR = f'/scratch/mjh252/logs/{DATASET}/multithreading-test_{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
+EXP_DIR = f'./results/{DATASET}/multithreading-test_{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
 LOG_DIR = EXP_DIR
 LOG_FILE = os.path.join(EXP_DIR, 'log')
 TMP_DIR = os.path.join(EXP_DIR, 'tmp')
 DATA_DIR = './data_dir'
+# DATA_DIR = '/scratch/mjh252/data/UCL'
 os.mkdir(EXP_DIR)
 os.mkdir(TMP_DIR)
 
-latest_dir = f'/scratch/mjh252/logs/{DATASET}/latest'
+# latest_dir = f'/scratch/mjh252/logs/{DATASET}/latest'
+latest_dir = f'./results/{DATASET}/latest'
 if os.path.islink(latest_dir):
     os.unlink(latest_dir)
 os.symlink(os.path.abspath(EXP_DIR), latest_dir)

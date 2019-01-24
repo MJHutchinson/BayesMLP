@@ -16,12 +16,10 @@ from scipy.sparse import dok_matrix
 
 def compute_validation_error(nn, data_loader, params, gpu_id, results_dir):
 
-    deviceStr = '/gpu:' + str(gpu_id)
-
     # with tf.device(deviceStr):
 
     model = BayesMLPNNRegressionHyperprior(data_loader.input_size, nn, data_loader.train_length, data_loader.y_mu, data_loader.y_sigma, hyperprior=True)
-    print(f'{data_loader.pickle_name} - running {model}.')
+    print(f'gpu {gpu_id} - {data_loader.pickle_name} - running {model}.')
     result = test_model_regression(model, data_loader, params['epochs'], params['batchSize'], log_freq=100, results_dir=results_dir, verbose=False)
     model.close_session()
     tf.reset_default_graph()
