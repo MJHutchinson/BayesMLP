@@ -40,6 +40,7 @@ class BNNMLPFunctionCaller(NNFunctionCaller):
 
         while num_tries < _MAX_TRIES and not success:
             try:
+                self.reporter.writeln(f'Running one gpu {qinfo.worker_id}: {qinfo}')
                 test_score = model.run_model_tensorflow.compute_validation_error(nn, self.data_loader, self.train_params.tf_params, qinfo.worker_id, qinfo.log_dir)
                 success = True
             except Exception as e:

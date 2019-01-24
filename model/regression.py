@@ -8,9 +8,8 @@ from copy import deepcopy
 np.random.seed(0)
 tf.set_random_seed(0)
 
-os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
-
-tf.logging.set_verbosity(tf.logging.INFO)
+os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
+tf.logging.set_verbosity(tf.logging.WARN)
 
 INITIAL_LOG_NOISE = -6.
 
@@ -1151,8 +1150,6 @@ class BayesMLPRegressionHyperprior(Reg_NN):
                 with tf.name_scope(f'layer_{i}/'):
                     self.W.append(make_weight_parameter([din, dout], self.prior_var, self.hyperprior))
                     self.b.append(make_weight_parameter([dout], self.prior_var, self.hyperprior))
-
-
 
 class BayesMLPNNRegressionHyperprior(Reg_NN):
     def __init__(self, input_size, nn, training_size, y_mu, y_sigma,

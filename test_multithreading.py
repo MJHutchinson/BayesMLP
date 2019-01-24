@@ -14,7 +14,7 @@ from utils.nn_utils import get_feedforward_adj_mat
 from model.neural_network_representation import get_mlp_layer_labels, MultiLayerPerceptron
 
 DATASET = 'wine-quality-red' # Dataset to run on
-CONFIG = f'./config/parameter_sweep_layer_sizes/{DATASET}.yaml'
+CONFIG = f'./config/{DATASET}.yaml'
 
 experiment_config = yaml.load(open(CONFIG, 'rb'))
 
@@ -30,13 +30,13 @@ epochs = experiment_config['epochs']
 
 tf_params = {
     'batchSize': batch_size,
-    'epochs': 100, #epochs,
+    'epochs': epochs,
     'learningRate': 0.001
 }
 
 GPU_IDS = [0]
 
-EXP_DIR = f'./results/{DATASET}/multithreading-test_{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
+EXP_DIR = f'/scratch/mjh252/logs/{DATASET}/multithreading-test_{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
 LOG_DIR = EXP_DIR
 LOG_FILE = os.path.join(EXP_DIR, 'log')
 TMP_DIR = os.path.join(EXP_DIR, 'tmp')
@@ -44,7 +44,7 @@ DATA_DIR = './data_dir'
 os.mkdir(EXP_DIR)
 os.mkdir(TMP_DIR)
 
-latest_dir = f'./results/{DATASET}/latest'
+latest_dir = f'/scratch/mjh252/logs/{DATASET}/latest'
 if os.path.islink(latest_dir):
     os.unlink(latest_dir)
 os.symlink(os.path.abspath(EXP_DIR), latest_dir)
