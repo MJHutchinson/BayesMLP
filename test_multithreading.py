@@ -1,5 +1,6 @@
 import os
 import yaml
+import time
 import itertools
 
 from argparse import Namespace
@@ -13,7 +14,7 @@ from utils.nn_utils import get_feedforward_adj_mat
 from model.neural_network_representation import get_mlp_layer_labels, MultiLayerPerceptron
 
 DATASET = 'wine-quality-red' # Dataset to run on
-CONFIG = f'./config/parameter_sweep_layer_size/{DATASET}.yaml'
+CONFIG = f'./config/parameter_sweep_layer_sizes/{DATASET}.yaml'
 
 experiment_config = yaml.load(open(CONFIG, 'rb'))
 
@@ -29,7 +30,7 @@ epochs = experiment_config['epochs']
 
 tf_params = {
     'batchSize': batch_size,
-    'epochs': epochs,
+    'epochs': 100, #epochs,
     'learningRate': 0.001
 }
 
@@ -43,13 +44,19 @@ DATA_DIR = './data_dir'
 os.mkdir(EXP_DIR)
 os.mkdir(TMP_DIR)
 
-REPORTER = get_reporter(LOG_FILE)
+latest_dir = f'./results/{DATASET}/latest'
+if os.path.islink(latest_dir):
+    os.unlink(latest_dir)
+os.symlink(os.path.abspath(EXP_DIR), latest_dir)
+
+REPORTER = get_reporter(open(LOG_FILE, 'w'))
 
 worker_manager = GPUWorkerManager(GPU_IDS, TMP_DIR, LOG_DIR)
 
 train_params = Namespace(data_set=DATASET,
                          data_dir=DATA_DIR,
-                         tf_params=tf_params)
+                         tf_params=tf_params,
+                         metric='test_rmse')
 
 func_caller = BNNMLPFunctionCaller(DATASET, None, train_params,
                                reporter=REPORTER,
@@ -81,13 +88,17 @@ def wait_till_free():
             # self.set_curr_spent_capital(last_receive_time)
             latest_results = worker_manager.fetch_latest_results()
             for qinfo_result in latest_results:
-                self._update_history(qinfo_result)
-                self._remove_from_in_progress(qinfo_result)
-            self._add_data_to_model(latest_results)
+                print(f'Finished model {qinfo_result}')
             keep_looping = False
         else:
-            time.sleep(poll_time)
+            time.sleep(0.5)
 
 
 while len(points) > 0:
+
+    wait_till_free()
+    point = points[0]
+    points.remove(point)
+    qinfo = Namespace(point=point, send_time=time.time())
+    worker_manager.dispatch_single_job(func_caller, point, qinfo)
 
