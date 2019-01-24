@@ -88,7 +88,7 @@ def wait_till_free():
             # self.set_curr_spent_capital(last_receive_time)
             latest_results = worker_manager.fetch_latest_results()
             for qinfo_result in latest_results:
-                print(f'Finished model {qinfo_result}')
+                print(f'Finished model on gpu {qinfo_result.worker_id}: {qinfo_result}')
             keep_looping = False
         else:
             time.sleep(0.5)

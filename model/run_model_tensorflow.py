@@ -28,6 +28,6 @@ def compute_validation_error(nn, data_loader, params, gpu_id, results_dir):
 
     rolling_score = result[params['metric']][-20:]
 
-    return sum(rolling_score)/len(rolling_score)
+    return sum(rolling_score)/len(rolling_score) # return the log dir too
 
 

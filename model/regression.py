@@ -242,6 +242,7 @@ class Reg_NN(object):
             s += f'{key}_{config[key]}_'
 
         s = s[:-1]
+        s = s.replace('\n', ' ').replace('\t1.0', ' ')#.replace(' ', '')
         return s
 
     def make_metrics(self):

@@ -42,7 +42,7 @@ class NNFunctionCaller(FunctionCaller):
 
   def eval_single(self, nn, qinfo, noisy=False):
     """ Over-rides eval_single. """
-    qinfo.val = self._func_wrapper(nn, qinfo)
+    qinfo = self._func_wrapper(nn, qinfo)
     if qinfo.val == EVAL_ERROR_CODE:
       self.reporter.writeln(('Error occurred when evaluating %s. Returning ' +
                              'EVAL_ERROR_CODE: %s.')%(nn, EVAL_ERROR_CODE))
@@ -74,7 +74,7 @@ class NNFunctionCaller(FunctionCaller):
     #   shutil.rmtree(self.tmp_dir)
     # except:
     #   pass
-    return ret
+    return qinfo
 
   def _eval_synthetic_function(self, nn, qinfo):
     """ Evaluates the synthetic function. """
