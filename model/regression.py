@@ -97,8 +97,8 @@ class Reg_NN(object):
         self.x = tf.placeholder(tf.float32, [None, input_size], name='x')
         self.y = tf.placeholder(tf.float32, [None, output_size], name='y')
 
-        np.random.seed(1) # Control random seeds between runs
-        tf.random.set_random_seed(1)
+        # np.random.seed(1) # Control random seeds between runs
+        # tf.random.set_random_seed(1)
 
     def assign_optimizer(self, learning_rate=0.001):
         with tf.name_scope('optimiser'):
@@ -1175,6 +1175,7 @@ class BayesMLPNNRegressionHyperprior(Reg_NN):
 
         super(BayesMLPNNRegressionHyperprior, self).__init__(input_size, 0, 1, training_size)
 
+        self.nn = nn
         self.conn_mat = nn.conn_mat
         self.hidden_sizes = nn.num_units_in_each_layer
         self.layer_labels = nn.layer_labels

@@ -1,4 +1,5 @@
 import os
+import traceback
 import model.run_model_tensorflow
 
 from opt.nn_function_caller import NNFunctionCaller
@@ -49,5 +50,6 @@ class BNNMLPFunctionCaller(NNFunctionCaller):
                 self.reporter.writeln(f'********* Failed to try {num_tries} with gpu {qinfo.worker_id}')
                 self.reporter.writeln(f'{e}')
                 print(e)
+                print(traceback.format_exc())
 
         return test_score
