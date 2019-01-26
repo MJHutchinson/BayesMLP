@@ -92,7 +92,7 @@ def _KL_term(weights, prior):
 
 
 class Reg_NN(object):
-    def __init__(self, input_size, hidden_size, output_size, training_size, y_mu, y_sigma):
+    def __init__(self, input_size, hidden_size, output_size, training_size):
         # input and output placeholders
         self.x = tf.placeholder(tf.float32, [None, input_size], name='x')
         self.y = tf.placeholder(tf.float32, [None, output_size], name='y')

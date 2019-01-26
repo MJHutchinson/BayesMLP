@@ -30,7 +30,7 @@ epochs = experiment_config['epochs']
 
 tf_params = {
     'batchSize': batch_size,
-    'epochs': epochs,
+    'epochs': 100, #epochs,
     'learningRate': 0.001
 }
 
