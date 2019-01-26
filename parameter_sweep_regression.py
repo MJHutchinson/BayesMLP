@@ -8,8 +8,9 @@ import itertools
 
 import tensorflow as tf
 import data.data_loader as data
-from model.regression import BayesMLPRegression
-from model.utils import test_model_regression
+from model.regression import BayesMLPRegression, BayesMLPNNRegressionHyperprior
+from model.test_model import test_model_regression
+from utils.nn_utils import get_nn_representation
 
 
 '''
@@ -85,14 +86,15 @@ for idx, (hidden_layer, hidden_size, lr, prior_var) in enumerate(param_space):
 
     hidden_configuration = [hidden_size] * hidden_layer
 
-    model = BayesMLPRegression(input_size, hidden_configuration, output_size, train_length, y_mu, y_sigma, prior_var=prior_var)
+    # model = BayesMLPRegression(input_size, hidden_configuration, output_size, train_length, prior_var=prior_var)
+    nn = get_nn_representation(hidden_size, hidden_layer)
+    model = BayesMLPNNRegressionHyperprior(data_loader.input_size, nn, data_loader.output_size, hyperprior=True)
 
     print(f'{args.dataset} - running {model}. Parameter set {idx+1} of {len(param_space)}')
 
     name = f'{model}'
-    log_dir = f'{results_dir}/logs/{name}'
 
-    result = test_model_regression(model, data_loader, epochs, batch_size, log_freq=100, log_dir=log_dir, verbose=False)
+    result = test_model_regression(model, data_loader, epochs, batch_size, results_dir=results_dir, log_freq=100, verbose=True)
     model.close_session()
     tf.reset_default_graph()
 

@@ -11,7 +11,7 @@ from scipy.sparse import dok_matrix
 import data.data_loader as data
 from model.neural_network_representation import MultiLayerPerceptron, get_mlp_layer_labels
 from model.regression import BayesMLPNNRegression
-from model.utils import test_model_regression
+from model.test_model import test_model_regression
 from utils.general_utils import _set_coords_to_val
 from utils.file_utils import gen_hidden_combinations, parameter_combinations
 

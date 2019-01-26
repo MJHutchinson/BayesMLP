@@ -6,7 +6,7 @@ import shutil
 import tensorflow as tf
 import argparse
 from model.regression import BayesMLPRegression, BaysMLPRegressionTFP
-from model.utils import test_model_regression
+from model.test_model import test_model_regression
 from utils.file_utils import num_to_name, gen_hidden_combinations, parameter_combinations
 from data.data_loader import RegressionDataloader
 

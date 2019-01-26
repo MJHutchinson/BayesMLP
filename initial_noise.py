@@ -9,7 +9,7 @@ import itertools
 import tensorflow as tf
 import data.data_loader as data
 from model.regression import BayesMLPRegression
-from model.utils import test_model_regression
+from model.test_model import test_model_regression
 
 
 '''

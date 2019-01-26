@@ -97,8 +97,8 @@ class Reg_NN(object):
         self.x = tf.placeholder(tf.float32, [None, input_size], name='x')
         self.y = tf.placeholder(tf.float32, [None, output_size], name='y')
 
-        self.y_mu = tf.constant(y_mu, dtype=tf.float32, name='y_mu')
-        self.y_sigma = tf.constant(y_sigma, dtype=tf.float32, name='y_sigma')
+        np.random.seed(1) # Control random seeds between runs
+        tf.random.set_random_seed(1)
 
     def assign_optimizer(self, learning_rate=0.001):
         with tf.name_scope('optimiser'):
@@ -252,22 +252,37 @@ class Reg_NN(object):
             self.test_logloss  = tf.placeholder(tf.float32, shape=None, name='test_logloss_summary')
             self.test_rmse     = tf.placeholder(tf.float32, shape=None, name='test_rmse_summary')
 
-            train_cost_summary    = tf.summary.scalar('metrics/train_cost',     self.train_cost)
-            train_logloss_summary = tf.summary.scalar('metrics/train_logloss',  self.train_logloss)
-            train_kl_summary      = tf.summary.scalar('metrics/train_kl',       self.train_kl)
-            test_logloss_summary  = tf.summary.scalar('metrics/test_logloss',   self.test_logloss)
-            test_rmse_summary     = tf.summary.scalar('metrics/test_rmse',      self.test_rmse)
-            noise_var_summary     = tf.summary.scalar('parameters/homoskedastic_noise', self.output_sigma)
+            self.train_logloss_true = tf.placeholder(tf.float32, shape=None, name='train_logloss_summary_true')
+            self.test_logloss_true  = tf.placeholder(tf.float32, shape=None, name='test_logloss_summary_true')
+            self.test_rmse_true     = tf.placeholder(tf.float32, shape=None, name='test_rmse_summary_true')
+            self.output_sigma_true  = tf.placeholder(tf.float32, shape=None, name='homoskedastic_noise_true')
+
+            train_cost_summary    = tf.summary.scalar('train_cost',     self.train_cost, family='transforms_space')
+            train_logloss_summary = tf.summary.scalar('train_logloss',  self.train_logloss, family='transforms_space')
+            train_kl_summary      = tf.summary.scalar('train_kl',       self.train_kl, family='real_space')
+            test_logloss_summary  = tf.summary.scalar('test_logloss',   self.test_logloss, family='transforms_space')
+            test_rmse_summary     = tf.summary.scalar('test_rmse',      self.test_rmse, family='transforms_space')
+            noise_output_noise_summary = tf.summary.scalar('homoskedastic_noise', self.output_sigma, family='transforms_space')
+
+            train_logloss_summary_true = tf.summary.scalar('train_logloss_true',  self.train_logloss_true, family='real_space')
+            test_logloss_summary_true  = tf.summary.scalar('test_logloss_true',   self.test_logloss_true, family='real_space')
+            test_rmse_summary_true     = tf.summary.scalar('test_rmse_true',      self.test_rmse_true, family='real_space')
+            noise_output_noise_summary_true = tf.summary.scalar('homoskedastic_noise_true', self.output_sigma_true, family='real_space')
 
             self.performance_metrics = tf.summary.merge_all()
 
-    def log_metrics(self, train_cost, train_logloss, train_kl, test_logloss, test_rmse):
+    def log_metrics(self, train_cost, train_logloss, train_kl, test_logloss, test_rmse, train_logloss_true, test_logloss_true, test_rmse_true, output_sigma_true):
         return self.sess.run(self.performance_metrics, feed_dict={
             self.train_cost:train_cost,
             self.train_logloss: train_logloss,
             self.train_kl: train_kl,
             self.test_logloss: test_logloss,
-            self.test_rmse: test_rmse
+            self.test_rmse: test_rmse,
+
+            self.train_logloss_true: train_logloss_true,
+            self.test_logloss_true: test_logloss_true,
+            self.test_rmse_true: test_rmse_true,
+            self.output_sigma_true: output_sigma_true
         })
 
 
@@ -277,12 +292,12 @@ class Reg_NN(object):
 
 
 class BaysMLPRegressionTFP(Reg_NN):
-    def __init__(self, input_size, hidden_size, output_size, training_size, y_mu, y_sigma,
+    def __init__(self, input_size, hidden_size, output_size, training_size,
                  no_train_samples=10, no_pred_samples=100, prev_means=None, prev_log_variances=None,
                  learning_rate=0.001,
                  prior_mean=0., prior_var=1.):
 
-        super(BaysMLPRegressionTFP, self).__init__(input_size, hidden_size, output_size, training_size, y_mu, y_sigma)
+        super(BaysMLPRegressionTFP, self).__init__(input_size, hidden_size, output_size, training_size)
 
         self.prior_mean = prior_mean
         self.prior_var = prior_var
@@ -355,11 +370,11 @@ class BaysMLPRegressionTFP(Reg_NN):
 
 
 class BayesMLPRegression(Reg_NN):
-    def __init__(self, input_size, hidden_size, output_size, training_size, y_mu, y_sigma,
+    def __init__(self, input_size, hidden_size, output_size, training_size,
                  no_train_samples=10, no_pred_samples=100, prev_means=None, prev_log_variances=None,
                  learning_rate=0.001, prior_mean=0., prior_var=1., initial_output_noise=np.exp(-6)):
 
-        super(BayesMLPRegression, self).__init__(input_size, hidden_size, output_size, training_size, y_mu, y_sigma)
+        super(BayesMLPRegression, self).__init__(input_size, hidden_size, output_size, training_size)
 
         self.config = {
             'hidden_size': hidden_size,
@@ -392,10 +407,7 @@ class BayesMLPRegression(Reg_NN):
         # def train predictions and training metric production
         self.pred_train = self._prediction(self.x, self.no_train_samples)
 
-        self.pred_train_actual = self.pred_train * self.y_sigma + self.y_mu
-        self.targ_train_actual = self.y * self.y_sigma + self.y_mu
-
-        self.loglik = _loglik(self.pred_train_actual, self.targ_train_actual, self.output_sigma)
+        self.loglik = _loglik(self.pred_train, self.y, self.output_sigma)
         self.KL = tf.div(_KL_term(self.weights, self.priors), self.training_size)
 
         self.cost = -self.loglik + self.KL
@@ -404,11 +416,8 @@ class BayesMLPRegression(Reg_NN):
         # def test predictions and testing metrics
         self.pred_test  = self._prediction(self.x, self.no_pred_samples)
 
-        self.pred_test_actual = self.pred_test * self.y_sigma + self.y_mu
-        self.targ_test_actual = self.y * self.y_sigma + self.y_mu
-
-        self.mse = _mse(self.pred_test_actual, self.targ_test_actual)
-        self.test_loglik = _test_loglik(self.pred_test_actual, self.targ_test_actual, self.output_sigma)
+        self.mse = _mse(self.pred_test, self.y)
+        self.test_loglik = _test_loglik(self.pred_test, self.y, self.output_sigma)
 
 
         self.assign_optimizer(learning_rate)
@@ -573,12 +582,12 @@ class BayesMLPRegression(Reg_NN):
 
 
 class BayesSkipMLPRegression(Reg_NN):
-    def __init__(self, input_size, hidden_size, skips, output_size, training_size, y_mu, y_sigma,
+    def __init__(self, input_size, hidden_size, skips, output_size, training_size,
                  no_train_samples=10, no_pred_samples=100, prev_means=None, prev_log_variances=None,
                  learning_rate=0.001,
                  prior_mean=0., prior_var=1.):
 
-        super(BayesSkipMLPRegression, self).__init__(input_size, hidden_size, output_size, training_size, y_mu, y_sigma)
+        super(BayesSkipMLPRegression, self).__init__(input_size, hidden_size, output_size, training_size)
 
         self.config = {
             'hidden_size': hidden_size,
@@ -817,12 +826,12 @@ class BayesSkipMLPRegression(Reg_NN):
 """ Bayes MLP for regression built from NN representation from OTTOMAN paper """
 
 class BayesMLPNNRegression(Reg_NN):
-    def __init__(self, input_size, nn, training_size, y_mu, y_sigma,
+    def __init__(self, input_size, nn, training_size,
                  no_train_samples=10, no_pred_samples=100, prev_means=None, prev_log_variances=None,
                  learning_rate=0.001,
                  prior_mean=0., prior_var=1.):
 
-        super(BayesMLPNNRegression, self).__init__(input_size, 0, 1, training_size, y_mu, y_sigma)
+        super(BayesMLPNNRegression, self).__init__(input_size, 0, 1, training_size)
 
         self.config = {
             'hidden_sizes': nn.num_units_in_each_layer,
@@ -1034,11 +1043,11 @@ class BayesMLPNNRegression(Reg_NN):
 from model.variational_parameter import make_weight_parameter
 
 class BayesMLPRegressionHyperprior(Reg_NN):
-    def __init__(self, input_size, hidden_size, output_size, training_size, y_mu, y_sigma,
+    def __init__(self, input_size, hidden_size, output_size, training_size,
                  no_train_samples=10, no_pred_samples=100, prev_means=None, prev_log_variances=None,
                  learning_rate=0.001, prior_mean=0., prior_var=1., initial_output_noise=np.exp(-6), hyperprior=False):
 
-        super(BayesMLPRegressionHyperprior, self).__init__(input_size, hidden_size, output_size, training_size, y_mu, y_sigma)
+        super(BayesMLPRegressionHyperprior, self).__init__(input_size, hidden_size, output_size, training_size)
 
         self.hidden_size = deepcopy(hidden_size)
         self.learning_rate = learning_rate
@@ -1151,12 +1160,20 @@ class BayesMLPRegressionHyperprior(Reg_NN):
                     self.W.append(make_weight_parameter([din, dout], self.prior_var, self.hyperprior))
                     self.b.append(make_weight_parameter([dout], self.prior_var, self.hyperprior))
 
-class BayesMLPNNRegressionHyperprior(Reg_NN):
-    def __init__(self, input_size, nn, training_size, y_mu, y_sigma,
-                 no_train_samples=10, no_pred_samples=100, prev_means=None, prev_log_variances=None,
-                 learning_rate=0.001, prior_mean=0., prior_var=1., hyperprior=False):
 
-        super(BayesMLPNNRegressionHyperprior, self).__init__(input_size, 0, 1, training_size, y_mu, y_sigma)
+class BayesMLPNNRegressionHyperprior(Reg_NN):
+    def __init__(self,
+                 input_size,
+                 nn,
+                 training_size,
+                 no_train_samples=10,
+                 no_pred_samples=100,
+                 learning_rate=0.001,
+                 prior_mean=0.,
+                 prior_var=1.,
+                 hyperprior=False):
+
+        super(BayesMLPNNRegressionHyperprior, self).__init__(input_size, 0, 1, training_size)
 
         self.conn_mat = nn.conn_mat
         self.hidden_sizes = nn.num_units_in_each_layer
@@ -1173,8 +1190,6 @@ class BayesMLPNNRegressionHyperprior(Reg_NN):
             'hyperprior': self.hyperprior
         }
 
-        self.nn = nn
-
         self.create_parameters()
 
         self.no_train_samples = no_train_samples
@@ -1187,10 +1202,7 @@ class BayesMLPNNRegressionHyperprior(Reg_NN):
         # def train predictions and training metric production
         self.pred_train = self._prediction(self.x, self.no_train_samples)
 
-        self.pred_train_actual = self.pred_train * self.y_sigma + self.y_mu
-        self.targ_train_actual = self.y * self.y_sigma + self.y_mu
-
-        self.loglik = _loglik(self.pred_train_actual, self.targ_train_actual, self.output_sigma)
+        self.loglik = _loglik(self.pred_train, self.y, self.output_sigma)
         self.KL = tf.div(self._KL_term(), self.training_size)
 
         self.cost = -self.loglik + self.KL
@@ -1198,11 +1210,8 @@ class BayesMLPNNRegressionHyperprior(Reg_NN):
         # def test predictions and testing metrics
         self.pred_test = self._prediction(self.x, self.no_pred_samples)
 
-        self.pred_test_actual = self.pred_test * self.y_sigma + self.y_mu
-        self.targ_test_actual = self.y * self.y_sigma + self.y_mu
-
-        self.mse = _mse(self.pred_test_actual, self.targ_test_actual)
-        self.test_loglik = _test_loglik(self.pred_test_actual, self.targ_test_actual, self.output_sigma)
+        self.mse = _mse(self.pred_test, self.y)
+        self.test_loglik = _test_loglik(self.pred_test, self.y, self.output_sigma)
 
         self.assign_optimizer(learning_rate)
         self.assign_session()
@@ -1214,7 +1223,7 @@ class BayesMLPNNRegressionHyperprior(Reg_NN):
         # this samples a layer at a time
     def _prediction_layer(self, inputs, no_samples):
         K = no_samples
-        N = tf.shape(inputs)[0]
+        N = tf.shape(inputs, name='N')[0]
 
         with tf.name_scope('Expand_sample/'):
             act = tf.tile(tf.expand_dims(inputs, 0), [K, 1, 1])
@@ -1263,17 +1272,8 @@ class BayesMLPNNRegressionHyperprior(Reg_NN):
             # get parent layer output sizes and sum
             parent_acts = [prev_acts[i] for i in plist]
 
-            scalar_mult = tf.Variable(1. / len(plist), dtype=tf.float32, trainable=False)  ### NEED TO VERIFY FLOAT 32
+            scalar_mult = tf.constant(1. / len(plist), dtype=tf.float32)  ### NEED TO VERIFY FLOAT 32
             act = tf.scalar_mul(scalar_mult, tf.add_n(parent_acts))
-
-            # dout = 1
-            # m_pre = tf.einsum('kni,io->kno', act, self.W_m[-1])
-            # v_pre = tf.einsum('kni,io->kno', act ** 2.0, tf.exp(self.W_v[-1]))
-            # eps_w = tf.random_normal([K, N, dout], 0.0, 1.0, dtype=tf.float32)
-            # pre_W = eps_w * tf.sqrt(1e-9 + v_pre) + m_pre
-            # eps_b = tf.random_normal([K, 1, dout], 0.0, 1.0, dtype=tf.float32)
-            # pre_b = eps_b * tf.exp(0.5 * self.b_v[-1]) + self.b_m[-1]
-            # pre = pre_W + pre_b
 
         return act
 

@@ -1,6 +1,6 @@
 import pickle
 from model.classification import BayesMLPClassification
-from model.utils import test_model
+from model.test_model import test_model
 from data.data_loader import MnistDataloader
 
 # batch_size = 1000

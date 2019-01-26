@@ -9,7 +9,7 @@ import itertools
 import tensorflow as tf
 import data.data_loader as data
 from model.regression import BayesMLPRegressionHyperprior, BayesMLPRegression, BayesMLPNNRegression, BayesSkipMLPRegression, BayesMLPNNRegressionHyperprior
-from model.utils import test_model_regression
+from model.test_model import test_model_regression
 from model.neural_network_representation import MultiLayerPerceptron, get_mlp_layer_labels
 from scipy.sparse import dok_matrix
 
