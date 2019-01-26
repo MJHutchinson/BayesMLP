@@ -92,7 +92,7 @@ def _KL_term(weights, prior):
 
 
 class Reg_NN(object):
-    def __init__(self, input_size, hidden_size, output_size, training_size):
+    def __init__(self, input_size, hidden_size, output_size, training_size, y_mu, y_sigma):
         # input and output placeholders
         self.x = tf.placeholder(tf.float32, [None, input_size], name='x')
         self.y = tf.placeholder(tf.float32, [None, output_size], name='y')
@@ -1190,7 +1190,7 @@ class BayesMLPNNRegressionHyperprior(Reg_NN):
         self.pred_train_actual = self.pred_train * self.y_sigma + self.y_mu
         self.targ_train_actual = self.y * self.y_sigma + self.y_mu
 
-        self.loglik = _loglik(self.pred_train_actual, self.targ_train_actual, self.output_sigma)
+        self.loglik = _loglik(self.pred_train, self.y, self.output_sigma)
         self.KL = tf.div(self._KL_term(), self.training_size)
 
         self.cost = -self.loglik + self.KL
@@ -1201,8 +1201,8 @@ class BayesMLPNNRegressionHyperprior(Reg_NN):
         self.pred_test_actual = self.pred_test * self.y_sigma + self.y_mu
         self.targ_test_actual = self.y * self.y_sigma + self.y_mu
 
-        self.mse = _mse(self.pred_test_actual, self.targ_test_actual)
-        self.test_loglik = _test_loglik(self.pred_test_actual, self.targ_test_actual, self.output_sigma)
+        self.mse = _mse(self.pred_test, self.y)
+        self.test_loglik = _test_loglik(self.pred_test, self.y, self.output_sigma)
 
         self.assign_optimizer(learning_rate)
         self.assign_session()
