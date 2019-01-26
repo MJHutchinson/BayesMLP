@@ -8,6 +8,8 @@ import pickle
 
 def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, results_dir='./results', name_prefix=None, verbose=True):
     x_train, y_train, x_test, y_test = data_gen.get_data()
+    y_sigma = float(data_gen.y_sigma)
+    log_y_sigma = float(np.log(y_sigma))
 
     if name_prefix is None:
         name = f'{model}'
@@ -20,39 +22,54 @@ def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, r
     fig_dir = f'{log_dir}/figs'
     os.mkdir(fig_dir)
 
-    elbos = []
+    train_elbos = []
     test_lls = []
-    rmses = []
-    noise_sigmas = []
+    test_rmses = []
     train_lls = []
     train_kls = []
+    noise_sigmas = []
+
+    test_lls_true = []
+    test_rmses_true = []
+    train_lls_true = []
+    noise_sigmas_true = []
 
     if verbose:
-        test_log_lik, test_rmse = model.accuracy(x_test, y_test, batch_size=batch_size)
-        print(f'Initial test log likelihood: {test_log_lik:8.4f}, test rmse: {test_rmse:8.4f}')
+        test_ll, test_rmse = model.accuracy(x_test, y_test, batch_size=batch_size)
+        print(f'Initial test log likelihood: {test_ll:8.4f}, test rmse: {test_rmse:8.4f}')
 
     for epoch in range(epochs):
 
         t = time.time()
-        train_elbo, train_kl, train_log_lik = model.train_one(x_train, y_train, batch_size=batch_size)
+        train_elbo, train_kl, train_ll = model.train_one(x_train, y_train, batch_size=batch_size)
         train_time = time.time()-t
-        test_log_lik, test_rmse = model.accuracy(x_test, y_test, batch_size=batch_size)
+        test_ll, test_rmse = model.accuracy(x_test, y_test, batch_size=batch_size)
         test_time = time.time() - train_time - t
 
-        sy = model.sess.run(model.output_sigma)
+        noise_sigma = model.sess.run(model.output_sigma)
 
-        elbos.append(train_elbo)
-        test_lls.append(test_log_lik)
-        rmses.append(test_rmse)
-        noise_sigmas.append(sy)
-        train_lls.append(train_log_lik)
+        train_elbos.append(train_elbo)
+        test_lls.append(test_ll)
+        test_rmses.append(test_rmse)
+        noise_sigmas.append(noise_sigma)
+        train_lls.append(train_ll)
         train_kls.append(train_kl)
 
-        summary = model.log_metrics(train_elbo, train_log_lik, train_kl, test_log_lik, test_rmse)
+        test_ll_true = test_ll - log_y_sigma
+        train_ll_true = train_ll - log_y_sigma
+        test_rmse_true = test_rmse * y_sigma
+        noise_sigma_true = noise_sigma * y_sigma
+
+        test_lls_true.append(test_ll_true)
+        train_lls_true.append(train_ll_true)
+        test_rmses_true.append(test_rmse_true)
+        noise_sigmas_true.append(noise_sigma_true)
+
+        summary = model.log_metrics(train_elbo, train_ll, train_kl, test_ll, test_rmse, train_ll_true, test_ll_true, test_rmse_true, noise_sigma_true)
         summary_writer.add_summary(summary, epoch)
 
         if (epoch % log_freq == 0) & verbose:
-            print(f'\rEpoch {epoch:4.0f}, \t ELBO: {train_elbo:10.4f}, \t KL term: {train_kl:10.4f}, \t train log likelihood term: {train_log_lik:8.4f}, \t test log likelihood: {test_log_lik:8.4f}, \t test auxiliary: {test_rmse:8.4f}, \t noise sigma: {sy:8.4f}, \t train time: {train_time:6.4f}, \t test time: {test_time:6.4f}')
+            print(f'\rEpoch {epoch:4.0f}, \t ELBO: {train_elbo:10.4f}, \t KL term: {train_kl:10.4f}, \t train log likelihood term: {train_ll:8.4f}, \t test log likelihood: {test_ll:8.4f}, \t test auxiliary: {test_rmse:8.4f}, \t noise sigma: {noise_sigma:8.4f}, \t train time: {train_time:6.4f}, \t test time: {test_time:6.4f}')
 
         if epoch % (log_freq * 10) == 0:
             predictions_train = np.mean(model.prediction(x_train, batch_size=batch_size), 0)
@@ -70,7 +87,16 @@ def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, r
 
     summary_writer.close()
 
-    result = {'elbo': elbos, 'test_ll': test_lls, 'test_rmse': rmses, 'noise_sigma': noise_sigmas, 'train_ll': train_lls, 'train_kl': train_kls}
+    result = {'elbo': train_elbos,
+              'test_ll': test_lls,
+              'test_rmse': test_rmses,
+              'noise_sigma': noise_sigmas,
+              'train_ll': train_lls,
+              'train_kl': train_kls,
+              'train_ll_true': train_lls_true,
+              'test_ll_true': test_lls_true,
+              'test_rmse_true': test_rmses_true,
+              'noise_sigma_true': noise_sigma_true}
 
     model_config = model.get_config()
     train_config = {'batch_size': batch_size, 'epochs': epochs, 'results': result}
