@@ -1,7 +1,8 @@
-hidden_sizes: [50]
-hidden_layers: [2]
-epochs: 60000
+hs: [400]
+hidden_layers: 2
+epochs: 2
 search_space: 'small'
 learning_rates: [0.001]
 prior_vars: [1.]
+activations: ['relu']
 batch_size: 900

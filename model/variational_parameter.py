@@ -11,28 +11,53 @@ class Paramter(object):
         self.prior = prior
         self.varables = variables
 
-    def KL(self):
+    def _KL(self):
         """
-        compute KL(value||prior)
-        assume:
-            (1) value is a diagonal gaussian
-            (2) prior is a diagonal gaussian or an inverse-gamme
-            (3) if prior is an inverse-gamma, it is a hyper-prior
-        """
+                compute KL(value||prior) for each weight
+                assume:
+                    (1) value is a diagonal gaussian
+                    (2) prior is a diagonal gaussian or an inverse-gamme
+                    (3) if prior is an inverse-gamma, it is a hyper-prior
+                """
         if isinstance(self.value, d.Normal):
             if isinstance(self.prior, d.Normal):
-                return tf.reduce_sum(d.kl_divergence(self.value, self.prior))
+                return d.kl_divergence(self.value, self.prior)
 
             elif isinstance(self.prior, d.InverseGamma):
                 m = tf.to_float(tf.reduce_prod(tf.shape(self.value.loc)))
-                S = tf.reduce_sum(self.value.scale**2 + self.value.loc**2)
+                S = tf.reduce_sum(self.value.scale ** 2 + self.value.loc ** 2)
                 m_plus_2alpha_plus_2 = m + 2.0 * self.prior.concentration + 2.0
                 S_plus_2beta = S + 2.0 * self.prior.rate
                 s_star = S_plus_2beta / m_plus_2alpha_plus_2
 
                 tf.summary.scalar(name='prior_std', tensor=s_star)
 
-                return tf.reduce_sum(d.kl_divergence(self.value, d.Normal(0, tf.sqrt(s_star))))
+                return d.kl_divergence(self.value, d.Normal(0, tf.sqrt(s_star)))
+
+    def KL(self):
+        """
+        Computes the total KL for the given
+        :return:
+        """
+        return tf.reduce_sum(self._KL())
+
+    def pruning_from_KL(self):
+        """
+        Quantifies how much each unit has been pruned by computing the KL of the weights of a given neuron. KL
+        normalised to be per weight.
+        ONLY works on weight parameters at the moment - does not incorporate biases and will not calculate correctly
+        on biases
+        :return: a list confining KL per neuron
+        """
+        return tf.reduce_mean(self._KL(), axis=0)
+
+    def pruning_from_ratio(self):
+        """
+        Quantifies how much each weight has been pruned - per weight NOT per neuron
+        :return:
+        """
+        ratio = tf.divide(tf.abs(self.value.loc), tf.abs(self.value.scale))
+        return tf.reshape(range, [-1])
 
 
 def make_weight_parameter(shape, prior_var=1., hyper_prior=False, name=None):

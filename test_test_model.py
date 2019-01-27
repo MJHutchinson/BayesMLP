@@ -12,7 +12,7 @@ from utils.reporters import get_reporter
 from utils.nn_utils import get_feedforward_nn
 from utils.mutli_gpu_runner import MultiGPURunner
 
-DATASET = 'wine-quality-red' # Dataset to run on
+DATASET = 'yacht' # Dataset to run on
 CONFIG = f'./config/{DATASET}.yaml'
 
 experiment_config = yaml.load(open(CONFIG, 'rb'))
@@ -74,6 +74,11 @@ for (hidden_layer, hidden_size) in param_space:
     }
     points.append((nn, params))
 
+from model.regression import BayesMLPNNRegression
+from data.data_loader import RegressionDataloader
+from model.test_model import test_model_regression
 
-gpu_runner = MultiGPURunner(func_caller, GPU_IDS, TMP_DIR, LOG_DIR)
-gpu_runner.run_points(points)
+point = points[0]
+data_loader = RegressionDataloader(DATASET, DATA_DIR)
+model = BayesMLPNNRegression(data_loader.input_size, point[0], data_loader.train_length, **point[1])
+test_model_regression(model, data_loader, 50000, 1000, 10, LOG_DIR)

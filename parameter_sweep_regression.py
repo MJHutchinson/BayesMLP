@@ -5,11 +5,14 @@ import yaml
 import shutil
 import argparse
 import itertools
+from argparse import Namespace
 
 import tensorflow as tf
 import data.data_loader as data
-from model.regression import BayesMLPRegression
-from model.utils import test_model_regression
+from utils.nn_utils import get_feedforward_nn
+from utils.mutli_gpu_runner import MultiGPURunner
+from utils.reporters import get_reporter
+from opt.bnn_function_caller import BNNMLPFunctionCaller
 
 
 '''
@@ -17,11 +20,12 @@ Experiment to run a series of different parameter settings on the specified data
 '''
 
 parser = argparse.ArgumentParser(description='Script for dispatching train runs of BNNs over larger search spaces')
-parser.add_argument('-c',  '--config', default='./config/kin8nm.yaml')
-parser.add_argument('-ds', '--dataset', default='kin8nm')
-parser.add_argument('-ld', '--logdir', default='./results')
-parser.add_argument('-dd', '--datadir', default='./data_dir')
+parser.add_argument('-c',  '--config')
+parser.add_argument('-ds', '--dataset')
+parser.add_argument('-ld', '--logdir')
+parser.add_argument('-dd', '--datadir')
 parser.add_argument('-cm', '--commonname', default=None)
+parser.add_argument('--gpu', nargs='+', type=int)
 parser.add_argument('-nd', '--nodatetime', action='store_true')
 args = parser.parse_args()
 
@@ -62,10 +66,6 @@ hidden_layers = experiment_config['hidden_layers']
 learning_rates = experiment_config['learning_rates']
 prior_vars = experiment_config['prior_vars']
 
-# Training parameters
-batch_size = experiment_config['batch_size']
-epochs = experiment_config['epochs']
-
 print(f'Running experiment on {args.dataset} with parameters:\n'
       f'{experiment_config}\n'
       f'Saving results in {results_dir}\n')
@@ -74,32 +74,33 @@ print(f'Running experiment on {args.dataset} with parameters:\n'
 # Load in dataset and related info
 
 data_loader = data.RegressionDataloader(args.dataset, args.datadir)
-input_size, train_length, output_size = data_loader.get_dims()
-_, _, y_mu, y_sigma = data_loader.get_transforms()
 
 # Design search space for paramters
 param_space = list(itertools.product(hidden_layers, hidden_sizes, learning_rates, prior_vars))
 
+points = []
 # Loop over parameter space
 for idx, (hidden_layer, hidden_size, lr, prior_var) in enumerate(param_space):
+    nn = get_feedforward_nn(hidden_size, hidden_layer)
+    params = {
+        'learning_rate': lr,
+        'prior_var': prior_var,
+        'hyperprior': True
+    }
+    points.append((nn, params))
 
-    hidden_configuration = [hidden_size] * hidden_layer
 
-    model = BayesMLPRegression(input_size, hidden_configuration, output_size, train_length, y_mu, y_sigma, prior_var=prior_var)
+REPORTER = get_reporter(open(os.path.join(results_dir, 'log'), 'w'))
+train_params = Namespace(data_set=args.dataset,
+                         data_dir=args.datadir,
+                         tf_params={
+                             'batchSize': experiment_config['batch_size'],
+                             'epochs': experiment_config['epochs']
+                         },
+                         metric='test_rmse')
+func_caller = BNNMLPFunctionCaller(args.dataset, None, train_params,
+                               reporter=REPORTER,
+                               tmp_dir=None)
 
-    print(f'{args.dataset} - running {model}. Parameter set {idx+1} of {len(param_space)}')
-
-    name = f'{model}'
-    log_dir = f'{results_dir}/logs/{name}'
-
-    result = test_model_regression(model, data_loader, epochs, batch_size, log_freq=100, log_dir=log_dir, verbose=False)
-    model.close_session()
-    tf.reset_default_graph()
-
-    model_config = model.get_config()
-    train_config = {'batch_size': batch_size, 'epochs': epochs, 'results': result}
-    output = {**model_config, **train_config, 'results': result}
-
-    result_file = f'{results_dir}/{name}.pkl'
-    with open(result_file, 'wb') as h:
-        pickle.dump(output, h)
+gpu_runner = MultiGPURunner(func_caller, gpu_ids=args.gpu, log_dir=results_dir, tmp_dir=os.path.join(results_dir, 'tmp'))
+gpu_runner.run_points(points)

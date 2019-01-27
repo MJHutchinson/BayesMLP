@@ -1,7 +1,7 @@
 from model.regression import BayesMLPGen, BayesMLPRegression
 import numpy as np
 import matplotlib.pyplot as plt
-from model.utils import test_model_regression
+from model.test_model import test_model_regression
 import time
 
 x = np.expand_dims(np.random.uniform(-1., 1., 1000), 1).astype(np.float32)

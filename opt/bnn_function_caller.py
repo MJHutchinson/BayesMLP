@@ -1,4 +1,5 @@
 import os
+import traceback
 import model.run_model_tensorflow
 
 from opt.nn_function_caller import NNFunctionCaller
@@ -33,7 +34,7 @@ class BNNMLPFunctionCaller(NNFunctionCaller):
 
         self.train_params.tf_params['metric'] = self.train_params.metric
 
-    def _eval_validation_score(self, nn, qinfo):
+    def _eval_validation_score(self, point, qinfo):
         os.environ['CUDA_VISIBLE_DEVICES'] = str(qinfo.worker_id)
         num_tries = 0
         success = False
@@ -41,13 +42,14 @@ class BNNMLPFunctionCaller(NNFunctionCaller):
         while num_tries < _MAX_TRIES and not success:
             try:
                 self.reporter.writeln(f'Running on gpu {qinfo.worker_id}: {qinfo}')
-                test_score = model.run_model_tensorflow.compute_validation_error(nn, self.data_loader, self.train_params.tf_params, qinfo.worker_id, qinfo.log_dir)
+                test_score = model.run_model_tensorflow.compute_validation_error(point, self.data_loader, self.train_params.tf_params, qinfo.worker_id, qinfo.log_dir)
                 success = True
             except Exception as e:
                 sleep(_SLEEP_BETWEEN_TRIES_SECS)
                 num_tries += 1
                 self.reporter.writeln(f'********* Failed to try {num_tries} with gpu {qinfo.worker_id}')
                 self.reporter.writeln(f'{e}')
+                self.reporter.writeln(f'{traceback.format_exc()}')
                 print(e)
 
         return test_score

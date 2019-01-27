@@ -69,9 +69,10 @@ def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, r
         summary_writer.add_summary(summary, epoch)
 
         if (epoch % log_freq == 0) & verbose:
-            print(f'\rEpoch {epoch:4.0f}, \t ELBO: {train_elbo:10.4f}, \t KL term: {train_kl:10.4f}, \t train log likelihood term: {train_ll:8.4f}, \t test log likelihood: {test_ll:8.4f}, \t test auxiliary: {test_rmse:8.4f}, \t noise sigma: {noise_sigma:8.4f}, \t train time: {train_time:6.4f}, \t test time: {test_time:6.4f}')
+            print(f'\rEpoch {epoch:4.0f}, \t ELBO: {train_elbo:10.4f}, \t KL term: {train_kl:10.4f}, \t train log likelihood term: {train_ll_true:8.4f}, \t test log likelihood: {test_ll_true:8.4f}, \t test auxiliary: {test_rmse_true:8.4f}, \t noise sigma: {noise_sigma_true:8.4f}, \t train time: {train_time:6.4f}, \t test time: {test_time:6.4f}')
 
         if epoch % (log_freq * 10) == 0:
+            # Plot predictions vs actual plots
             predictions_train = np.mean(model.prediction(x_train, batch_size=batch_size), 0)
             predictions_test = np.mean(model.prediction(x_test, batch_size=batch_size), 0)
             plt.figure()
@@ -82,10 +83,46 @@ def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, r
             plt.ylabel('predictions')
             plt.title(f'epcoh {epoch}')
             plt.plot([min(y_train), max(y_train)], [min(y_train), max(y_train)], color='r')
-            plt.savefig(f'{fig_dir}/{epoch}.png')
+            plt.savefig(f'{fig_dir}/predictions_{epoch}.png')
             plt.close()
 
+            # Plot cdf of 'pruning' based on KL
+            pruning_measure = [weight.pruning_from_KL() for weight in model.W]
+            pruning_measure = model.sess.run(pruning_measure)
+            # pruning_measure = np.concatenate(pruning_measure)
+
+            fig, ax = plt.subplots(1,1)
+            for i, x in enumerate(pruning_measure):
+                plt.hist(x, bins=100, density=False, cumulative=-1, label=f'Layer {i}',
+                         histtype='step', alpha=1.0)
+            plt.legend()
+            plt.title('CDF of weight pruning by KL')
+            plt.xlabel('Mean KL of weights')
+            plt.ylabel('Cumulative density')
+            plt.savefig(f'{fig_dir}/pruning_CDF_{epoch}.png')
+            plt.close()
+
+            fig, ax = plt.subplots(1, 1)
+            for i, x in enumerate(pruning_measure):
+                plt.hist(x, bins=100, density=False, cumulative=False, label=f'Layer {i}',
+                         histtype='step', alpha=1.0)
+                mu = float(np.mean(x))
+                std = float(np.std(x))
+                plt.plot([mu+std, mu+std], [0, 25], label=f'Layer {i}: mu + std')
+                active = np.sum(x > (mu+std))
+                plt.text(0.25, 0.9-0.06*i, f'layer {i}: KLs>mu+std: {active}', transform=ax.transAxes)
+            plt.legend()
+            plt.title('PDF of weight pruning by KL')
+            plt.xlabel('Mean KL of weights')
+            plt.ylabel('Density density')
+            plt.savefig(f'{fig_dir}/pruning_PDF_{epoch}.png')
+            plt.close()
+
+
     summary_writer.close()
+
+    pruning_measure = [weight.pruning_from_KL() for weight in model.W]
+    pruning_measure = model.sess.run(pruning_measure)
 
     result = {'elbo': train_elbos,
               'test_ll': test_lls,
@@ -96,7 +133,8 @@ def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, r
               'train_ll_true': train_lls_true,
               'test_ll_true': test_lls_true,
               'test_rmse_true': test_rmses_true,
-              'noise_sigma_true': noise_sigma_true}
+              'noise_sigma_true': noise_sigma_true,
+              'pruning_kl': pruning_measure}
 
     model_config = model.get_config()
     train_config = {'batch_size': batch_size, 'epochs': epochs, 'results': result}

@@ -8,8 +8,8 @@ import itertools
 
 import tensorflow as tf
 import data.data_loader as data
-from model.regression import BayesMLPRegressionHyperprior, BayesMLPRegression, BayesMLPNNRegression, BayesSkipMLPRegression, BayesMLPNNRegressionHyperprior
-from model.utils import test_model_regression
+from model.regression import BayesMLPRegressionHyperprior, BayesMLPRegression, BayesMLPNNRegression, BayesSkipMLPRegression, BayesMLPNNRegression
+from model.test_model import test_model_regression
 from model.neural_network_representation import MultiLayerPerceptron, get_mlp_layer_labels
 from scipy.sparse import dok_matrix
 
@@ -90,8 +90,8 @@ for idx, (hidden_layer, hidden_size, lr, prior_var) in enumerate(param_space):
 
         nn = MultiLayerPerceptron('reg', layer_labels, A, num_units_each_layer, all_layer_labels)
 
-        model = BayesMLPNNRegressionHyperprior(input_size, nn, train_length, y_mu, y_sigma, prior_var=prior_var,
-                                               hyperprior=True)
+        model = BayesMLPNNRegression(input_size, nn, train_length, y_mu, y_sigma, prior_var=prior_var,
+                                     hyperprior=True)
         print(f'{dataset} - running {model}. Parameter set {idx + 1} of {len(param_space)}')
         test_model_regression(model, data_loader, epochs, batch_size, log_freq=100, results_dir=results_dir,
                               name_prefix=j, verbose=True)
@@ -99,8 +99,8 @@ for idx, (hidden_layer, hidden_size, lr, prior_var) in enumerate(param_space):
         tf.reset_default_graph()
 
 
-        model = BayesMLPNNRegressionHyperprior(input_size, nn, train_length, y_mu, y_sigma, prior_var=prior_var,
-                                               hyperprior=False)
+        model = BayesMLPNNRegression(input_size, nn, train_length, y_mu, y_sigma, prior_var=prior_var,
+                                     hyperprior=False)
         print(f'{dataset} - running {model}. Parameter set {idx+1} of {len(param_space)}')
         test_model_regression(model, data_loader, epochs, batch_size, log_freq=100, results_dir=results_dir,
                               name_prefix=j, verbose=True)
