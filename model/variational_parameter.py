@@ -51,13 +51,13 @@ class Paramter(object):
         """
         return tf.reduce_mean(self._KL(), axis=0)
 
-    def pruning_from_ratio(self):
+    def pruning_from_SNR(self):
         """
-        Quantifies how much each weight has been pruned - per weight NOT per neuron
+        Quantifies how much each weight has been pruned - per weight NOT per neuron. From Bayes by Backprop
         :return:
         """
         ratio = tf.divide(tf.abs(self.value.loc), tf.abs(self.value.scale))
-        return tf.reshape(range, [-1])
+        return tf.reshape(ratio, [-1])
 
 
 def make_weight_parameter(shape, prior_var=1., hyper_prior=False, name=None):

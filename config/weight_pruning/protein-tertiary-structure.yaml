@@ -1,7 +1,0 @@
-hidden_sizes: [50,70,100,130]
-hidden_layers: [1,2,3]
-epochs: 30000
-search_space: 'small'
-learning_rates: [0.001]
-prior_vars: [1.]
-batch_size: 10000

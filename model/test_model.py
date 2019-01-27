@@ -5,8 +5,11 @@ import tensorflow as tf
 import os
 import pickle
 
+from utils.plot_utils import plot_KL_pruning, plot_SNP_pruning
 
-def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, results_dir='./results', name_prefix=None, verbose=True):
+
+def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, results_dir='./results', name_prefix=None,
+                          accuracy_plots=True, KL_pruning_plots=True, SNR_pruning_plots=True, verbose=True):
     x_train, y_train, x_test, y_test = data_gen.get_data()
     y_sigma = float(data_gen.y_sigma)
     log_y_sigma = float(np.log(y_sigma))
@@ -73,56 +76,29 @@ def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, r
 
         if epoch % (log_freq * 10) == 0:
             # Plot predictions vs actual plots
-            predictions_train = np.mean(model.prediction(x_train, batch_size=batch_size), 0)
-            predictions_test = np.mean(model.prediction(x_test, batch_size=batch_size), 0)
-            plt.figure()
-            plt.scatter(y_train, predictions_train)
-            plt.scatter(y_test, predictions_test)
-            plt.legend(['Train', 'Test'])
-            plt.xlabel('actuals')
-            plt.ylabel('predictions')
-            plt.title(f'epcoh {epoch}')
-            plt.plot([min(y_train), max(y_train)], [min(y_train), max(y_train)], color='r')
-            plt.savefig(f'{fig_dir}/predictions_{epoch}.png')
-            plt.close()
 
-            # Plot cdf of 'pruning' based on KL
-            pruning_measure = [weight.pruning_from_KL() for weight in model.W]
-            pruning_measure = model.sess.run(pruning_measure)
-            # pruning_measure = np.concatenate(pruning_measure)
+            if accuracy_plots:
+                predictions_train = np.mean(model.prediction(x_train, batch_size=batch_size), 0)
+                predictions_test = np.mean(model.prediction(x_test, batch_size=batch_size), 0)
+                plt.figure()
+                plt.scatter(y_train, predictions_train)
+                plt.scatter(y_test, predictions_test)
+                plt.legend(['Train', 'Test'])
+                plt.xlabel('actuals')
+                plt.ylabel('predictions')
+                plt.title(f'epcoh {epoch}')
+                plt.plot([min(y_train), max(y_train)], [min(y_train), max(y_train)], color='r')
+                plt.savefig(f'{fig_dir}/predictions_{epoch}.png')
+                plt.close()
 
-            fig, ax = plt.subplots(1,1)
-            for i, x in enumerate(pruning_measure):
-                plt.hist(x, bins=100, density=False, cumulative=-1, label=f'Layer {i}',
-                         histtype='step', alpha=1.0)
-            plt.legend()
-            plt.title('CDF of weight pruning by KL')
-            plt.xlabel('Mean KL of weights')
-            plt.ylabel('Cumulative density')
-            plt.savefig(f'{fig_dir}/pruning_CDF_{epoch}.png')
-            plt.close()
+            if KL_pruning_plots:
+                plot_KL_pruning(model, fig_dir, epoch)
 
-            fig, ax = plt.subplots(1, 1)
-            for i, x in enumerate(pruning_measure):
-                plt.hist(x, bins=100, density=False, cumulative=False, label=f'Layer {i}',
-                         histtype='step', alpha=1.0)
-                mu = float(np.mean(x))
-                std = float(np.std(x))
-                plt.plot([mu+std, mu+std], [0, 25], label=f'Layer {i}: mu + std')
-                active = np.sum(x > (mu+std))
-                plt.text(0.25, 0.9-0.06*i, f'layer {i}: KLs>mu+std: {active}', transform=ax.transAxes)
-            plt.legend()
-            plt.title('PDF of weight pruning by KL')
-            plt.xlabel('Mean KL of weights')
-            plt.ylabel('Density density')
-            plt.savefig(f'{fig_dir}/pruning_PDF_{epoch}.png')
-            plt.close()
+            if SNR_pruning_plots:
+                plot_SNP_pruning(model, fig_dir, epoch)
 
 
     summary_writer.close()
-
-    pruning_measure = [weight.pruning_from_KL() for weight in model.W]
-    pruning_measure = model.sess.run(pruning_measure)
 
     result = {'elbo': train_elbos,
               'test_ll': test_lls,
@@ -133,8 +109,17 @@ def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, r
               'train_ll_true': train_lls_true,
               'test_ll_true': test_lls_true,
               'test_rmse_true': test_rmses_true,
-              'noise_sigma_true': noise_sigma_true,
-              'pruning_kl': pruning_measure}
+              'noise_sigma_true': noise_sigma_true}
+
+    if KL_pruning_plots:
+        pruning_measure = [weight.pruning_from_KL() for weight in model.W]
+        pruning_measure = model.sess.run(pruning_measure)
+        result['KL_pruning'] = pruning_measure
+
+    if SNR_pruning_plots:
+        pruning_measure = [weight.pruning_from_SNR() for weight in model.W]
+        pruning_measure = model.sess.run(pruning_measure)
+        result['SNR_pruning'] = pruning_measure
 
     model_config = model.get_config()
     train_config = {'batch_size': batch_size, 'epochs': epochs, 'results': result}

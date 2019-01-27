@@ -37,59 +37,6 @@ def plot_training_curves(input, val='accuracies', rolling_av_len=None, legend=No
 
     return fig, ax
 
-def plot_training_curves_rv(input, legend=None, rolling_av_len=5):
-    _, ax = plt.subplots(1, 1)
-    ax.set_xlabel('Epoch')
-    ax.set_ylabel('Accuracy')
-    if legend is None:
-        legend = []
-    for results in input:
-        for key in results.keys():
-            acc = results[key]['results']['accuracies']
-            av_acc = [0] * (len(acc) - rolling_av_len)
-            for i, _ in enumerate(av_acc):
-                for j in range(rolling_av_len):
-                    av_acc[i] += acc[i+j]/rolling_av_len
-            ax.plot(av_acc)
-
-        ax.legend(legend)
-
-
-
-def plot_cost_curves(*input, legend=None, key='rmse', rolling_av=None):
-    _, ax = plt.subplots(1, 1)
-    ax.set_xlabel('Epoch')
-    ax.set_ylabel('Cost')
-    legend = []
-    for results in input:
-        if rolling_av is None:
-            result = results['results']
-            ax.plot(result['costs'])
-            legend.append(key)
-
-    ax.legend(legend)
-
-
-def plot_min_vs_first(input, val = 'costs', legend=None):
-    _, ax = plt.subplots(1, 1)
-    ax.set_xlabel(f'First epoch {val}')
-    ax.set_ylabel(f'Minimum {val}')
-
-    initial_accs = []
-    best_accs = []
-
-    for result in input:
-
-        r = result['results'][val]
-        initial_accs.append(r[0])
-        best_accs.append(min(r))
-
-    ax.scatter(initial_accs, best_accs)
-    ax.plot(np.unique(initial_accs), np.poly1d(np.polyfit(initial_accs, best_accs, 1))(np.unique(initial_accs)))
-
-    if legend is not None:
-        ax.legend(legend)
-
 
 def plot_min_vs_i(input, i, val = 'costs', legend=None):
     _, ax = plt.subplots(1, 1)
@@ -108,27 +55,6 @@ def plot_min_vs_i(input, i, val = 'costs', legend=None):
 
     ax.scatter(initial_accs, best_accs)
     # ax.plot(np.unique(initial_accs), np.poly1d(np.polyfit(initial_accs, best_accs, 1))(np.unique(initial_accs)))
-
-    if legend is not None:
-        ax.legend(legend)
-
-
-def plot_max_vs_first(input, val = 'costs', legend=None):
-    _, ax = plt.subplots(1, 1)
-    ax.set_xlabel(f'First epoch {val}')
-    ax.set_ylabel(f'Maximum {val}')
-
-    initial_accs = []
-    best_accs = []
-
-    for result in input:
-
-        r = result['results'][val]
-        initial_accs.append(r[0])
-        best_accs.append(max(r))
-
-    ax.scatter(initial_accs, best_accs)
-    ax.plot(np.unique(initial_accs), np.poly1d(np.polyfit(initial_accs, best_accs, 1))(np.unique(initial_accs)))
 
     if legend is not None:
         ax.legend(legend)
@@ -159,26 +85,6 @@ def plot_max_vs_i(input, i, val = 'costs', legend=None):
     if legend is not None:
         ax.legend(legend)
 
-def plot_last_vs_first(input, val = 'costs', legend=None):
-    _, ax = plt.subplots(1, 1)
-    ax.set_xlabel(f'First epoch {val}')
-    ax.set_ylabel(f'Final epoch {val}')
-
-    initial_accs = []
-    best_accs = []
-
-    for result in input:
-
-        r = result['results'][val]
-        initial_accs.append(r[0])
-        best_accs.append(r[-1])
-
-    ax.scatter(initial_accs, best_accs)
-    ax.plot(np.unique(initial_accs), np.poly1d(np.polyfit(initial_accs, best_accs, 1))(np.unique(initial_accs)))
-
-    if legend is not None:
-        ax.legend(legend)
-
 
 def plot_last_vs_i(input, i, val = 'costs', legend=None):
     _, ax = plt.subplots(1, 1)
@@ -198,6 +104,7 @@ def plot_last_vs_i(input, i, val = 'costs', legend=None):
 
     if legend is not None:
         ax.legend(legend)
+
 
 def plot_xy(x, y, x_lablel='', y_label='', legend=None):
     _, ax = plt.subplots(1, 1)
@@ -244,6 +151,7 @@ def plot_dict(x_dict, y_dict, x_lablel='', y_label='', title=None,  log_scale=Fa
 
     return fig, ax
 
+
 def rank_best_value(input, n=10, value = 'accuracies', minimum=False):
     print(f'{"Minimum" if minimum else "Maximum"} {value} (limited to {n})')
     pairs = []
@@ -271,3 +179,79 @@ def rank_final_value(*input, n=10, value = 'accuracies', minimum=False):
         for i, pair in enumerate(pairs):
             if i<10:
                 print(f'{pair[0]}: {value}: {pair[1]}')
+
+
+def plot_KL_pruning(model, fig_dir, epoch):
+    # Plot cdf of 'pruning' based on KL
+    pruning_measure = [weight.pruning_from_KL() for weight in model.W]
+    pruning_measure = model.sess.run(pruning_measure)
+    # pruning_measure = np.concatenate(pruning_measure)
+
+    fig, axs = plt.subplots(len(pruning_measure), 1, figsize=(6.4, 2.4 * len(pruning_measure)))
+    axs[0].set_title('Reverse CDF of weight pruning by KL')
+    for i, (x, ax) in enumerate(zip(pruning_measure, axs)):
+        ax.hist(x, bins=100, density=False, cumulative=-1, label=f'Layer {i}',
+                histtype='step', alpha=1.0)
+        ax.set_xlabel('Mean KL of weights')
+        ax.set_ylabel('Cumulative density')
+        ax.legend()
+    plt.tight_layout()
+    plt.savefig(f'{fig_dir}/pruning_KL_CDF_{epoch}.png')
+    plt.close()
+
+    fig, axs = plt.subplots(len(pruning_measure), 1, figsize=(6.4, 2.4 * len(pruning_measure)))
+    axs[0].set_title('PDF of weight pruning by KL')
+    for (x, ax) in zip(pruning_measure, axs):
+        ax.hist(x, bins=100, density=False, cumulative=False, label=f'Layer {i}',
+                histtype='step', alpha=1.0)
+
+        mu = float(np.mean(x))
+        std = float(np.std(x))
+        ax.plot([mu + std, mu + std], list(ax.get_ylim()), label=f'Layer {i}: mu + std')
+        active = np.sum(x > (mu + std))
+        ax.text(0.25, 0.9 - 0.06 * i, f'layer {i}: KLs>mu+std: {active}', transform=ax.transAxes)
+
+        ax.set_xlabel('Mean KL of weights')
+        ax.set_ylabel('Density')
+        ax.legend()
+    plt.tight_layout()
+    plt.savefig(f'{fig_dir}/pruning_KL_PDF_{epoch}.png')
+    plt.close()
+
+
+def plot_SNP_pruning(model, fig_dir, epoch):
+    # Plot cdf of 'pruning' based on SNR
+    pruning_measure = [weight.pruning_from_SNR() for weight in model.W]
+    pruning_measure = model.sess.run(pruning_measure)
+    # pruning_measure = np.concatenate(pruning_measure)
+
+    fig, axs = plt.subplots(len(pruning_measure), 1, figsize=(6.4, 2.4 * len(pruning_measure)))
+    axs[0].set_title('Reverse CDF of weight pruning by SNR')
+    for i, (x, ax) in enumerate(zip(pruning_measure, axs)):
+        ax.hist(x, bins=100, density=False, cumulative=-1, label=f'Layer {i}',
+                histtype='step', alpha=1.0)
+        ax.set_xlabel('SNR of weights')
+        ax.set_ylabel('Cumulative density')
+        ax.legend()
+    plt.tight_layout()
+    plt.savefig(f'{fig_dir}/pruning_SNR_CDF_{epoch}.png', )
+    plt.close()
+
+    fig, axs = plt.subplots(len(pruning_measure), 1, figsize=(6.4, 2.4 * len(pruning_measure)))
+    axs[0].set_title('PDF of weight pruning by SNR')
+    for (x, ax) in zip(pruning_measure, axs):
+        ax.hist(x, bins=100, density=False, cumulative=False, label=f'Layer {i}',
+                histtype='step', alpha=1.0)
+
+        # mu = float(np.mean(x))
+        # std = float(np.std(x))
+        # ax.plot([mu + std, mu + std], list(ax.get_ylim()), label=f'Layer {i}: mu + std')
+        # active = np.sum(x > (mu + std))
+        # ax.text(0.25, 0.9 - 0.06 * i, f'layer {i}: KLs>mu+std: {active}', transform=ax.transAxes)
+
+        ax.set_xlabel('SNR of weights')
+        ax.set_ylabel('Density')
+        ax.legend()
+    plt.tight_layout()
+    plt.savefig(f'{fig_dir}/pruning_SNR_PDF_{epoch}.png')
+    plt.close()

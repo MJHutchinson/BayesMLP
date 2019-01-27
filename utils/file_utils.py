@@ -1,4 +1,5 @@
 import os
+import pickle
 import itertools
 
 def get_immediate_subdirectories(a_dir):
@@ -9,6 +10,20 @@ def get_immediate_subdirectories(a_dir):
 def get_immediate_files(a_dir):
     return [name for name in os.listdir(a_dir)
         if os.path.isfile(os.path.join(a_dir, name))]
+
+
+def get_results_from_dir(dir):
+    files = get_immediate_files(dir)
+    files = [f for f in files if f.split('.')[-1] == 'pkl']
+
+    results = []
+
+    for file in files:
+        r = pickle.load(open(f'{dir}/{file}', 'rb'))
+        # if (r['prior_var'] == 1):
+        results.append(r)
+
+    return results
 
 
 def num_to_name(number):

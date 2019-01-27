@@ -65,6 +65,7 @@ hidden_sizes = experiment_config['hidden_sizes']
 hidden_layers = experiment_config['hidden_layers']
 learning_rates = experiment_config['learning_rates']
 prior_vars = experiment_config['prior_vars']
+hyperprior = experiment_config['hyperprior']
 
 print(f'Running experiment on {args.dataset} with parameters:\n'
       f'{experiment_config}\n'
@@ -85,7 +86,7 @@ for idx, (hidden_layer, hidden_size, lr, prior_var) in enumerate(param_space):
     params = {
         'learning_rate': lr,
         'prior_var': prior_var,
-        'hyperprior': True
+        'hyperprior': hyperprior
     }
     points.append((nn, params))
 
