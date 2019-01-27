@@ -2,10 +2,10 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 
-plt.style.use('bmh')
-
-plt.rcParams["font.family"] = "serif"
-plt.rcParams["text.usetex"] = True
+# plt.style.use('bmh')
+#
+# plt.rcParams["font.family"] = "serif"
+# plt.rcParams["text.usetex"] = True
 
 
 def plot_training_curves(input, val='accuracies', rolling_av_len=None, legend=None, title=None):
