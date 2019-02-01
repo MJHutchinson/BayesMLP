@@ -42,13 +42,13 @@ class BNNMLPFunctionCaller(NNFunctionCaller):
         while num_tries < _MAX_TRIES and not success:
             try:
                 self.reporter.writeln(f'Running on gpu {qinfo.worker_id}: {qinfo}')
-                if hasattr(qinfo, 'iteration'):
+                if 'iteration' in qinfo.point[1].keys():
                     test_score = model.run_model_tensorflow.compute_validation_error(point,
                                                                                      self.data_loader,
                                                                                      self.train_params.tf_params,
                                                                                      qinfo.worker_id,
                                                                                      qinfo.log_dir,
-                                                                                     name_prefix=f'{qinfo.iteration}')
+                                                                                     name_prefix=f'{qinfo.point[1]["iteration"]}')
                 else:
                     test_score = model.run_model_tensorflow.compute_validation_error(point,
                                                                                      self.data_loader,
