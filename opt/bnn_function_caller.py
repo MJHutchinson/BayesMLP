@@ -42,7 +42,19 @@ class BNNMLPFunctionCaller(NNFunctionCaller):
         while num_tries < _MAX_TRIES and not success:
             try:
                 self.reporter.writeln(f'Running on gpu {qinfo.worker_id}: {qinfo}')
-                test_score = model.run_model_tensorflow.compute_validation_error(point, self.data_loader, self.train_params.tf_params, qinfo.worker_id, qinfo.log_dir)
+                if hasattr(qinfo, 'iteration'):
+                    test_score = model.run_model_tensorflow.compute_validation_error(point,
+                                                                                     self.data_loader,
+                                                                                     self.train_params.tf_params,
+                                                                                     qinfo.worker_id,
+                                                                                     qinfo.log_dir,
+                                                                                     name_prefix=f'{qinfo.iteration}')
+                else:
+                    test_score = model.run_model_tensorflow.compute_validation_error(point,
+                                                                                     self.data_loader,
+                                                                                     self.train_params.tf_params,
+                                                                                     qinfo.worker_id,
+                                                                                     qinfo.log_dir)
                 success = True
             except Exception as e:
                 sleep(_SLEEP_BETWEEN_TRIES_SECS)

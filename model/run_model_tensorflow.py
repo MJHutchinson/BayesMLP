@@ -14,7 +14,7 @@ from model.neural_network_representation import MultiLayerPerceptron, get_mlp_la
 from scipy.sparse import dok_matrix
 
 
-def compute_validation_error(point, data_loader, params, gpu_id, results_dir):
+def compute_validation_error(point, data_loader, params, gpu_id, results_dir, name_prefix=None):
 
     # with tf.device(deviceStr):
 
@@ -23,7 +23,7 @@ def compute_validation_error(point, data_loader, params, gpu_id, results_dir):
 
     model = BayesMLPNNRegression(data_loader.input_size, nn, data_loader.train_length, **model_parameters)
     print(f'gpu {gpu_id} - {data_loader.pickle_name} - running {model}.')
-    result = test_model_regression(model, data_loader, params['epochs'], params['batchSize'], log_freq=100, results_dir=results_dir, verbose=False)
+    result = test_model_regression(model, data_loader, params['epochs'], params['batchSize'], log_freq=100, results_dir=results_dir, verbose=False, name_prefix=name_prefix)
     model.close_session()
     tf.reset_default_graph()
 

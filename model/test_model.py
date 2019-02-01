@@ -10,16 +10,23 @@ from utils.plot_utils import plot_KL_pruning, plot_SNP_pruning
 
 def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, results_dir='./results', name_prefix=None,
                           accuracy_plots=True, KL_pruning_plots=True, SNR_pruning_plots=True, verbose=True):
-    x_train, y_train, x_test, y_test = data_gen.get_data()
-    y_sigma = float(data_gen.y_sigma)
-    log_y_sigma = float(np.log(y_sigma))
 
     if name_prefix is None:
         name = f'{model}'
     else:
         name = f'{name_prefix}_{model}'
 
+    result_file = f'{results_dir}/{name}.pkl'
+
     log_dir = f'{results_dir}/logs/{name}'
+
+    if os.path.exists(result_file):
+        print(f'{model} already exists, skipping')
+        return pickle.load(open(result_file, 'rb'))['results']
+
+    x_train, y_train, x_test, y_test = data_gen.get_data()
+    y_sigma = float(data_gen.y_sigma)
+    log_y_sigma = float(np.log(y_sigma))
 
     summary_writer = tf.summary.FileWriter(log_dir, graph=model.sess.graph)
     fig_dir = f'{log_dir}/figs'
@@ -125,7 +132,6 @@ def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, r
     train_config = {'batch_size': batch_size, 'epochs': epochs, 'results': result}
     output = {**model_config, **train_config, 'results': result}
 
-    result_file = f'{results_dir}/{name}.pkl'
     with open(result_file, 'wb') as h:
         pickle.dump(output, h)
 

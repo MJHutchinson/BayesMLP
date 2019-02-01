@@ -3,7 +3,7 @@ import matplotlib
 import numpy as np
 
 # plt.style.use('bmh')
-#
+
 # plt.rcParams["font.family"] = "serif"
 # plt.rcParams["text.usetex"] = True
 
@@ -133,8 +133,6 @@ def plot_dict(x_dict, y_dict, x_lablel='', y_label='', title=None,  log_scale=Fa
             legend = [float(l) for l in legend]
         except ValueError:
             pass
-
-
 
     legend = sorted(legend)
 

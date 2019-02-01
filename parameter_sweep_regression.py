@@ -81,14 +81,26 @@ param_space = list(itertools.product(hidden_layers, hidden_sizes, learning_rates
 
 points = []
 # Loop over parameter space
-for idx, (hidden_layer, hidden_size, lr, prior_var) in enumerate(param_space):
-    nn = get_feedforward_nn(hidden_size, hidden_layer)
-    params = {
-        'learning_rate': lr,
-        'prior_var': prior_var,
-        'hyperprior': hyperprior
-    }
-    points.append((nn, params))
+if 'iterations' in experiment_config.keys():
+    for i in range(experiment_config['iterations']):
+        for idx, (hidden_layer, hidden_size, lr, prior_var) in enumerate(param_space):
+            nn = get_feedforward_nn(hidden_size, hidden_layer)
+            params = {
+                'learning_rate': lr,
+                'prior_var': prior_var,
+                'hyperprior': hyperprior,
+                'iteration': i
+            }
+            points.append((nn, params))
+else:
+    for idx, (hidden_layer, hidden_size, lr, prior_var) in enumerate(param_space):
+        nn = get_feedforward_nn(hidden_size, hidden_layer)
+        params = {
+            'learning_rate': lr,
+            'prior_var': prior_var,
+            'hyperprior': hyperprior
+        }
+        points.append((nn, params))
 
 
 REPORTER = get_reporter(open(os.path.join(results_dir, 'log'), 'w'))

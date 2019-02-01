@@ -1,7 +1,9 @@
-hidden_sizes: [50]
+hidden_sizes: [1,2,3,4,50]
 hidden_layers: [2]
-epochs: 50000
+epochs: 100
 search_space: 'small'
 learning_rates: [0.001]
 prior_vars: [1.]
+hyperprior: True
 batch_size: 1000
+iterations: 3

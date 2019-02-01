@@ -54,7 +54,7 @@ if os.path.islink(latest_dir):
 os.symlink(os.path.abspath(results_dir), latest_dir)
 
 # Copy config across for reference
-shutil.copy2(args.config, results_dir)
+shutil.copy2(args.config, os.path.join(results_dir, 'config.yaml'))
 
 # Parameter space to sweep
 hidden_sizes = experiment_config['hidden_sizes']

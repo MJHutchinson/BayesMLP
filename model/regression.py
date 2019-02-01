@@ -6,7 +6,7 @@ import numpy as np
 from copy import deepcopy
 
 np.random.seed(0)
-tf.set_random_seed(0)
+# tf.set_random_seed(0)
 
 os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
 tf.logging.set_verbosity(tf.logging.WARN)
@@ -506,7 +506,7 @@ from model.variational_parameter import make_weight_parameter
 class BayesMLPNNRegression(Reg_NN):
     def __init__(self, input_size, nn, training_size,
                  no_train_samples=10, no_pred_samples=100, prev_means=None, prev_log_variances=None,
-                 learning_rate=0.001, prior_mean=0., prior_var=1., hyperprior=False):
+                 learning_rate=0.001, prior_mean=0., prior_var=1., hyperprior=False, **kwargs):
 
         super(BayesMLPNNRegression, self).__init__(input_size, 0, 1, training_size)
 
