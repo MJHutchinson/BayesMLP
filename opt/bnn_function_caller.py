@@ -21,10 +21,10 @@ def get_default_params():
 
 class BNNMLPFunctionCaller(NNFunctionCaller):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, dataloader, *args, **kwargs):
         super(BNNMLPFunctionCaller, self).__init__(*args, **kwargs)
 
-        self.data_loader = RegressionDataloader(self.train_params.data_set, self.train_params.data_dir)
+        self.data_loader = dataloader
         self.reporter.writeln('Loader data ' + self.train_params.data_set)
         self.reporter.writeln('Training data shape: ' + 'x: ' + str(self.data_loader.X_train.shape) + ', y: ' + str(self.data_loader.Y_train.shape))
         self.reporter.writeln('Training data shape: ' + 'x: ' + str(self.data_loader.X_test.shape) + ', y: ' + str(self.data_loader.Y_test.shape))

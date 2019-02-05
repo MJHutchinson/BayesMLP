@@ -88,7 +88,7 @@ for idx, (hidden_layer, hidden_size, lr, prior_var, data_multiple) in enumerate(
 
     hidden_configuration = [hidden_size] * hidden_layer
 
-    model = BayesMLPRegression(input_size, hidden_configuration, output_size, train_length*data_multiple, y_mu, y_sigma, prior_var=prior_var)
+    model = BayesMLPRegression(input_size, hidden_configuration, output_size, train_length*data_multiple, prior_var=prior_var)
 
     print(f'{args.dataset} - running {model}. Parameter set {idx+1} of {len(param_space)}')
 

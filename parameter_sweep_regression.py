@@ -74,7 +74,7 @@ print(f'Running experiment on {args.dataset} with parameters:\n'
 
 # Load in dataset and related info
 
-data_loader = data.RegressionDataloader(args.dataset, args.datadir)
+data_loader = data.RegressionDataloaderFixedSplits(args.dataset, args.datadir + '/presplit')
 
 # Design search space for paramters
 param_space = list(itertools.product(hidden_layers, hidden_sizes, learning_rates, prior_vars))
@@ -111,7 +111,7 @@ train_params = Namespace(data_set=args.dataset,
                              'epochs': experiment_config['epochs']
                          },
                          metric='test_rmse')
-func_caller = BNNMLPFunctionCaller(args.dataset, None, train_params,
+func_caller = BNNMLPFunctionCaller(data_loader, args.dataset, None, train_params,
                                reporter=REPORTER,
                                tmp_dir=None)
 

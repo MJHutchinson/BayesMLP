@@ -1,39 +1,70 @@
+import os
 import pickle
 import numpy as np
 
 
-class RegressionDataloader():
-    def __init__(self, pickle_name, data_dir='./data_dir'):
-        self.pickle_name = pickle_name
+class Dataloader(object):
+    def get_data(self):
+        raise NotImplementedError
 
-        f = open(f'{data_dir}/{self.pickle_name}.pkl', 'rb')
-        train_set, valid_set, test_set = pickle.load(f)
-        f.close()
+    def get_batch_size(self, max_hidden_layer_size):
+        raise NotImplementedError
 
-        self.X_train = np.vstack((train_set[0], valid_set[0]))
-        self.Y_train = np.hstack((train_set[1], valid_set[1]))
-        self.X_test = test_set[0]
-        self.Y_test = test_set[1]
+    @property
+    def input_size(self):
+        raise NotImplementedError
+
+    @property
+    def output_size(self):
+        raise NotImplementedError
+
+    @property
+    def train_length(self):
+        raise NotImplementedError
+
+    @property
+    def y_mu(self):
+        raise NotImplementedError
+
+    @property
+    def y_sigma(self):
+        raise NotImplementedError
+
+
+class RegressionDataloader(Dataloader):
+    
+    def __init__(self, X_train, X_test, Y_train, Y_test):
+
+        self.X_train = X_train
+        self.Y_train = Y_train
+        self.X_test = X_test
+        self.Y_test = Y_test
 
         if len(self.Y_train.shape) == 1:
             self.Y_train = np.expand_dims(self.Y_train, 1)
         if len(self.Y_test.shape) == 1:
             self.Y_test = np.expand_dims(self.Y_test, 1)
 
-        self.X_means = 0.5 * (np.expand_dims(np.max(self.X_train, axis=0), 0) + np.expand_dims(np.min(self.X_train, axis=0), 0)) # np.expand_dims(np.mean(self.X_train, axis=0), 0)
-        self.Y_means = 0.5 * (np.expand_dims(np.max(self.Y_train, axis=0), 0) + np.expand_dims(np.min(self.Y_train, axis=0), 0)) # np.expand_dims(np.mean(self.Y_train, axis=0), 0)
-        self.X_sigmas = 0.5 * (np.expand_dims(np.max(self.X_train, axis=0), 0) - np.expand_dims(np.min(self.X_train, axis=0), 0)) # np.sqrt(np.expand_dims(np.var(self.X_train, axis=0), 0)) #
-        self.Y_sigmas = 0.5 * (np.expand_dims(np.max(self.Y_train, axis=0), 0) - np.expand_dims(np.min(self.Y_train, axis=0), 0)) # np.sqrt(np.expand_dims(np.var(self.Y_train, axis=0), 0)) #
+        self.X_means = 0.5 * (
+                    np.expand_dims(np.max(self.X_train, axis=0), 0) + np.expand_dims(np.min(self.X_train, axis=0),
+                                                                                     0))  # np.expand_dims(np.mean(self.X_train, axis=0), 0)
+        self.Y_means = 0.5 * (
+                    np.expand_dims(np.max(self.Y_train, axis=0), 0) + np.expand_dims(np.min(self.Y_train, axis=0),
+                                                                                     0))  # np.expand_dims(np.mean(self.Y_train, axis=0), 0)
+        self.X_sigmas = 0.5 * (
+                    np.expand_dims(np.max(self.X_train, axis=0), 0) - np.expand_dims(np.min(self.X_train, axis=0),
+                                                                                     0))  # np.sqrt(np.expand_dims(np.var(self.X_train, axis=0), 0)) #
+        self.Y_sigmas = 0.5 * (
+                    np.expand_dims(np.max(self.Y_train, axis=0), 0) - np.expand_dims(np.min(self.Y_train, axis=0),
+                                                                                     0))  # np.sqrt(np.expand_dims(np.var(self.Y_train, axis=0), 0)) #
 
         self.X_train_transform, self.Y_train_transform = self.transform(self.X_train, self.Y_train)
         self.X_test_transform, self.Y_test_transform = self.transform(self.X_test, self.Y_test)
 
     def transform(self, X, Y):
-        return (X-self.X_means)/self.X_sigmas, (Y - self.Y_means)/self.Y_sigmas
+        return (X - self.X_means) / self.X_sigmas, (Y - self.Y_means) / self.Y_sigmas
 
-    def antitransform(self, X, Y):
-        return (X*self.X_sigmas) + self.X_means, (Y*self.Y_sigmas) + self.Y_means
-
+    ## Depreciated
     def get_dims(self):
         # Get data input and output dimensions
         return self.X_train.shape[1], self.X_train.shape[0], self.Y_train.shape[1]
@@ -69,6 +100,45 @@ class RegressionDataloader():
         return self.Y_sigmas
 
 
+class RegressionDataloaderFixedSplits(RegressionDataloader):
+    def __init__(self, pickle_name, data_dir='./data_dir'):
+        self.pickle_name = pickle_name
+
+        f = open(f'{data_dir}/{self.pickle_name}.pkl', 'rb')
+        train_set, valid_set, test_set = pickle.load(f)
+        f.close()
+
+        X_train = np.vstack((train_set[0], valid_set[0]))
+        Y_train = np.hstack((train_set[1], valid_set[1]))
+        X_test = test_set[0]
+        Y_test = test_set[1]
+        
+        super().__init__(X_train, X_test, Y_train, Y_test)
+
+
+class RegressionDataloaderVariableSplits(RegressionDataloader):
+
+    def __init__(self, data_path, data_set, split_number):
+        
+        data = np.loadtxt(os.path.join(data_path, data_set, 'data.txt'))
+        feature_index = np.loadtxt(os.path.join(data_path, data_set, 'index_features.txt'))
+        target_index = np.loadtxt(os.path.join(data_path, data_set, 'index_features.txt'))
+
+        X = data[:, [int(i) for i in feature_index.tolist()]]
+        Y = data[:, [int(i) for i in target_index.tolist()]]
+        
+        train_index = np.loadtxt(os.path.join(data_path, data_set, f'index_train_{split_number}.txt'))
+        test_index = np.loadtxt(os.path.join(data_path, data_set, f'index_test_{split_number}.txt'))
+
+        X_train = X[[int(i) for i in train_index.tolist()]]
+        Y_train = Y[[int(i) for i in train_index.tolist()]]
+
+        X_test = X[[int(i) for i in test_index.tolist()]]
+        Y_test = Y[[int(i) for i in test_index.tolist()]]
+
+        super().__init__(X_train, X_test, Y_train, Y_test)
+
+
 class ClassificationDataloader():
     def __init__(self, pickle_name, data_dir='./data_dir'):
         self.pickle_name = pickle_name
@@ -81,7 +151,7 @@ class ClassificationDataloader():
         self.Y_train = np.hstack((train_set[1], valid_set[1])).astype(np.int)
         self.X_test = test_set[0]
         self.Y_test = test_set[1].astype(np.int)
-        self.classes = int(np.max(self.Y_train)+1)
+        self.classes = int(np.max(self.Y_train) + 1)
 
     def get_dims(self):
         # Get data input and output dimensions
@@ -106,15 +176,25 @@ class DummyDataloader(RegressionDataloader):
 
         noise = 0.01
 
-        self.X_train = np.expand_dims(np.random.uniform(0,10, len), 1)
-        self.Y_train = (self.X_train ** 2 * a) + (self.X_train * b) + c + np.expand_dims(np.random.normal(0, noise, len), 1)
-        self.X_test = np.expand_dims(np.random.uniform(0,10, len), 1)
-        self.Y_test = (self.X_test ** 2 * a) + (self.X_test * b) + c + np.expand_dims(np.random.normal(0, noise, len), 1)
+        self.X_train = np.expand_dims(np.random.uniform(0, 10, len), 1)
+        self.Y_train = (self.X_train ** 2 * a) + (self.X_train * b) + c + np.expand_dims(
+            np.random.normal(0, noise, len), 1)
+        self.X_test = np.expand_dims(np.random.uniform(0, 10, len), 1)
+        self.Y_test = (self.X_test ** 2 * a) + (self.X_test * b) + c + np.expand_dims(np.random.normal(0, noise, len),
+                                                                                      1)
 
-        self.X_means = 0.5 * (np.expand_dims(np.max(self.X_train, axis=0), 0) + np.expand_dims(np.min(self.X_train, axis=0), 0))  # np.expand_dims(np.mean(self.X_train, axis=0), 0)
-        self.Y_means = 0.5 * (np.expand_dims(np.max(self.Y_train, axis=0), 0) + np.expand_dims(np.min(self.Y_train, axis=0), 0))  # np.expand_dims(np.mean(self.Y_train, axis=0), 0)
-        self.X_sigmas = 0.5 * (np.expand_dims(np.max(self.X_train, axis=0), 0) - np.expand_dims(np.min(self.X_train, axis=0), 0))  # np.sqrt(np.expand_dims(np.var(self.X_train, axis=0), 0)) #
-        self.Y_sigmas = 0.5 * (np.expand_dims(np.max(self.Y_train, axis=0), 0) - np.expand_dims(np.min(self.Y_train, axis=0), 0))  # np.sqrt(np.expand_dims(np.var(self.Y_train, axis=0), 0)) #
+        self.X_means = 0.5 * (
+                    np.expand_dims(np.max(self.X_train, axis=0), 0) + np.expand_dims(np.min(self.X_train, axis=0),
+                                                                                     0))  # np.expand_dims(np.mean(self.X_train, axis=0), 0)
+        self.Y_means = 0.5 * (
+                    np.expand_dims(np.max(self.Y_train, axis=0), 0) + np.expand_dims(np.min(self.Y_train, axis=0),
+                                                                                     0))  # np.expand_dims(np.mean(self.Y_train, axis=0), 0)
+        self.X_sigmas = 0.5 * (
+                    np.expand_dims(np.max(self.X_train, axis=0), 0) - np.expand_dims(np.min(self.X_train, axis=0),
+                                                                                     0))  # np.sqrt(np.expand_dims(np.var(self.X_train, axis=0), 0)) #
+        self.Y_sigmas = 0.5 * (
+                    np.expand_dims(np.max(self.Y_train, axis=0), 0) - np.expand_dims(np.min(self.Y_train, axis=0),
+                                                                                     0))  # np.sqrt(np.expand_dims(np.var(self.Y_train, axis=0), 0)) #
 
         self.X_train_transform, self.Y_train_transform = self.transform(self.X_train, self.Y_train)
         self.X_test_transform, self.Y_test_transform = self.transform(self.X_test, self.Y_test)
@@ -153,14 +233,17 @@ class Kin8nmDataloader(RegressionDataloader):
     def get_batch_size(self, max_hidden_layer_size):
         return 1000
 
-''#'#'#
+
+''  # '#'#
+
+
 class MnistDataloader(ClassificationDataloader):
     def __init__(self):
         super().__init__('mnist')
 
     def get_batch_size(self, max_hidden_layer_size):
         if max_hidden_layer_size <= 50:
-            return  7000
+            return 7000
         elif max_hidden_layer_size <= 100:
             return 3500
         elif max_hidden_layer_size <= 500:
@@ -190,7 +273,7 @@ class PowerPlantDataloader(RegressionDataloader):
 class ProteinTertiaryStructureDataloader(RegressionDataloader):
     def __init__(self):
         super().__init__('protein-tertiary-structure')
-        
+
     def get_batch_size(self, max_hidden_layer_size):
         return 2000
 
@@ -198,7 +281,7 @@ class ProteinTertiaryStructureDataloader(RegressionDataloader):
 class WineQualityRedDataloader(RegressionDataloader):
     def __init__(self):
         super().__init__('wine-quality-red')
-        
+
     def get_batch_size(self, max_hidden_layer_size):
         return 1000
 
@@ -206,7 +289,7 @@ class WineQualityRedDataloader(RegressionDataloader):
 class YachtDataloader(RegressionDataloader):
     def __init__(self):
         super().__init__('yacht')
-        
+
     def get_batch_size(self, max_hidden_layer_size):
         return 2000
 
