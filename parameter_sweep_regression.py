@@ -74,7 +74,7 @@ print(f'Running experiment on {args.dataset} with parameters:\n'
 
 # Load in dataset and related info
 
-data_loader = data.RegressionDataloaderFixedSplits(args.dataset, args.datadir + '/presplit')
+data_loader = data.RegressionDataloaderFixedSplits(args.dataset, args.datadir)
 
 # Design search space for paramters
 param_space = list(itertools.product(hidden_layers, hidden_sizes, learning_rates, prior_vars))
