@@ -76,8 +76,10 @@ print(f'Running experiment on {args.dataset} with parameters:\n'
 
 if args.dataset == 'mnist':
     data_loader = data.ClassificationDataloader(args.dataset, args.datadir, batch_size=experiment_config['batch_size'])
+    metric = 'test_acc'
 else:
     data_loader = data.RegressionDataloaderFixedSplits(args.dataset, args.datadir)
+    metric = 'test_rmse'
 
 # Design search space for paramters
 param_space = list(itertools.product(hidden_layers, hidden_sizes, learning_rates, prior_vars))
@@ -113,7 +115,7 @@ train_params = Namespace(data_set=args.dataset,
                              'batchSize': experiment_config['batch_size'],
                              'epochs': experiment_config['epochs']
                          },
-                         metric='test_rmse')
+                         metric=metric)
 func_caller = BNNMLPFunctionCaller(data_loader, args.dataset, None, train_params,
                                reporter=REPORTER,
                                tmp_dir=None)
