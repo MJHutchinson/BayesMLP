@@ -113,7 +113,6 @@ class Reg_NN(object):
             config = tf.ConfigProto() # log_device_placement=True
             config.gpu_options.allow_growth=True
 
-
             # launch a session
             self.sess = tf.Session(config=config)
             self.sess.run([init, init2])
@@ -126,7 +125,7 @@ class Reg_NN(object):
             avg_cost, avg_kl, avg_ll = self.train_one(x_train, y_train)
             # Display logs per epoch step
             if epoch % display_epoch == 0:
-                print("Epoch:", '%04d' % (epoch + 1), "cost=", \
+                print("Epoch:", '%04d' % (epoch + 1), "cost=",
                       "{:.9f} ".format(avg_cost))
             costs.append(avg_cost)
         print("Optimization Finished!")
@@ -164,7 +163,7 @@ class Reg_NN(object):
             avg_kl += kl * fraction
             avg_ll += ll * fraction
 
-        return avg_cost, avg_kl, avg_ll
+        return avg_cost, avg_kl, avg_ll, total_batch
 
     def prediction(self, x_test, batch_size=100):
         sess = self.sess
@@ -504,7 +503,7 @@ class BayesMLPRegression(Reg_NN):
 from model.variational_parameter import make_weight_parameter
 
 class BayesMLPNNRegression(Reg_NN):
-    def __init__(self, input_size, nn, training_size,
+    def __init__(self, input_size, nn, output_size, training_size,
                  no_train_samples=10, no_pred_samples=100, prev_means=None, prev_log_variances=None,
                  learning_rate=0.001, prior_mean=0., prior_var=1., hyperprior=False, **kwargs):
 

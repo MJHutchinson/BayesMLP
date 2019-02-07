@@ -2,56 +2,48 @@ import tensorflow as tf
 import numpy as np
 from copy import deepcopy
 
+from utils.nn_utils import activation_dict
+
 np.random.seed(0)
 tf.set_random_seed(0)
 
-
-# variable initialization functions
-def weight_variable(shape, init_weights=None):
-    if init_weights is not None:
-        initial = tf.constant(init_weights)
-    else:
-        initial = tf.truncated_normal(shape, stddev=0.1)
-    return tf.Variable(initial)
+def get_layer_parents(adjList, lidx):
+    """ Returns parent layer indices for a given layer index. """
+    # Return all parents (layer indices in list) for layer lidx
+    return [e[0] for e in adjList if e[1] == lidx]
 
 
-def bias_variable(shape):
-    initial = tf.constant(0.1, shape=shape)
-    return tf.Variable(initial)
+def _loglik(predictions, targets):
+    with tf.name_scope('loglik'):
+        pred = predictions
+        targets = tf.tile(tf.expand_dims(targets, 0), [predictions.get_shape().as_list()[0], 1, 1])
+        log_lik = - tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=pred, labels=targets))
+        return log_lik
 
 
-def small_variable(shape):
-    initial = tf.constant(-6.0, shape=shape)
-    return tf.Variable(initial)
+def _test_loglik(predictions, targets):
+    with tf.name_scope('test_loglik'):
+        pred = tf.reduce_mean(predictions, axis=0)
+        log_lik = - tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=pred, labels=targets))
+        return log_lik
 
 
-def zero_variable(shape):
-    initial = tf.zeros(shape=shape)
-    return tf.Variable(initial)
-
-
-def _create_weights_mf(in_dim, hidden_size, out_dim, init_weights=None, init_variances=None):
-    size = deepcopy(hidden_size)
-    size.append(out_dim)
-    size.insert(0, in_dim)
-    no_params = 0
-    for i in range(len(size) - 1):
-        no_weights = size[i] * size[i + 1]
-        no_biases = size[i + 1]
-        no_params += (no_weights + no_biases)
-    m_weights = weight_variable([no_params], init_weights)
-    if init_variances is None:
-        v_weights = small_variable([no_params])
-    else:
-        v_weights = tf.Variable(tf.constant(init_variances, dtype=tf.float32))
-    return no_params, m_weights, v_weights, size
+def _predict_correct(predictions, y_test):
+    pred_classes = tf.argmax(tf.reduce_mean(predictions, axis=0), axis=1)
+    y_classes = tf.argmax(y_test, axis=1)
+    correct = tf.equal(pred_classes, y_classes)
+    correct = tf.reduce_sum(tf.cast(correct, tf.float32))
+    return correct
 
 
 class Cla_NN(object):
-    def __init__(self, input_size, hidden_size, output_size, training_size):
+    def __init__(self, input_size, output_size):
         # input and output placeholders
         self.x = tf.placeholder(tf.float32, [None, input_size])
         self.y = tf.placeholder(tf.float32, [None, output_size])
+
+        np.random.seed(1)
+        tf.random.set_random_seed(1)
 
     def assign_optimizer(self, learning_rate=0.001):
         with tf.name_scope('optimiser'):
@@ -61,7 +53,8 @@ class Cla_NN(object):
         # Initializing the variables
         with tf.name_scope('initialisation'):
             init = tf.global_variables_initializer()
-            config = tf.ConfigProto()
+            init2 = tf.local_variables_initializer()
+            config = tf.ConfigProto()  # log_device_placement=True
             config.gpu_options.allow_growth = True
 
             # launch a session
@@ -69,36 +62,14 @@ class Cla_NN(object):
             self.sess.run(init)
 
     def train(self, x_train, y_train, no_epochs=100, batch_size=100, display_epoch=5):
-        N = x_train.shape[0]
-        if batch_size > N:
-            batch_size = N
 
-        sess = self.sess
         costs = []
         # Training cycle
         for epoch in range(no_epochs):
-            perm_inds = list(range(x_train.shape[0]))
-            np.random.shuffle(perm_inds)
-            cur_x_train = x_train[perm_inds]
-            cur_y_train = y_train[perm_inds]
-
-            avg_cost = 0.
-            total_batch = int(np.ceil(N * 1.0 / batch_size))
-            # Loop over all batches
-            for i in range(total_batch):
-                start_ind = i * batch_size
-                end_ind = np.min([(i + 1) * batch_size, N])
-                batch_x = cur_x_train[start_ind:end_ind, :]
-                batch_y = cur_y_train[start_ind:end_ind, :]
-                # Run optimization op (backprop) and cost op (to get loss value)
-                _, c = sess.run(
-                    [self.train_step, self.cost],
-                    feed_dict={self.x: batch_x, self.y: batch_y})
-                # Compute average loss
-                avg_cost += c / total_batch
+            avg_cost, avg_kl, avg_ll = self.train_one(x_train, y_train)
             # Display logs per epoch step
             if epoch % display_epoch == 0:
-                print("Epoch:", '%04d' % (epoch + 1), "cost=", \
+                print("Epoch:", '%04d' % (epoch + 1), "cost=",
                       "{:.9f} ".format(avg_cost))
             costs.append(avg_cost)
         print("Optimization Finished!")
@@ -128,14 +99,23 @@ class Cla_NN(object):
             batch_y = cur_y_train[start_ind:end_ind, :]
             # Run optimization op (backprop) and cost op (to get loss value)
             _, c, kl, ll = sess.run(
-                [self.train_step, self.cost, self.KL_term, self.loglik_term],
+                [self.train_step, self.cost, self.KL, self.train_loglik],
                 feed_dict={self.x: batch_x, self.y: batch_y})
             # Compute average loss
             avg_cost += c / total_batch
             avg_kl += kl / total_batch
             avg_ll += ll / total_batch
 
-        return avg_cost, avg_kl, avg_ll
+        return avg_cost, avg_kl, avg_ll, total_batch
+
+    def train_one_optim_step(self, dataloader):
+        batch_x, batch_y = dataloader.next_train_batch()
+
+        _, c, kl, ll = self.sess.run(
+            [self.train_step, self.cost, self.KL, self.train_loglik],
+            feed_dict={self.x: batch_x, self.y: batch_y})
+
+        return c, kl, ll
 
     def prediction(self, x_test, batch_size=100):
         sess = self.sess
@@ -153,7 +133,7 @@ class Cla_NN(object):
             batch_x = x_test[start_ind:end_ind, :]
             # Run optimization op (backprop) and cost op (to get loss value)
             pred = sess.run(
-                [self.pred],
+                [self.pred_test],
                 feed_dict={self.x: batch_x})[0]
             # Compute average loss
             if preds is None:
@@ -164,11 +144,11 @@ class Cla_NN(object):
         return preds
 
     def prediction_prob(self, x_test):
-        prob = self.sess.run([tf.nn.softmax(self.pred)], feed_dict={self.x: x_test})[0]
+        prob = self.sess.run([tf.nn.softmax(self.pred_test)], feed_dict={self.x: x_test})[0]
         return prob
 
     def prediction_class(self, x_test):
-        classes = self.sess.run([tf.argmax(tf.reduce_mean(tf.nn.softmax(self.pred), axis=0), axis=1)], feed_dict={self.x: x_test})[0]
+        classes = self.sess.run([tf.argmax(tf.reduce_mean(tf.nn.softmax(self.pred_test), axis=0), axis=1)], feed_dict={self.x: x_test})[0]
         return classes
 
     def accuracy(self, x_test, y_test, batch_size=100):
@@ -195,14 +175,16 @@ class Cla_NN(object):
             batch_y = cur_y_train[start_ind:end_ind, :]
             # Run optimization op (backprop) and cost op (to get loss value)
             corr, ll  = sess.run(
-                [self.corr, self.test_loglik_term],
+                [self.corr_test, self.test_loglik],
                 feed_dict={self.x: batch_x, self.y: batch_y})
             # Compute average loss
-            correct += corr
-            loglik += ll
-            total += end_ind-start_ind
 
-        return correct/total, ll/total
+            fraction = (end_ind - start_ind) / N
+
+            correct += corr / N
+            loglik += ll * fraction
+
+        return correct, ll
 
 
     def get_weights(self):
@@ -211,6 +193,54 @@ class Cla_NN(object):
 
     def close_session(self):
         self.sess.close()
+
+    def get_config(self):
+        return self.config
+
+    def __str__(self):
+        config = self.get_config()
+        s = ''
+        for key in config:
+            s += f'{key}_{config[key]}_'
+
+        s = s[:-1]
+        s = s.replace('\n', ' ').replace('\t1.0', ' ')#.replace(' ', '')
+        return s
+
+    def make_metrics(self):
+        with tf.name_scope('performance'):
+            self.train_cost    = tf.placeholder(tf.float32, shape=None, name='train_cost_summary')
+            self.train_logloss = tf.placeholder(tf.float32, shape=None, name='train_logloss_summary')
+            self.train_kl      = tf.placeholder(tf.float32, shape=None, name='train_kl_summary')
+            self.test_logloss  = tf.placeholder(tf.float32, shape=None, name='test_logloss_summary')
+            self.test_acc      = tf.placeholder(tf.float32, shape=None, name='test_rmse_summary')
+
+            self.train_logloss_true = tf.placeholder(tf.float32, shape=None, name='train_logloss_summary_true')
+            self.test_logloss_true  = tf.placeholder(tf.float32, shape=None, name='test_logloss_summary_true')
+            self.output_sigma_true  = tf.placeholder(tf.float32, shape=None, name='homoskedastic_noise_true')
+
+            train_cost_summary    = tf.summary.scalar('train_cost',     self.train_cost, family='transforms_space')
+            train_logloss_summary = tf.summary.scalar('train_logloss',  self.train_logloss, family='transforms_space')
+            train_kl_summary      = tf.summary.scalar('train_kl',       self.train_kl, family='real_space')
+            test_logloss_summary  = tf.summary.scalar('test_logloss',   self.test_logloss, family='transforms_space')
+
+            train_logloss_summary_true = tf.summary.scalar('train_logloss_true',  self.train_logloss_true, family='real_space')
+            test_logloss_summary_true  = tf.summary.scalar('test_logloss_true',   self.test_logloss_true, family='real_space')
+            test_acc_summary           = tf.summary.scalar('test_acc',      self.test_acc, family='real_space')
+
+            self.performance_metrics = tf.summary.merge_all()
+
+    def log_metrics(self, train_cost, train_logloss, train_kl, test_logloss, test_acc, train_logloss_true, test_logloss_true):
+        return self.sess.run(self.performance_metrics, feed_dict={
+            self.train_cost:train_cost,
+            self.train_logloss: train_logloss,
+            self.train_kl: train_kl,
+            self.test_logloss: test_logloss,
+
+            self.train_logloss_true: train_logloss_true,
+            self.test_logloss_true: test_logloss_true,
+            self.test_acc: test_acc
+        })
 
 
 """ Neural Network MLP Model """
@@ -457,3 +487,158 @@ class BayesMLPClassification(Cla_NN):
             self.test_logloss: test_logloss,
             self.test_accuracy: test_accuracy
         })
+
+
+
+""" Abstracted parameters network"""
+
+
+from model.variational_parameter import make_weight_parameter
+
+
+class BayesMLPNNClassification(Cla_NN):
+    def __init__(self, input_size, nn, output_size, training_size,
+                 no_train_samples=10, no_pred_samples=100, prev_means=None, prev_log_variances=None,
+                 learning_rate=0.001, prior_mean=0., prior_var=1., hyperprior=False, **kwargs):
+
+        super(BayesMLPNNClassification, self).__init__(input_size, output_size)
+
+        self.conn_mat = nn.conn_mat
+        self.hidden_sizes = nn.num_units_in_each_layer
+        self.layer_labels = nn.layer_labels
+        self.prior_var = prior_var
+        self.learning_rate = learning_rate
+        self.hyperprior = hyperprior
+        self.input_size = input_size
+        self.output_size = output_size
+
+        self.config = {
+            'hidden_sizes': self.hidden_sizes,
+            'con_mat': self.conn_mat,
+            'learning_rate': self.learning_rate,
+            'prior_var': self.prior_var,
+            'hyperprior': self.hyperprior
+        }
+
+        self.nn = nn
+
+        self.create_parameters()
+
+        self.no_train_samples = no_train_samples
+        self.no_pred_samples = no_pred_samples
+        self.training_size = training_size
+
+        self.pred_train = self._prediction(self.x, self.no_train_samples)
+        self.pred_test  = self._prediction(self.x, self.no_pred_samples)
+        self.corr_train = _predict_correct(self.pred_train, self.y)
+        self.corr_test  = _predict_correct(self.pred_test,  self.y)
+
+        self.KL = tf.div(self._KL_term(), training_size)
+        self.train_loglik = - _loglik(self.pred_train, self.y)
+        self.test_loglik  = - _test_loglik(self.pred_test, self.y)
+        self.cost = self.KL + self.train_loglik
+
+        self.assign_optimizer(learning_rate)
+        self.assign_session()
+        self.make_metrics()
+
+    def _prediction(self, inputs, no_samples):
+        return self._prediction_layer(inputs, no_samples)
+
+        # this samples a layer at a time
+    def _prediction_layer(self, inputs, no_samples):
+        K = no_samples
+        N = tf.shape(inputs)[0]
+
+        with tf.name_scope('Expand_sample/'):
+            act = tf.tile(tf.expand_dims(inputs, 0), [K, 1, 1])
+
+        prev_acts = [act]
+
+        for lidx in range(1, self.nn.num_internal_layers+1):
+
+            plist = get_layer_parents(self.nn.conn_mat.keys(), lidx)
+            # get parent layer output sizes and sum
+            parent_acts = [prev_acts[i] for i in plist]
+
+            dout = self.nn.num_units_in_each_layer[lidx]
+            if dout == None: dout = 1
+            layer_label = self.nn.layer_labels[lidx]
+            activation = activation_dict[layer_label]
+
+            with tf.name_scope(f'layer_{lidx}_{layer_label}_{dout}/'):
+
+                act = tf.concat(parent_acts, -1)
+
+                W = self.W[lidx-1].value
+                b = self.b[lidx-1].value
+
+                m_pre = tf.einsum('kni,io->kno', act, W.loc)
+                v_pre = tf.einsum('kni,io->kno', act ** 2.0, W.scale ** 2)
+                eps_w = tf.random_normal([K, N, dout], 0.0, 1.0, dtype=tf.float32)
+                pre_W = eps_w * tf.sqrt(1e-9 + v_pre) + m_pre
+                eps_b = tf.random_normal([K, 1, dout], 0.0, 1.0, dtype=tf.float32)
+                pre_b = eps_b * b.scale + b.loc
+                pre = pre_W + pre_b
+
+                if activation is not None:
+                    act = activation(pre)
+                else:
+                    act = pre
+                prev_acts.append(act)
+
+        lidx += 1
+
+        layer_label = self.nn.layer_labels[lidx]
+
+        with tf.name_scope(f'layer_{lidx}_{layer_label}/'):
+
+            plist = get_layer_parents(self.nn.conn_mat.keys(), lidx)
+            # get parent layer output sizes and sum
+            parent_acts = [prev_acts[i] for i in plist]
+
+            scalar_mult = tf.Variable(1. / len(plist), dtype=tf.float32, trainable=False)  ### NEED TO VERIFY FLOAT 32
+            act = tf.scalar_mul(scalar_mult, tf.add_n(parent_acts))
+
+            # dout = 1
+            # m_pre = tf.einsum('kni,io->kno', act, self.W_m[-1])
+            # v_pre = tf.einsum('kni,io->kno', act ** 2.0, tf.exp(self.W_v[-1]))
+            # eps_w = tf.random_normal([K, N, dout], 0.0, 1.0, dtype=tf.float32)
+            # pre_W = eps_w * tf.sqrt(1e-9 + v_pre) + m_pre
+            # eps_b = tf.random_normal([K, 1, dout], 0.0, 1.0, dtype=tf.float32)
+            # pre_b = eps_b * tf.exp(0.5 * self.b_v[-1]) + self.b_m[-1]
+            # pre = pre_W + pre_b
+
+        return act
+
+    def _KL_term(self):
+        with tf.name_scope('kl'):
+            kl = 0
+            for i, (weight, bias) in enumerate(zip(self.W, self.b)):
+                with tf.name_scope(f'layer_{i}'):
+                    kl += weight.KL()
+                    kl += bias.KL()
+            return kl
+
+    def create_parameters(self):
+
+        self.W = []; self.b = []
+
+        douts = [self.x.get_shape().as_list()[-1]]
+
+        for lidx in range(1, self.nn.num_internal_layers+1):
+            plist = get_layer_parents(self.nn.conn_mat.keys(), lidx)
+            # get parent layer output sizes and sum
+            parent_outs = [douts[i] for i in plist]
+            din = sum(parent_outs)
+            # get number of units in layer
+
+            dout = self.nn.num_units_in_each_layer[lidx]
+            if dout == None: dout = self.output_size
+            douts.append(dout)
+
+            layer_label = self.nn.layer_labels[lidx]
+
+            with tf.name_scope(f'layer_{lidx}_{layer_label}_{dout}/'):
+                self.W.append(make_weight_parameter([din, dout], self.prior_var, self.hyperprior))
+                self.b.append(make_weight_parameter([dout], self.prior_var, self.hyperprior))

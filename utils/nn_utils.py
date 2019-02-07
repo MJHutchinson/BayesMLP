@@ -1,5 +1,22 @@
+import tensorflow as tf
+
 from scipy.sparse import dok_matrix
 from model.neural_network_representation import get_mlp_layer_labels, MultiLayerPerceptron
+
+activation_dict = {'relu':tf.nn.relu,
+                'elu':tf.nn.elu,
+                'crelu':tf.nn.crelu,
+                'relu6':tf.nn.relu6,
+                'softplus':tf.nn.softplus,
+                'softmax':tf.nn.softmax,
+                'linear':None,
+                'logistic':tf.nn.sigmoid,
+                'tanh':tf.nn.tanh,
+                'leaky-relu':tf.nn.relu, # Need to update tf for leaky_relu; leaky_relu --> relu.
+                'relu-x':tf.nn.relu, # Not sure what relu-x is in tf; relu-x --> relu.
+                'step':tf.nn.tanh, # Not sure how to do step in tf; step --> tanh
+                }
+
 
 def get_feedforward_adj_mat(num_layers):
     """ Returns an adjacency matrix for a feed forward network. """

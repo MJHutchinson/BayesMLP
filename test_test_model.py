@@ -12,7 +12,7 @@ from utils.reporters import get_reporter
 from utils.nn_utils import get_feedforward_nn
 from utils.mutli_gpu_runner import MultiGPURunner
 
-DATASET = 'yacht' # Dataset to run on
+DATASET = 'mnist' # Dataset to run on
 CONFIG = f'./config/{DATASET}.yaml'
 
 experiment_config = yaml.load(open(CONFIG, 'rb'))
@@ -41,7 +41,7 @@ EXP_DIR = f'./results/{DATASET}/multithreading-test_{datetime.now().strftime("%Y
 LOG_DIR = EXP_DIR
 LOG_FILE = os.path.join(EXP_DIR, 'log')
 TMP_DIR = os.path.join(EXP_DIR, 'tmp')
-DATA_DIR = './data_dir'
+DATA_DIR = './data_dir/presplit'
 # DATA_DIR = '/scratch/mjh252/data/UCL'
 os.mkdir(EXP_DIR)
 os.mkdir(TMP_DIR)
@@ -52,14 +52,14 @@ if os.path.islink(latest_dir):
     os.unlink(latest_dir)
 os.symlink(os.path.abspath(EXP_DIR), latest_dir)
 
-REPORTER = get_reporter(open(LOG_FILE, 'w'))
-train_params = Namespace(data_set=DATASET,
-                         data_dir=DATA_DIR,
-                         tf_params=tf_params,
-                         metric='test_rmse')
-func_caller = BNNMLPFunctionCaller(DATASET, None, train_params,
-                               reporter=REPORTER,
-                               tmp_dir=TMP_DIR)
+# REPORTER = get_reporter(open(LOG_FILE, 'w'))
+# train_params = Namespace(data_set=DATASET,
+#                          data_dir=DATA_DIR,
+#                          tf_params=tf_params,
+#                          metric='test_rmse')
+# func_caller = BNNMLPFunctionCaller(DATASET, None, train_params,
+#                                reporter=REPORTER,
+#                                tmp_dir=TMP_DIR)
 
 points = []
 
@@ -69,16 +69,18 @@ for (hidden_layer, hidden_size) in param_space:
 
     nn = get_feedforward_nn(hidden_size, hidden_layer)
     params = {
-        'hyperprior': True,
+        'hyperprior': False,
         'prior_var': 1.0
     }
     points.append((nn, params))
 
 from model.regression import BayesMLPNNRegression
-from data.data_loader import RegressionDataloader
-from model.test_model import test_model_regression
+from model.classification import BayesMLPNNClassification
+from data.data_loader import RegressionDataloader, ClassificationDataloader
+from model.test_model import test_model_regression, test_model_classification, test_model_classification_optim_steps
 
 point = points[0]
-data_loader = RegressionDataloader(DATASET, DATA_DIR)
-model = BayesMLPNNRegression(data_loader.input_size, point[0], data_loader.train_length, **point[1])
-test_model_regression(model, data_loader, 50000, 1000, 10, LOG_DIR)
+data_loader = ClassificationDataloader(DATASET, DATA_DIR, 1000)
+model = BayesMLPNNClassification(data_loader.input_size, point[0], data_loader.output_size, data_loader.train_length, **point[1])
+print(model)
+test_model_classification_optim_steps(model, data_loader, 50000, 1000, 200, LOG_DIR)
