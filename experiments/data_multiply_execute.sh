@@ -11,7 +11,7 @@ python data_multiply.py -c ./config/data_multiply/yacht.yaml                    
 
 export CUDA_VISIBLE_DEVICES=1
 python data_multiply.py -c ./config/data_multiply/kin8nm.yaml                     -ds kin8nm                      -ld /scratch/mjh252/logs/clean -dd /scratch/mjh252/data/UCL/ -cm data-multiply -nd &
-# python parameter_sweep_regression.py -c ./config/naval-propulsion-plant.yaml     -ds naval-propulsion-plant      -ld /scratch/mjh252/logs/clean -dd /scratch/mjh252/data/UCL/ -cm sweep-1 &
+# python parameter_sweep.py -c ./config/naval-propulsion-plant.yaml     -ds naval-propulsion-plant      -ld /scratch/mjh252/logs/clean -dd /scratch/mjh252/data/UCL/ -cm sweep-1 &
 #python data_multiply.py -c ./config/data_multiply/power-plant.yaml                -ds power-plant                 -ld /scratch/mjh252/logs/clean -dd /scratch/mjh252/data/UCL/ -cm data-multiply -nd &
 
 export CUDA_VISIBLE_DEVICES=4
