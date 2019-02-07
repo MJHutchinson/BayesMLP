@@ -16,7 +16,7 @@
 #wait
 #
 #python parameter_sweep.py -c ./config/weight_pruning_hyperprior/power-plant.yaml                -ds power-plant                  -ld /scratch/mjh252/logs/clean/ -dd /scratch/mjh252/data/presplit/ -cm weight_pruning_hyperprior -nd --gpu 0 1 2 3 &
-python parameter_sweep.py -c ./config/weight_pruning_hyperprior/mnist.yaml                -ds mnist                        -ld /scratch/mjh252/logs/clean/ -dd /scratch/mjh252/data/presplit/ -cm weight_pruning_prior_1 -nd --gpu 4 5 6 7 &
+python parameter_sweep.py -c ./config/weight_pruning_hyperprior/mnist.yaml                -ds mnist                        -ld /scratch/mjh252/logs/clean/ -dd /scratch/mjh252/data/presplit/ -cm weight_pruning_hyperprior -nd --gpu 4 5 6 7 &
 
 
 wait
