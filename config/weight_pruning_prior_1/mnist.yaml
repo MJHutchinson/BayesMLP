@@ -4,5 +4,5 @@ epochs: 50000
 search_space: 'small'
 learning_rates: [0.001]
 prior_vars: [1.]
-hyperprior: True
+hyperprior: False
 batch_size: 1000

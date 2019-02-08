@@ -149,33 +149,65 @@ def do_plots(results_dir):
         plt.tight_layout()
         plt.savefig(os.path.join(results_dir, 'figs', f'{metric1}-{metric2}.png'))
 
+
+    def plot_optimisation_step_correlation_grouped(groups, metric, step):
+
+        fig, axs = plt.subplots(1, 1, figsize=(5, 2.5))
+
+        for group in groups:
+            final_vals = []
+            step_vals = []
+
+            results = groups[group]
+            for result in results:
+                final_vals.append(result['results'][metric][-1])
+                step_vals.append(result['results'][metric][step])
+
+            plt.scatter(step_vals, final_vals,)
+
+        plt.legend(groups.keys())
+        plt.xlabel(f'{metric.replace("_", " ")} at step {step}')
+        plt.ylabel(f'{metric.replace("_", " ")} at final step')
+        plt.plot([min(final_vals), max(final_vals)], [min(final_vals), max(final_vals)])
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(results_dir, 'figs', f'{metric}_correlation_step_{step}.png'))
+
+
     for group in layer_groups: plot_KL_pruning(layer_groups[group])
     plot_metric_actual_grouped(layer_groups, 'test_rmse_true')
     plot_metric_actual_grouped(layer_groups, 'test_ll_true')
     plot_metric_vs_metric(layer_groups, 'test_rmse_true', 'test_ll_true')
+    for step in [0] + list(range(1000, len(layer_groups[1][0]['results']['test_ll_true']), 1000)):
+        plot_optimisation_step_correlation_grouped(layer_groups, 'test_rmse_true', step)
+        plot_optimisation_step_correlation_grouped(layer_groups, 'test_ll_true', step)
+
+
 
     # plt.show()
     plt.close('all')
 
 
-dirs = ['../remote_logs_clean/bostonHousing/weight_pruning_hyperprior',
-        '../remote_logs_clean/bostonHousing/weight_pruning_prior_1',
-        '../remote_logs_clean/wine-quality-red/weight_pruning_hyperprior',
-        '../remote_logs_clean/wine-quality-red/weight_pruning_prior_1',
-        '../remote_logs_clean/yacht/weight_pruning_hyperprior',
-        '../remote_logs_clean/yacht/weight_pruning_prior_1',
-        '../remote_logs_clean/protein-tertiary-structure/weight_pruning_hyperprior',
-        '../remote_logs_clean/protein-tertiary-structure/weight_pruning_prior_1',
-        '../remote_logs_clean/concrete/weight_pruning_hyperprior',
-        '../remote_logs_clean/concrete/weight_pruning_prior_1',
-        '../remote_logs_clean/energy/weight_pruning_hyperprior',
-        '../remote_logs_clean/energy/weight_pruning_prior_1',
-        '../remote_logs_clean/kin8nm/weight_pruning_hyperprior',
-        '../remote_logs_clean/kin8nm/weight_pruning_prior_1',
-        '../remote_logs_clean/naval-propulsion-plant/weight_pruning_hyperprior',
-        '../remote_logs_clean/naval-propulsion-plant/weight_pruning_prior_1',
+dirs = [
+        # '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior',
+        # '../remote_logs_clean/bostonHousing/weight_pruning_prior_1',
+        # '../remote_logs_clean/wine-quality-red/weight_pruning_hyperprior',
+        # '../remote_logs_clean/wine-quality-red/weight_pruning_prior_1',
+        # '../remote_logs_clean/yacht/weight_pruning_hyperprior',
+        # '../remote_logs_clean/yacht/weight_pruning_prior_1',
+        # '../remote_logs_clean/protein-tertiary-structure/weight_pruning_hyperprior',
+        # '../remote_logs_clean/protein-tertiary-structure/weight_pruning_prior_1',
+        # '../remote_logs_clean/concrete/weight_pruning_hyperprior',
+        # '../remote_logs_clean/concrete/weight_pruning_prior_1',
+        # '../remote_logs_clean/energy/weight_pruning_hyperprior',
+        # '../remote_logs_clean/energy/weight_pruning_prior_1',
+        # '../remote_logs_clean/kin8nm/weight_pruning_hyperprior',
+        # '../remote_logs_clean/kin8nm/weight_pruning_prior_1',
+        # '../remote_logs_clean/naval-propulsion-plant/weight_pruning_hyperprior',
+        # '../remote_logs_clean/naval-propulsion-plant/weight_pruning_prior_1',
         '../remote_logs_clean/power-plant/weight_pruning_hyperprior',
-        '../remote_logs_clean/power-plant/weight_pruning_prior_1']
+        '../remote_logs_clean/power-plant/weight_pruning_prior_1'
+]
 
 for dir in dirs:
     print(dir)
