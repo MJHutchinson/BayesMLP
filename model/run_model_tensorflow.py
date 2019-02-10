@@ -33,7 +33,7 @@ def compute_validation_error(point, data_loader, params, gpu_id, results_dir, na
         model = BayesMLPNNClassification(data_loader.input_size, nn, data_loader.output_size, data_loader.train_length,
                                      **model_parameters)
         print(f'gpu {gpu_id} - {data_loader.pickle_name} - running {model}.')
-        result = test_model_classification_optim_steps(model, data_loader, params['epochs'], params['batchSize'], log_freq=200,
+        result = test_model_classification_optim_steps(model, data_loader, params['epochs'], params['batchSize'], log_freq=50,
                                        results_dir=results_dir, verbose=True, name_prefix=name_prefix)
 
     model.close_session()

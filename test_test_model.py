@@ -82,7 +82,7 @@ from model.test_model import test_model_regression, test_model_classification, t
 
 point = points[0]
 data_loader = ClassificationDataloader(DATASET, DATA_DIR, 1000)
-model = BayesMLPClassification(data_loader.input_size, [50,50], data_loader.output_size, data_loader.train_length) # BayesMLPNNClassification(data_loader.input_size, point[0], data_loader.output_size, data_loader.train_length, **point[1])
+model = BayesMLPNNClassification(data_loader.input_size, point[0], data_loader.output_size, data_loader.train_length) # BayesMLPNNClassification(data_loader.input_size, point[0], data_loader.output_size, data_loader.train_length, **point[1])
 print(model)
 # test_model_classification(model, data_loader, 50000, 1000, 1, LOG_DIR, KL_pruning_plots=False, SNR_pruning_plots=False)
 test_model_classification_optim_steps(model, data_loader, 50000, 1000, 50, LOG_DIR, KL_pruning_plots=False, SNR_pruning_plots=False)
