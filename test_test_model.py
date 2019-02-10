@@ -75,12 +75,12 @@ for (hidden_layer, hidden_size) in param_space:
     points.append((nn, params))
 
 from model.regression import BayesMLPNNRegression
-from model.classification import BayesMLPNNClassification
+from model.classification import BayesMLPNNClassification, BayesMLPClassification
 from data.data_loader import RegressionDataloader, ClassificationDataloader
 from model.test_model import test_model_regression, test_model_classification, test_model_classification_optim_steps
 
 point = points[0]
 data_loader = ClassificationDataloader(DATASET, DATA_DIR, 1000)
-model = BayesMLPNNClassification(data_loader.input_size, point[0], data_loader.output_size, data_loader.train_length, **point[1])
+model = BayesMLPClassification(data_loader.input_size, [50,50], data_loader.output_size, data_loader.train_length) # BayesMLPNNClassification(data_loader.input_size, point[0], data_loader.output_size, data_loader.train_length, **point[1])
 print(model)
-test_model_classification_optim_steps(model, data_loader, 50000, 1000, 200, LOG_DIR)
+test_model_classification_optim_steps(model, data_loader, 50000, 1000, 200, LOG_DIR, KL_pruning_plots=False, SNR_pruning_plots=False)

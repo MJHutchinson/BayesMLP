@@ -253,12 +253,27 @@ class BayesMLPClassification(Cla_NN):
                  no_train_samples=10, no_pred_samples=100, prev_means=None, prev_log_variances=None,
                  learning_rate=0.001,
                  prior_mean=0, prior_var=1, activation=tf.nn.relu):
-        super(BayesMLPClassification, self).__init__(input_size, hidden_size, output_size, training_size)
+        super(BayesMLPClassification, self).__init__(input_size, output_size)
+
+        self.hidden_sizes = hidden_size
+        self.prior_var = prior_var
+        self.learning_rate = learning_rate
+        self.input_size = input_size
+        self.output_size = output_size
+
+        self.config = {
+            'hidden_sizes': self.hidden_sizes,
+            'learning_rate': self.learning_rate,
+            'prior_var': self.prior_var,
+        }
 
         m, v, self.size = self.create_weights(input_size, hidden_size, output_size, prev_means, prev_log_variances)
         self.W_m, self.b_m = m[0], m[1]
         self.W_v, self.b_v = v[0], v[1]
         self.weights = [m, v]
+
+        self.W = self.W_m + self.W_v
+        self.b = self.b_m + self.b_v
 
         m, v = self.create_prior(input_size, hidden_size, output_size, prev_means, prev_log_variances, prior_mean, prior_var)
         self.prior_W_m, self.prior_b_m = m[0], m[1]
@@ -272,20 +287,23 @@ class BayesMLPClassification(Cla_NN):
 
         self.activation = activation
 
-        self.pred = self._prediction(self.x, self.no_pred_samples)
-        self.corr = self._predict_correct(self.x, self.y)
+        self.pred_train = self._prediction(self.x, self.no_train_samples)
+        self.pred_test = self._prediction(self.x, self.no_pred_samples)
 
-        self.KL_term = tf.div(self._KL_term(), training_size)
-        self.loglik_term = - self._loglik(self.x, self.y)
-        self.test_loglik_term = - self._test_loglik(self.x, self.y)
-        self.cost = self.KL_term + self.loglik_term
+        self.corr_train = self._predict_correct(self.pred_train, self.y)
+        self.corr_test = self._predict_correct(self.pred_test, self.y)
+
+        self.KL = tf.div(self._KL_term(), training_size)
+        self.train_loglik = - self._loglik(self.pred_train, self.y)
+        self.test_loglik = - self._test_loglik(self.pred_test, self.y)
+        self.cost = self.KL + self.train_loglik
 
         self.assign_optimizer(learning_rate)
         self.assign_session()
         self.make_metrics()
 
-    def _predict_correct(self, x_test, y_test):
-        pred_classes = tf.argmax(tf.reduce_mean(tf.nn.softmax(self.pred), axis=0), axis=1)
+    def _predict_correct(self, y_pred, y_test):
+        pred_classes = tf.argmax(tf.reduce_mean(tf.nn.softmax(y_pred), axis=0), axis=1)
         y_classes = tf.argmax(y_test, axis=1)
         correct = tf.equal(pred_classes, y_classes)
         correct = tf.reduce_sum(tf.cast(correct, tf.float32))
@@ -354,16 +372,17 @@ class BayesMLPClassification(Cla_NN):
                 return pre
 
     # computes log likelihood of input for against target
-    def _loglik(self, inputs, targets):
+    def _loglik(self, preds, targets):
         with tf.name_scope('loglik'):
-            pred = self._prediction(inputs, self.no_train_samples)
+            pred = preds
             targets = tf.tile(tf.expand_dims(targets, 0), [self.no_train_samples, 1, 1])
             log_lik = - tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=pred, labels=targets))
             return log_lik
 
-    def _test_loglik(self, inputs, targets):
+    def _test_loglik(self, preds, targets):
         with tf.name_scope('test_loglik'):
-            pred = tf.reduce_mean(self._prediction(inputs, self.no_train_samples), axis=0)
+            preds = tf.nn.softmax(preds)
+            pred = tf.reduce_mean(preds, axis=0)
             log_lik = - tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=pred, labels=targets))
             return log_lik
 
@@ -462,33 +481,6 @@ class BayesMLPClassification(Cla_NN):
             b_v.append(bi_v)
 
         return [W_m, b_m], [W_v, b_v]
-
-    def make_metrics(self):
-        with tf.name_scope('performance'):
-            self.train_cost    = tf.placeholder(tf.float32, shape=None, name='train_cost_summary')
-            self.train_logloss = tf.placeholder(tf.float32, shape=None, name='train_logloss_summary')
-            self.train_kl      = tf.placeholder(tf.float32, shape=None, name='train_kl_summary')
-            self.test_logloss  = tf.placeholder(tf.float32, shape=None, name='test_logloss_summary')
-            self.test_accuracy = tf.placeholder(tf.float32, shape=None, name='test_accuracy_summary')
-
-            train_cost_summary    = tf.summary.scalar('train cost',     self.train_cost)
-            train_logloss_summary = tf.summary.scalar('train logloss',  self.train_logloss)
-            train_kl_summary      = tf.summary.scalar('train kl',       self.train_kl)
-            test_logloss_summary  = tf.summary.scalar('test logloss',   self.test_logloss)
-            test_accuracy_summary = tf.summary.scalar('test accuracy',  self.test_accuracy)
-
-            self.performance_metrics = tf.summary.merge_all()
-
-    def log_metrics(self, train_cost, train_logloss, train_kl, test_logloss, test_accuracy):
-        return self.sess.run(self.performance_metrics, feed_dict={
-            self.train_cost:train_cost,
-            self.train_logloss: train_logloss,
-            self.train_kl: train_kl,
-            self.test_logloss: test_logloss,
-            self.test_accuracy: test_accuracy
-        })
-
-
 
 """ Abstracted parameters network"""
 

@@ -37,13 +37,7 @@ from utils.results_utils import ExperimentResults
 # results_dir = '../remote_logs_clean/power-plant/weight_pruning_prior_1'
 
 def do_plots(results_dir):
-    os.makedirs(os.path.join(results_dir, 'figs'), exist_ok=True)
-
-    results = ExperimentResults(results_dir)
-
-    layer_groups = results.group_results(lambda x: len(x['hidden_sizes']) - 3)
-
-    thresholds = [[1], [1, 0.5], [1, 0.2, 0.2]]  # Hyperprior
+    thresholds = [[1], [0.002, 0.005], [1, 0.2, 0.2]]  # Hyperprior
 
     # thresholds = [[1], [1, 0.5], [1, 0.5, 0.5]] # Fixed Prior
 
@@ -63,7 +57,8 @@ def do_plots(results_dir):
         prune_axs[layers][0].set_title('Total active weights')
         prune_axs[i][0].set_xlabel('Layer size')
 
-        prune_axs[0][1].set_title('Final RMSE')
+        # prune_axs[0][1].set_title('Final RMSE')
+        prune_axs[0][1].set_title('Final Accuracy')
         prune_axs[1][1].set_title('Final Test Log Likelihood')
         # prune_axs[2][1].set_title('Layer 3 active weights')
         # prune_axs[3][1].set_title('Total active weights')
@@ -75,7 +70,8 @@ def do_plots(results_dir):
                 sum(neuron_kl > thresholds[layers - 1][layer] for neuron_kl in r['results']['KL_pruning'][layer]) for
                 layer in range(layers)]
 
-            final_rmse = sum(r['results']['test_rmse_true'][-20:]) / 20
+            # final_rmse = sum(r['results']['test_rmse_true'][-20:]) / 20
+            final_rmse = sum(r['results']['test_acc'][-20:]) / 20
             final_test_loglik = sum(r['results']['test_ll_true'][-20:]) / 20
 
             for i in range(layers):
@@ -173,13 +169,26 @@ def do_plots(results_dir):
         plt.tight_layout()
         plt.savefig(os.path.join(results_dir, 'figs', f'{metric}_correlation_step_{step}.png'))
 
+    os.makedirs(os.path.join(results_dir, 'figs'), exist_ok=True)
+
+    results = ExperimentResults(results_dir)
+
+    layer_groups = results.group_results(lambda x: len(x['hidden_sizes']) - 3)
+
+    # for group in layer_groups: plot_KL_pruning(layer_groups[group])
+    # plot_metric_actual_grouped(layer_groups, 'test_rmse_true')
+    # plot_metric_actual_grouped(layer_groups, 'test_ll_true')
+    # plot_metric_vs_metric(layer_groups, 'test_rmse_true', 'test_ll_true')
+    # for step in [0] + list(range(1000, len(layer_groups[1][0]['results']['test_ll_true']), 1000)):
+    #     plot_optimisation_step_correlation_grouped(layer_groups, 'test_rmse_true', step)
+    #     plot_optimisation_step_correlation_grouped(layer_groups, 'test_ll_true', step)
 
     for group in layer_groups: plot_KL_pruning(layer_groups[group])
-    plot_metric_actual_grouped(layer_groups, 'test_rmse_true')
+    plot_metric_actual_grouped(layer_groups, 'test_acc')
     plot_metric_actual_grouped(layer_groups, 'test_ll_true')
-    plot_metric_vs_metric(layer_groups, 'test_rmse_true', 'test_ll_true')
-    for step in [0] + list(range(1000, len(layer_groups[1][0]['results']['test_ll_true']), 1000)):
-        plot_optimisation_step_correlation_grouped(layer_groups, 'test_rmse_true', step)
+    plot_metric_vs_metric(layer_groups, 'test_acc', 'test_ll_true')
+    for step in [0] + list(range(1000, len(layer_groups[0][0]['results']['test_ll_true']), 1000)):
+        plot_optimisation_step_correlation_grouped(layer_groups, 'test_acc', step)
         plot_optimisation_step_correlation_grouped(layer_groups, 'test_ll_true', step)
 
 
@@ -188,27 +197,31 @@ def do_plots(results_dir):
     plt.close('all')
 
 
-dirs = [
-        # '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior',
-        # '../remote_logs_clean/bostonHousing/weight_pruning_prior_1',
-        # '../remote_logs_clean/wine-quality-red/weight_pruning_hyperprior',
-        # '../remote_logs_clean/wine-quality-red/weight_pruning_prior_1',
-        # '../remote_logs_clean/yacht/weight_pruning_hyperprior',
-        # '../remote_logs_clean/yacht/weight_pruning_prior_1',
-        # '../remote_logs_clean/protein-tertiary-structure/weight_pruning_hyperprior',
-        # '../remote_logs_clean/protein-tertiary-structure/weight_pruning_prior_1',
-        # '../remote_logs_clean/concrete/weight_pruning_hyperprior',
-        # '../remote_logs_clean/concrete/weight_pruning_prior_1',
-        # '../remote_logs_clean/energy/weight_pruning_hyperprior',
-        # '../remote_logs_clean/energy/weight_pruning_prior_1',
-        # '../remote_logs_clean/kin8nm/weight_pruning_hyperprior',
-        # '../remote_logs_clean/kin8nm/weight_pruning_prior_1',
-        # '../remote_logs_clean/naval-propulsion-plant/weight_pruning_hyperprior',
-        # '../remote_logs_clean/naval-propulsion-plant/weight_pruning_prior_1',
+dirs_regression = [
+        '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior',
+        '../remote_logs_clean/bostonHousing/weight_pruning_prior_1',
+        '../remote_logs_clean/wine-quality-red/weight_pruning_hyperprior',
+        '../remote_logs_clean/wine-quality-red/weight_pruning_prior_1',
+        '../remote_logs_clean/yacht/weight_pruning_hyperprior',
+        '../remote_logs_clean/yacht/weight_pruning_prior_1',
+        '../remote_logs_clean/protein-tertiary-structure/weight_pruning_hyperprior',
+        '../remote_logs_clean/protein-tertiary-structure/weight_pruning_prior_1',
+        '../remote_logs_clean/concrete/weight_pruning_hyperprior',
+        '../remote_logs_clean/concrete/weight_pruning_prior_1',
+        '../remote_logs_clean/energy/weight_pruning_hyperprior',
+        '../remote_logs_clean/energy/weight_pruning_prior_1',
+        '../remote_logs_clean/kin8nm/weight_pruning_hyperprior',
+        '../remote_logs_clean/kin8nm/weight_pruning_prior_1',
+        '../remote_logs_clean/naval-propulsion-plant/weight_pruning_hyperprior',
+        '../remote_logs_clean/naval-propulsion-plant/weight_pruning_prior_1',
         '../remote_logs_clean/power-plant/weight_pruning_hyperprior',
         '../remote_logs_clean/power-plant/weight_pruning_prior_1'
 ]
 
-for dir in dirs:
+dirs_classification = [
+    '../remote_logs_clean/mnist/weight_pruning_hyperprior',
+]
+
+for dir in dirs_classification:
     print(dir)
     do_plots(dir)
