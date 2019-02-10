@@ -106,7 +106,7 @@ class Cla_NN(object):
             avg_kl += kl / total_batch
             avg_ll += ll / total_batch
 
-        return avg_cost, avg_kl, avg_ll, total_batch
+        return avg_cost, avg_kl, avg_ll
 
     def train_one_optim_step(self, dataloader):
         batch_x, batch_y = dataloader.next_train_batch()

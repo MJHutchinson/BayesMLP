@@ -179,25 +179,21 @@ def test_model_classification(model, data_gen, epochs, batch_size=100, log_freq=
     train_lls_true = []
 
     if verbose:
-        test_ll, test_acc = model.accuracy(x_test, y_test, batch_size=batch_size)
+        test_acc, test_ll = model.accuracy(x_test, y_test, batch_size=batch_size)
         print(f'Initial test log likelihood: {test_ll:8.4f}, test acc: {test_acc:8.4f}')
 
-    total_optimisation_steps = 0
     total_train_time = 0
-    epoch = 0
 
     last_log = 0
     last_plot = 0
 
-    while total_optimisation_steps < epochs:
+    for epoch in range(epochs):
 
         t = time.time()
-        train_elbo, train_kl, train_ll, optimisation_steps = model.train_one(x_train, y_train, batch_size=batch_size)
+        train_elbo, train_kl, train_ll = model.train_one(x_train, y_train, batch_size=batch_size)
         train_time = time.time()-t
 
-        total_optimisation_steps += optimisation_steps
         total_train_time += train_time
-        epoch += 1
 
         test_acc, test_ll = model.accuracy(x_test, y_test, batch_size=batch_size)
         test_time = time.time() - train_time - t
@@ -215,15 +211,13 @@ def test_model_classification(model, data_gen, epochs, batch_size=100, log_freq=
         train_lls_true.append(train_ll_true)
 
         summary = model.log_metrics(train_elbo, train_ll, train_kl, test_ll, test_acc, train_ll_true, test_ll_true)
-        summary_writer.add_summary(summary, total_optimisation_steps)
+        summary_writer.add_summary(summary, epoch)
 
-        if (int(last_log/log_freq) != int(total_optimisation_steps/log_freq)) & verbose:
-            last_log = total_optimisation_steps
-            print(f'\rOptimisation step {total_optimisation_steps:4.0f}, \t ELBO: {train_elbo:10.4f}, \t KL term: {train_kl:10.4f}, \t train log likelihood term: {train_ll_true:8.4f}, \t test log likelihood: {test_ll_true:8.4f}, \t test accuracy: {test_acc:8.4f}, \t train time: {train_time:6.4f}, \t test time: {test_time:6.4f}')
+        if (epoch % log_freq == 0) & verbose:
+            print(f'\rOptimisation step {epoch:4.0f}, \t ELBO: {train_elbo:10.4f}, \t KL term: {train_kl:10.4f}, \t train log likelihood term: {train_ll_true:8.4f}, \t test log likelihood: {test_ll_true:8.4f}, \t test accuracy: {test_acc:8.4f}, \t train time: {train_time:6.4f}, \t test time: {test_time:6.4f}')
 
-        if int(last_plot / (10 * log_freq)) != int(total_optimisation_steps / (10 * log_freq)):
+        if epoch % (log_freq * 10) == 0:
             # Plot predictions vs actual plots
-            last_plot = total_optimisation_steps
 
             # if accuracy_plots:
             #     predictions_train = np.mean(model.prediction(x_train, batch_size=batch_size), 0)

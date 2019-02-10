@@ -226,6 +226,8 @@ class ClassificationDataloader(Dataloader):
         batch_x = self.cur_x_train[start_ind:end_ind, :]
         batch_y = self.cur_y_train[start_ind:end_ind, :]
 
+        self.curr_batch += 1
+
         return batch_x, batch_y
 
 
