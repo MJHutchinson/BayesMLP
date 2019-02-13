@@ -26,11 +26,29 @@ def get_feedforward_adj_mat(num_layers):
     return ret
 
 
+def get_dense_adj_matrix(num_layers):
+    ret = dok_matrix((num_layers, num_layers))
+    for i in range(num_layers-1):
+        ret[i, i+1] = 1
+        if i < num_layers - 2:
+            ret[i, num_layers-2] = 1
+    return ret
+
+
 def get_feedforward_nn(hidden_size, hidden_layer):
     hidden_configuration = [hidden_size] * hidden_layer
     all_layer_labels = get_mlp_layer_labels('reg')
     layer_labels = ['ip'] + ['relu'] * len(hidden_configuration) + ['linear', 'op']
     num_units_each_layer = [None] + hidden_configuration + [None, None]
     A = get_feedforward_adj_mat(len(layer_labels))
+
+    return MultiLayerPerceptron('reg', layer_labels, A, num_units_each_layer, all_layer_labels)
+
+
+def get_dense_nn(hidden_configuration):
+    all_layer_labels = get_mlp_layer_labels('reg')
+    layer_labels = ['ip'] + ['relu'] * len(hidden_configuration) + ['linear', 'op']
+    num_units_each_layer = [None] + hidden_configuration + [None, None]
+    A = get_dense_adj_matrix(len(layer_labels))
 
     return MultiLayerPerceptron('reg', layer_labels, A, num_units_each_layer, all_layer_labels)

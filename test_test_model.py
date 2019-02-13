@@ -69,7 +69,7 @@ for (hidden_layer, hidden_size) in param_space:
 
     nn = get_feedforward_nn(hidden_size, hidden_layer)
     params = {
-        'hyperprior': False,
+        'hyperprior': True,
         'prior_var': 1.0
     }
     points.append((nn, params))

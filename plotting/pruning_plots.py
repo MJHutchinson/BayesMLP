@@ -37,9 +37,11 @@ from utils.results_utils import ExperimentResults
 # results_dir = '../remote_logs_clean/power-plant/weight_pruning_prior_1'
 
 def do_plots(results_dir):
-    thresholds = [[1], [0.002, 0.005], [1, 0.2, 0.2]]  # Hyperprior
+    # thresholds = [[1], [0.002, 0.005], [1, 0.2, 0.2]]  # Hyperprior
 
     # thresholds = [[1], [1, 0.5], [1, 0.5, 0.5]] # Fixed Prior
+
+    thresholds = [[0.001], [0.001, 0.001], [0.001, 0.001, 0.001]]
 
     def plot_KL_pruning(results):
         '''
@@ -219,7 +221,7 @@ dirs_regression = [
 ]
 
 dirs_classification = [
-    '../remote_logs_clean/mnist/weight_pruning_hyperprior',
+    '../remote_logs_clean/mnist/weight_pruning_hyperprior', # [0.01]
 ]
 
 for dir in dirs_classification:

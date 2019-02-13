@@ -628,6 +628,15 @@ class MultiLayerPerceptron(NeuralNetwork):
     else:
       return None
 
+  def __eq__(self, other):
+    ret = True
+    ret = ret & isinstance(other, MultiLayerPerceptron)
+    ret = ret & (self.conn_mat == other.conn_mat).todense().all()
+    ret = ret & self.layer_labels == other.layer_labels
+    ret = ret & self.num_units_in_each_layer == other.num_units_in_each_layer
+
+    return ret
+
 
 # Some common functions ================================================================
 def _get_common_layer_labels():
