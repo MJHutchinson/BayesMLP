@@ -87,7 +87,7 @@ def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, r
         if epoch % log_freq == 0 & verbose:
             print(f'\rOptimisation step {epoch:4.0f}, \t ELBO: {train_elbo:10.4f}, \t KL term: {train_kl:10.4f}, \t train log likelihood term: {train_ll_true:8.4f}, \t test log likelihood: {test_ll_true:8.4f}, \t test auxiliary: {test_rmse_true:8.4f}, \t noise sigma: {noise_sigma_true:8.4f}, \t train time: {train_time:6.4f}, \t test time: {test_time:6.4f}')
 
-        if epoch % (10 * log_freq):
+        if epoch % (10 * log_freq) == 0:
             # Plot predictions vs actual plots
             if accuracy_plots:
                 predictions_train = np.mean(model.prediction(x_train, batch_size=batch_size), 0)
