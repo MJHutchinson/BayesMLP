@@ -178,6 +178,8 @@ def test_model_classification(model, data_gen, epochs, batch_size=100, log_freq=
     test_lls_true = []
     train_lls_true = []
 
+    times = []
+
     if verbose:
         test_acc, test_ll = model.accuracy(x_test, y_test, batch_size=batch_size)
         print(f'Initial test log likelihood: {test_ll:8.4f}, test acc: {test_acc:8.4f}')
@@ -209,6 +211,7 @@ def test_model_classification(model, data_gen, epochs, batch_size=100, log_freq=
 
         test_lls_true.append(test_ll_true)
         train_lls_true.append(train_ll_true)
+        times.append(total_train_time)
 
         summary = model.log_metrics(train_elbo, train_ll, train_kl, test_ll, test_acc, train_ll_true, test_ll_true)
         summary_writer.add_summary(summary, epoch)
@@ -249,7 +252,7 @@ def test_model_classification(model, data_gen, epochs, batch_size=100, log_freq=
               'train_kl': train_kls,
               'train_ll_true': train_lls_true,
               'test_ll_true': test_lls_true,
-              'train_time': total_train_time}
+              'train_time': train_time}
 
     if KL_pruning_plots:
         pruning_measure = [weight.pruning_from_KL() for weight in model.W]
