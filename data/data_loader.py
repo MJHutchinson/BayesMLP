@@ -124,10 +124,10 @@ class RegressionDataloaderVariableSplits(RegressionDataloader):
         
         data = np.loadtxt(os.path.join(data_path, data_set, 'data.txt'))
         feature_index = np.loadtxt(os.path.join(data_path, data_set, 'index_features.txt'))
-        target_index = np.loadtxt(os.path.join(data_path, data_set, 'index_features.txt'))
+        target_index = np.loadtxt(os.path.join(data_path, data_set, 'index_target.txt'))
 
         X = data[:, [int(i) for i in feature_index.tolist()]]
-        Y = data[:, [int(i) for i in target_index.tolist()]]
+        Y = data[:, int(target_index.tolist())]
         
         train_index = np.loadtxt(os.path.join(data_path, data_set, f'index_train_{split_number}.txt'))
         test_index = np.loadtxt(os.path.join(data_path, data_set, f'index_test_{split_number}.txt'))

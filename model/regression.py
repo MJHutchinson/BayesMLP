@@ -98,7 +98,7 @@ class Reg_NN(object):
         self.y = tf.placeholder(tf.float32, [None, output_size], name='y')
 
         np.random.seed(1)
-        tf.random.set_random_seed(1)
+        # tf.random.set_random_seed(1)
 
 
     def assign_optimizer(self, learning_rate=0.001):

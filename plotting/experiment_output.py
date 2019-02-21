@@ -17,8 +17,8 @@ data_set = 'bostonHousing'
 # results_dir = './remote_logs/power-plant/christsmas-sweep-1-2018-12-20 19:33:57'
 # results_dir = './remote_logs/protein-tertiary-structure/christsmas-sweep-1-2018-12-20 19:33:57'
 # results_dir = './remote_logs/wine-quality-red/christsmas-sweep-1-2018-12-20 19:33:57'
-results_dir = './remote_logs_clean/bostonHousing/initial-noise'
-# results_dir = './remote_logs_clean/wine-quality-red/initial-noise'
+# results_dir = '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior'
+results_dir = '../remote_logs_clean/wine-quality-red/weight_pruning_hyperprior'
 # results_dir = './remote_logs_clean/yacht/initial-noise'
 # results_dir = './remote_logs/wine-quality-red/christsmas-sweep-3-2019-01-09 08:51:54'
 # results_dir = './remote_logs/protein-tertiary-structure/christsmas-sweep-3-2019-01-09 08:51:54'
@@ -42,7 +42,7 @@ for file in files:
 metric_keys = ['elbo', 'test_ll', 'test_rmse', 'noise_sigma', 'train_kl', 'train_ll']
 # metric_keys = ['costs', 'test_ll', 'rmses', 'noise_sigma', 'train_kl', 'train_ll']
 
-legend = [f'{result["hidden_size"]} {result["prior_var"]}' for result in split]
+legend = [f'{result["hidden_sizes"]} {result["prior_var"]}' for result in split]
 
 # keys = ['costs', 'accuracies']
 for key in metric_keys:

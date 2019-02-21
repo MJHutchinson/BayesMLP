@@ -1,0 +1,9 @@
+hidden_size: 50
+hidden_layer: 2
+epochs: 50000
+search_space: 'small'
+learning_rate: 0.001
+prior_var: 1.
+hyperprior: True
+batch_size: 1000
+iterations: 10
