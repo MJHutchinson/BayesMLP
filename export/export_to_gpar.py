@@ -59,15 +59,15 @@ def export(results_file):
 
 
 files = [
-    '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior2',
-    '../remote_logs_clean/concrete/weight_pruning_hyperprior2',
-    '../remote_logs_clean/energy/weight_pruning_hyperprior2',
-    '../remote_logs_clean/kin8nm/weight_pruning_hyperprior2',
+    '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior3',
+    # '../remote_logs_clean/concrete/weight_pruning_hyperprior2',
+    # '../remote_logs_clean/energy/weight_pruning_hyperprior2',
+    # '../remote_logs_clean/kin8nm/weight_pruning_hyperprior2',
     # '../remote_logs_clean/naval-propulsion-plant/weight_pruning_hyperprior',
-    '../remote_logs_clean/power-plant/weight_pruning_hyperprior2',
-    '../remote_logs_clean/protein-tertiary-structure/weight_pruning_hyperprior2',
-    '../remote_logs_clean/wine-quality-red/weight_pruning_hyperprior2',
-    '../remote_logs_clean/yacht/weight_pruning_hyperprior2',
+    # '../remote_logs_clean/power-plant/weight_pruning_hyperprior2',
+    # '../remote_logs_clean/protein-tertiary-structure/weight_pruning_hyperprior2',
+    '../remote_logs_clean/wine-quality-red/weight_pruning_hyperprior3',
+    '../remote_logs_clean/yacht/weight_pruning_hyperprior3',
 ]
 
 for file in files:

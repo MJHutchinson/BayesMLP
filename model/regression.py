@@ -5,7 +5,7 @@ import tensorflow_probability.python.distributions as distributions
 import numpy as np
 from copy import deepcopy
 
-np.random.seed(0)
+# np.random.seed(0)
 # tf.set_random_seed(0)
 
 os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
@@ -96,9 +96,6 @@ class Reg_NN(object):
         # input and output placeholders
         self.x = tf.placeholder(tf.float32, [None, input_size], name='x')
         self.y = tf.placeholder(tf.float32, [None, output_size], name='y')
-
-        np.random.seed(1)
-        # tf.random.set_random_seed(1)
 
 
     def assign_optimizer(self, learning_rate=0.001):

@@ -6,6 +6,7 @@ import shutil
 import argparse
 import itertools
 
+import numpy as np
 import tensorflow as tf
 import data.data_loader as data
 from model.regression import BayesMLPRegression, BayesMLPNNRegression
@@ -18,6 +19,14 @@ from scipy.sparse import dok_matrix
 def compute_validation_error(point, data_loader, params, gpu_id, results_dir, name_prefix=None):
 
     # with tf.device(deviceStr):
+    name_prefix = str(name_prefix)
+
+    seed = 0
+    if name_prefix is not None:
+        for c in name_prefix: seed += ord(c)
+
+    np.random.seed(seed)
+    tf.random.set_random_seed(seed)
 
     nn = point[0]
     model_parameters = point[1]
