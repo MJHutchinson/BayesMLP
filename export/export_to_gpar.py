@@ -57,15 +57,20 @@ def export(results_file):
     np.savetxt(os.path.join(export_dir, 'f_rmse.txt'), f_test_rmse)
     np.savetxt(os.path.join(export_dir, 'f_steps.txt'), np.array(f_samples), fmt='%i')
 
+    np.savetxt(os.path.join(export_dir, 'x_loglik_last.txt'), x_test_ll[:, -1], fmt='%i')
+    np.savetxt(os.path.join(export_dir, 'f_loglik_last.txt'), f_test_ll[:, -1])
+    np.savetxt(os.path.join(export_dir, 'x_rmse_last.txt'), x_test_rmse[:, -1], fmt='%i')
+    np.savetxt(os.path.join(export_dir, 'f_rmse_last.txt'), f_test_rmse[:, -1])
+
 
 files = [
     '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior3',
-    # '../remote_logs_clean/concrete/weight_pruning_hyperprior2',
-    # '../remote_logs_clean/energy/weight_pruning_hyperprior2',
-    # '../remote_logs_clean/kin8nm/weight_pruning_hyperprior2',
-    # '../remote_logs_clean/naval-propulsion-plant/weight_pruning_hyperprior',
-    # '../remote_logs_clean/power-plant/weight_pruning_hyperprior2',
-    # '../remote_logs_clean/protein-tertiary-structure/weight_pruning_hyperprior2',
+    '../remote_logs_clean/concrete/weight_pruning_hyperprior3',
+    '../remote_logs_clean/energy/weight_pruning_hyperprior3',
+    '../remote_logs_clean/kin8nm/weight_pruning_hyperprior3',
+    '../remote_logs_clean/naval-propulsion-plant/weight_pruning_hyperprior',
+    '../remote_logs_clean/power-plant/weight_pruning_hyperprior3',
+    '../remote_logs_clean/protein-tertiary-structure/weight_pruning_hyperprior3',
     '../remote_logs_clean/wine-quality-red/weight_pruning_hyperprior3',
     '../remote_logs_clean/yacht/weight_pruning_hyperprior3',
 ]
