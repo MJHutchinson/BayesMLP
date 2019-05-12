@@ -1,5 +1,7 @@
 import os
 import pickle
+from tqdm import tqdm
+
 from utils.file_utils import get_immediate_files, get_immediate_subdirectories
 from utils.plot_utils import *
 from collections import defaultdict
@@ -44,7 +46,7 @@ def get_data(dir):
 
     results = []
 
-    for file in files:
+    for file in tqdm(files, desc=dir):
         r = pickle.load(open(f'{dir}/{file}', 'rb'))
         results.append(r)
 
