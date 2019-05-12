@@ -12,7 +12,7 @@ fig_x = 3
 fig_y = 2
 fig_dpi = 400
 
-do_all = False
+do_all = True
 
 metric_keys = ['elbo', 'test_ll', 'test_rmse', 'noise_sigma', 'train_kl', 'train_ll']
 
