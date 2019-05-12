@@ -139,6 +139,9 @@ fig_x = 4
 fig_y = 2
 
 def hyp_sweep(results_dir, data_set):
+
+    print(f'Hidden sizes {data_set}')
+
     layer_size_results = get_data(results_dir + 'sweep-hidden-sizes')
 
     dump_dir = base_dump_dir + f'{data_set}/'
@@ -161,6 +164,8 @@ def hyp_sweep(results_dir, data_set):
     # fig.savefig(save_dir + f'hyp-sweep/hidden-{data_set}-logloss.eps', dpi=fig_dpi, format='eps')
     #
     #
+
+    print(f'Prior vars {data_set}')
 
     prior_var_results = get_data(results_dir + 'sweep-prior-var')
     pickle.dump(prior_var_results, open(dump_dir + 'sweep-prior-var.pkl', 'wb'))
@@ -211,6 +216,8 @@ if do_all or False:
 
     results_dir = wine_results_dir
     data_set = 'wine'
+
+    print(f'Data multiply {data_set}')
 
     data_multiply_results = get_data_multiply_data(results_dir + 'data-multiply')
     data_multiply_results = sorted(data_multiply_results, key= lambda x: x['data_multiply'])
@@ -286,6 +293,8 @@ def initial_sigma_plot(results_dir, data_set):
             results.append(r)
 
         return results
+
+    print(f'Sigma init {data_set}')
 
     sigma_init_results = get_data_sigma_init(results_dir + 'initial-noise')
     sigma_init_results = sorted(sigma_init_results, key= lambda x: x['sigma_init'])
@@ -371,6 +380,8 @@ fig_x = 4
 fig_y = 2
 
 def multi_layer_plot(results_dir, data_set):
+
+    print(f'Multilayer plot {data_set}')
 
     data_variable_size = get_data(results_dir + 'variable-layer-sizes')
     for result in data_variable_size:
