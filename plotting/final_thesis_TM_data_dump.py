@@ -189,11 +189,11 @@ def hyp_sweep(results_dir, data_set):
 
 if do_all or True:
     hyp_sweep(bostonHousing_results_dir, 'boston')
-    hyp_sweep(concrete_results_dir, 'concrete')
+    # hyp_sweep(concrete_results_dir, 'concrete')
     hyp_sweep(kin8nm_results_dir, 'kin8nm')
-    hyp_sweep(naval_results_dir, 'naval')
-    hyp_sweep(power_results_dir, 'power')
-    hyp_sweep(protein_dir, 'protein')
+    # hyp_sweep(naval_results_dir, 'naval')
+    # hyp_sweep(power_results_dir, 'power')
+    # hyp_sweep(protein_dir, 'protein')
     hyp_sweep(wine_results_dir, 'wine')
     hyp_sweep(yacht_results_dir, 'yacht')
 
@@ -373,11 +373,11 @@ def initial_sigma_plot(results_dir, data_set):
 
 if do_all or False:
     initial_sigma_plot(bostonHousing_results_dir, 'boston')
-    initial_sigma_plot(concrete_results_dir, 'concrete')
+    # initial_sigma_plot(concrete_results_dir, 'concrete')
     initial_sigma_plot(kin8nm_results_dir, 'kin8nm')
-    initial_sigma_plot(naval_results_dir, 'naval')
-    initial_sigma_plot(power_results_dir, 'power')
-    initial_sigma_plot(protein_dir, 'protein')
+    # initial_sigma_plot(naval_results_dir, 'naval')
+    # initial_sigma_plot(power_results_dir, 'power')
+    # initial_sigma_plot(protein_dir, 'protein')
     initial_sigma_plot(wine_results_dir, 'wine')
     initial_sigma_plot(yacht_results_dir, 'yacht')
 
@@ -436,11 +436,11 @@ def multi_layer_plot(results_dir, data_set):
 
 if do_all or False:
     multi_layer_plot(bostonHousing_results_dir, 'boston')
-    multi_layer_plot(concrete_results_dir, 'concrete')
+    # multi_layer_plot(concrete_results_dir, 'concrete')
     multi_layer_plot(kin8nm_results_dir, 'kin8nm')
-    multi_layer_plot(naval_results_dir, 'naval')
-    multi_layer_plot(power_results_dir, 'power')
-    multi_layer_plot(protein_dir, 'protein')
+    # multi_layer_plot(naval_results_dir, 'naval')
+    # multi_layer_plot(power_results_dir, 'power')
+    # multi_layer_plot(protein_dir, 'protein')
     multi_layer_plot(wine_results_dir, 'wine')
     multi_layer_plot(yacht_results_dir, 'yacht')
 
