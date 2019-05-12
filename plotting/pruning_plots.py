@@ -41,7 +41,14 @@ def do_plots(results_dir):
 
     # thresholds = [[1], [1, 0.5], [1, 0.5, 0.5]] # Fixed Prior
 
-    thresholds = [[0.001], [0.001, 0.001], [0.001, 0.001, 0.001]]
+    thresholds = [[0.5], [0.5, 0.05], [0.5, 0.05, 0.05], [0.5, 0.05, 0.05, 0.05], [0.5, 0.05, 0.05, 0.05, 0.05]]
+
+    def plot_all_pruning(layer_groups):
+
+        fig, ax = plt.figure(figsize=(10, 5))
+
+        plt.title('Comparison of total number of units vs active units')
+
 
     def plot_KL_pruning(results):
         '''
@@ -72,8 +79,8 @@ def do_plots(results_dir):
                 sum(neuron_kl > thresholds[layers - 1][layer] for neuron_kl in r['results']['KL_pruning'][layer]) for
                 layer in range(layers)]
 
-            # final_rmse = sum(r['results']['test_rmse_true'][-20:]) / 20
-            final_rmse = sum(r['results']['test_acc'][-20:]) / 20
+            final_rmse = sum(r['results']['test_rmse_true'][-20:]) / 20
+            # final_rmse = sum(r['results']['test_acc'][-20:]) / 20
             final_test_loglik = sum(r['results']['test_ll_true'][-20:]) / 20
 
             for i in range(layers):
@@ -177,21 +184,27 @@ def do_plots(results_dir):
 
     layer_groups = results.group_results(lambda x: len(x['hidden_sizes']) - 3)
 
-    # for group in layer_groups: plot_KL_pruning(layer_groups[group])
+    for group in layer_groups: plot_KL_pruning(layer_groups[group])
     # plot_metric_actual_grouped(layer_groups, 'test_rmse_true')
     # plot_metric_actual_grouped(layer_groups, 'test_ll_true')
     # plot_metric_vs_metric(layer_groups, 'test_rmse_true', 'test_ll_true')
+    from utils.plot_utils import plot_KL_pruning_post
+    for group in layer_groups:
+        for result in layer_groups[group]:
+            plot_KL_pruning_post(result['results']['KL_pruning'], os.path.join(results_dir, 'figs'), str(result['hidden_sizes']))
+
+
     # for step in [0] + list(range(1000, len(layer_groups[1][0]['results']['test_ll_true']), 1000)):
     #     plot_optimisation_step_correlation_grouped(layer_groups, 'test_rmse_true', step)
     #     plot_optimisation_step_correlation_grouped(layer_groups, 'test_ll_true', step)
 
-    for group in layer_groups: plot_KL_pruning(layer_groups[group])
-    plot_metric_actual_grouped(layer_groups, 'test_acc')
-    plot_metric_actual_grouped(layer_groups, 'test_ll_true')
-    plot_metric_vs_metric(layer_groups, 'test_acc', 'test_ll_true')
-    for step in [0] + list(range(1000, len(layer_groups[0][0]['results']['test_ll_true']), 1000)):
-        plot_optimisation_step_correlation_grouped(layer_groups, 'test_acc', step)
-        plot_optimisation_step_correlation_grouped(layer_groups, 'test_ll_true', step)
+    # for group in layer_groups: plot_KL_pruning(layer_groups[group])
+    # plot_metric_actual_grouped(layer_groups, 'test_acc')
+    # plot_metric_actual_grouped(layer_groups, 'test_ll_true')
+    # plot_metric_vs_metric(layer_groups, 'test_acc', 'test_ll_true')
+    # for step in [0] + list(range(1000, len(layer_groups[0][0]['results']['test_ll_true']), 1000)):
+    #     plot_optimisation_step_correlation_grouped(layer_groups, 'test_acc', step)
+    #     plot_optimisation_step_correlation_grouped(layer_groups, 'test_ll_true', step)
 
 
 
@@ -200,30 +213,31 @@ def do_plots(results_dir):
 
 
 dirs_regression = [
-        '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior',
-        '../remote_logs_clean/bostonHousing/weight_pruning_prior_1',
-        '../remote_logs_clean/wine-quality-red/weight_pruning_hyperprior',
-        '../remote_logs_clean/wine-quality-red/weight_pruning_prior_1',
-        '../remote_logs_clean/yacht/weight_pruning_hyperprior',
-        '../remote_logs_clean/yacht/weight_pruning_prior_1',
-        '../remote_logs_clean/protein-tertiary-structure/weight_pruning_hyperprior',
-        '../remote_logs_clean/protein-tertiary-structure/weight_pruning_prior_1',
-        '../remote_logs_clean/concrete/weight_pruning_hyperprior',
-        '../remote_logs_clean/concrete/weight_pruning_prior_1',
-        '../remote_logs_clean/energy/weight_pruning_hyperprior',
-        '../remote_logs_clean/energy/weight_pruning_prior_1',
-        '../remote_logs_clean/kin8nm/weight_pruning_hyperprior',
-        '../remote_logs_clean/kin8nm/weight_pruning_prior_1',
-        '../remote_logs_clean/naval-propulsion-plant/weight_pruning_hyperprior',
-        '../remote_logs_clean/naval-propulsion-plant/weight_pruning_prior_1',
-        '../remote_logs_clean/power-plant/weight_pruning_hyperprior',
-        '../remote_logs_clean/power-plant/weight_pruning_prior_1'
+        # '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior',
+        # '../remote_logs_clean/bostonHousing/weight_pruning_prior_1',
+        # '../remote_logs_clean/wine-quality-red/weight_pruning_hyperprior',
+        # '../remote_logs_clean/wine-quality-red/weight_pruning_prior_1',
+        # '../remote_logs_clean/yacht/weight_pruning_hyperprior',
+        # '../remote_logs_clean/yacht/weight_pruning_prior_1',
+        # '../remote_logs_clean/protein-tertiary-structure/weight_pruning_hyperprior',
+        # '../remote_logs_clean/protein-tertiary-structure/weight_pruning_prior_1',
+        # '../remote_logs_clean/concrete/weight_pruning_hyperprior',
+        # '../remote_logs_clean/concrete/weight_pruning_prior_1',
+        # '../remote_logs_clean/energy/weight_pruning_hyperprior',
+        # '../remote_logs_clean/energy/weight_pruning_prior_1',
+        # '../remote_logs_clean/kin8nm/weight_pruning_hyperprior',
+        # '../remote_logs_clean/kin8nm/weight_pruning_prior_1',
+        # '../remote_logs_clean/naval-propulsion-plant/weight_pruning_hyperprior',
+        # '../remote_logs_clean/naval-propulsion-plant/weight_pruning_prior_1',
+        # '../remote_logs_clean/power-plant/weight_pruning_hyperprior',
+        # '../remote_logs_clean/power-plant/weight_pruning_prior_1'
+        '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior3',
 ]
 
 dirs_classification = [
-    '../remote_logs_clean/mnist/weight_pruning_hyperprior', # [0.01]
+    # '../remote_logs_clean/mnist/weight_pruning_hyperprior', # [0.01]
 ]
 
-for dir in dirs_classification:
+for dir in dirs_regression:
     print(dir)
     do_plots(dir)

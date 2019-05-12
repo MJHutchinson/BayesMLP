@@ -216,6 +216,46 @@ def plot_KL_pruning(model, fig_dir, epoch):
     plt.savefig(f'{fig_dir}/pruning_KL_PDF_{epoch}.png')
     plt.close()
 
+def plot_KL_pruning_post(pruning_measure, fig_dir, name):
+    # Plot cdf of 'pruning' based on KL
+    # Same as above, but for using after the fact
+
+    # fig, axs = plt.subplots(len(pruning_measure), 1, figsize=(6.4, 2.4 * len(pruning_measure)))
+    # axs[0].set_title('Reverse CDF of weight pruning by KL')
+    # for i, (x, ax) in enumerate(zip(pruning_measure, axs)):
+    #     ax.hist(x, bins=100, density=False, cumulative=-1, label=f'Layer {i}',
+    #             histtype='step', alpha=1.0)
+    #     ax.set_xlabel('Mean KL of weights')
+    #     ax.set_ylabel('Cumulative density')
+    #     ax.legend()
+    # plt.tight_layout()
+    # plt.savefig(f'{fig_dir}/{name}_pruning_KL_CDF_final.png')
+    # plt.close()
+
+    fig, axs = plt.subplots(len(pruning_measure), 1, figsize=(6.4, 2.4 * len(pruning_measure)))
+    axs[0].set_title('PDF of weight pruning by KL')
+    for i, (x, ax) in enumerate(zip(pruning_measure, axs)):
+        ax.hist(np.log(x), bins=100, density=False, cumulative=False, label=f'Layer {i}',
+                histtype='step', alpha=1.0)
+
+        # mu = float(np.mean(x))
+        # std = float(np.std(x))
+
+        thresholds = [[0.5], [0.5, 0.05], [0.5, 0.05, 0.05], [0.5, 0.05, 0.05, 0.05], [0.5, 0.05, 0.05, 0.05, 0.05]]
+        # print(len(pruning_measure), i)
+        # print(len(thresholds), len(thresholds[len(pruning_measure)]))
+        threshold = thresholds[len(pruning_measure)][i]
+        ax.plot([threshold, threshold], list(ax.get_ylim()), label=f'Layer {i}: threshold')
+        active = np.sum(x > threshold)
+        ax.text(0.25, 0.9 - 0.06 * i, f'layer {i}: KLs>threshold: {active}', transform=ax.transAxes)
+
+        ax.set_xlabel('Mean KL of weights')
+        ax.set_ylabel('Density')
+        ax.legend()
+    plt.tight_layout()
+    plt.savefig(f'{fig_dir}/{name}_pruning_KL_PDF_final.png')
+    plt.close()
+
 
 def plot_SNP_pruning(model, fig_dir, epoch):
     # Plot cdf of 'pruning' based on SNR
