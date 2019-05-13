@@ -2,6 +2,8 @@ import os
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
+
 from utils.plot_utils import *
 
 from utils.results_utils import ExperimentResults
@@ -245,9 +247,11 @@ def do_plots(results_dir):
 
         groups = len(layer_groups)
 
-        all_pruning_fig, all_pruning_ax = plt.subplots(1,1,figsize=(6.3, 3.15))
-        all_rmse_fig, all_rmse_ax = plt.subplots(1,1,figsize=(6.3, 3.15))
-        all_log_lik_fig, all_log_lik_ax = plt.subplots(1,1,figsize=(6.3, 3.15))
+        all_pruning_fig, all_pruning_ax = plt.subplots(1,1,figsize=(5.6, 2.8))
+        all_rmse_fig, all_rmse_ax = plt.subplots(1,1,figsize=(5.6, 2.8))
+        all_log_lik_fig, all_log_lik_ax = plt.subplots(1,1,figsize=(5.6, 2.8))
+
+        combined_fig, combined_ax = plt.subplots(3, 1, sharex=True, figsize=(5.6, 5.6+2.8))
 
         for i, group in enumerate(layer_groups):
 
@@ -286,8 +290,9 @@ def do_plots(results_dir):
 
                 active_neurons = [
                     sum(neuron_kl > thresholds[layers - 1][layer] for neuron_kl in r['results']['KL_pruning'][layer])
-                    for
-                    layer in range(layers)]
+                    for layer
+                    in range(layers)
+                ]
 
                 final_rmse.append(sum(r['results']['test_rmse_true'][-20:]) / 20)
                 final_test_loglik.append(sum(r['results']['test_ll_true'][-20:]) / 20)
@@ -308,6 +313,10 @@ def do_plots(results_dir):
             all_pruning_ax.scatter(points, active_weights, label=f'{layers} layers')
             all_rmse_ax.scatter(points, final_rmse, label=f'{layers} layers')
             all_log_lik_ax.scatter(points, final_test_loglik, label=f'{layers} layers')
+
+            combined_ax[0].scatter(points, active_weights, label=f'{layers} layers')
+            combined_ax[2].scatter(points, final_rmse, label=f'{layers} layers')
+            combined_ax[1].scatter(points, final_test_loglik, label=f'{layers} layers')
 
             prune_fig.tight_layout()  # rect=[0, 0.03, 1.0, 0.95]
             metric_fig.tight_layout()
@@ -330,14 +339,44 @@ def do_plots(results_dir):
         all_rmse_ax.set_ylabel('Final RMSE')
         all_log_lik_ax.set_ylabel('Final Log Likelihood')
 
+        all_pruning_ax.set_xscale('log')
+        all_rmse_ax.set_xscale('log')
+        all_log_lik_ax.set_xscale('log')
+
+        all_pruning_ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+        all_pruning_fig.tight_layout()
+        all_rmse_fig.tight_layout()
+        all_log_lik_fig.tight_layout()
+
+        combined_ax[0].legend()
+        combined_ax[2].legend()
+        combined_ax[1].legend()
+
+        combined_ax[2].set_xlabel('Layer size')
+
+        combined_ax[0].set_ylabel('Total active neurons')
+        combined_ax[2].set_ylabel('Final RMSE')
+        combined_ax[1].set_ylabel('Final Log Likelihood')
+
+        combined_ax[2].set_xscale('log')
+
+        combined_ax[0].yaxis.set_major_locator(MaxNLocator(integer=True))
+
+        combined_fig.tight_layout()
+
 
         savefig_handle(all_pruning_fig, os.path.join(results_dir, 'figs', f'pruning_kl'))
         savefig_handle(all_rmse_fig, os.path.join(results_dir, 'figs', f'rmse'))
         savefig_handle(all_log_lik_fig, os.path.join(results_dir, 'figs', f'log_likelihood'))
 
+        savefig_handle(combined_fig, os.path.join(results_dir, 'figs', f'combined'))
+
         savefig_handle(all_pruning_fig, os.path.join(final_thesis_dir, data_set, f'pruning_kl'), pdf=True, png=False)
         savefig_handle(all_rmse_fig, os.path.join(final_thesis_dir, data_set, f'rmse'), pdf=True, png=False)
         savefig_handle(all_log_lik_fig, os.path.join(final_thesis_dir, data_set, f'log_likelihood'), pdf=True, png=False)
+
+        savefig_handle(combined_fig, os.path.join(final_thesis_dir, data_set, f'combined'), pdf=True, png=False)
 
     os.makedirs(os.path.join(results_dir, 'figs'), exist_ok=True)
 
@@ -377,12 +416,12 @@ def do_plots(results_dir):
 final_thesis_dir = '/home/mjhutchinson/Documents/University/4th Year/4th Year Project/Final Thesis/Thesis-LaTeX/Chapter5/Figs'
 
 dirs_regression = [
-        # '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior3',
-        # '../remote_logs_clean/concrete/weight_pruning_hyperprior3',
-        # '../remote_logs_clean/energy/weight_pruning_hyperprior3',
-        # '../remote_logs_clean/kin8nm/weight_pruning_hyperprior3',
-        # '../remote_logs_clean/power-plant/weight_pruning_hyperprior3',
-        '../remote_logs_clean/protein-tertiary-structure/weight_pruning_hyperprior3',
+        '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior3',
+        '../remote_logs_clean/concrete/weight_pruning_hyperprior3',
+        '../remote_logs_clean/energy/weight_pruning_hyperprior3',
+        '../remote_logs_clean/kin8nm/weight_pruning_hyperprior3',
+        '../remote_logs_clean/power-plant/weight_pruning_hyperprior3',
+        # '../remote_logs_clean/protein-tertiary-structure/weight_pruning_hyperprior3',
         '../remote_logs_clean/yacht/weight_pruning_hyperprior3',
 ]
 

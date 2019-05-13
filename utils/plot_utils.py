@@ -16,6 +16,7 @@ rc('lines', linewidth=0.5)
 rc('lines', markersize=6)
 rc('scatter', marker='+')
 rc('axes', grid=True)
+rc('axes', axisbelow=True)
 rc('patch', edgecolor='black')
 rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
 
@@ -53,8 +54,11 @@ svg_params = {
 colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan']
 
 
-half_width_square = (3.15, 3.15)
-full_width_square = (6.3, 6.3)
+half_width_square = (2.8, 2.8)
+full_width_square = (5.6, 5.6)
+
+text_width = 5.8
+text_height = 9.1
 
 
 def savefig(fig_name, pdf=False, svg=False, png=True):
@@ -69,9 +73,15 @@ def savefig_handle(fig, fig_name, pdf=False, svg=False, png=True):
     if pdf: fig.savefig(fig_name + '.pdf', **pdf_params)
 
 
-def plot_training_curves(input, val='accuracies', rolling_av_len=None, legend=None, title=None):
-    fig, ax = plt.subplots(1, 1)
-    ax.set_xlabel('Epoch')
+def plot_training_curves(input, val='accuracies', rolling_av_len=20, legend=None, title=None, ax=None, xlabel=True):
+    if ax==None:
+        fig, ax = plt.subplots(1, 1)
+    else:
+        fig = None
+
+    if xlabel:
+        ax.set_xlabel('Epoch')
+
     if title is None:
         ax.set_ylabel(val)
         # ax.set_title(val)
@@ -84,14 +94,14 @@ def plot_training_curves(input, val='accuracies', rolling_av_len=None, legend=No
     for results in input:
         if rolling_av_len is None:
             result = results['results']
-            ax.plot(result[val])
+            ax.plot(result[val], label=results['data_multiply'])
             # legend.append(f'{results["hidden_size"]} lr: {results["lr"]} prior width: {results["prior_var"]}')
         else:
             vals = result = results['results'][val]
             smoothed_vals = [0] * (len(vals) - rolling_av_len)
             for i, _ in enumerate(smoothed_vals):
                 smoothed_vals[i] = sum(vals[i:i+rolling_av_len])/rolling_av_len
-            ax.plot(smoothed_vals)
+            ax.plot(smoothed_vals, label=results['data_multiply'])
 
     if legend is not None:
         ax.legend(legend)

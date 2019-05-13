@@ -6,13 +6,13 @@ from utils.file_utils import get_immediate_files, get_immediate_subdirectories
 from utils.plot_utils import *
 from collections import defaultdict
 
-save_dir = '/scratch/mjh252/figs/Final Thesis/Chapter5/Figs'
+base_thesis_dir = '/home/mjhutchinson/Documents/University/4th Year/4th Year Project/Final Thesis/Thesis-LaTeX/Chapter5/Figs/'
 
 fig_x = 3
 fig_y = 2
 fig_dpi = 400
 
-do_all = True
+do_all = False
 
 metric_keys = ['elbo', 'test_ll', 'test_rmse', 'noise_sigma', 'train_kl', 'train_ll']
 
@@ -26,16 +26,18 @@ wine_results_dir = '/scratch/mjh252/logs/clean/wine-quality-red/'
 yacht_results_dir = '/scratch/mjh252/logs/clean/yacht/'
 
 base_dump_dir = '/scratch/mjh252/summary_data/technical_milestone/'
-os.makedirs(base_dump_dir, exist_ok=True)
+base_load_dir = '../summary_data/'
+
+# os.makedirs(base_dump_dir, exist_ok=True)
 
 data = {
-    'bostonHousing':   {'dim':13,  'data_size':430},
+    'boston':   {'dim':13,  'data_size':430},
     'concrete': {'dim':8,   'data_size':875},
     'kin8nm':   {'dim':8,   'data_size':652},
     'naval':    {'dim':8,   'data_size':6963},
     'power':    {'dim':16,  'data_size':10143},
     'protein':  {'dim':9,   'data_size':38870},
-    'wine-quality-red':     {'dim':11,  'data_size':1359},
+    'wine':     {'dim':11,  'data_size':1359},
     'yacht':    {'dim':6,   'data_size':261}
 }
 
@@ -122,161 +124,193 @@ def group_by(results, data, key):
 
     return num_weights, layer_size, prior_var, final_ll, final_rmse, final_cost
 
-# plot_results(data['bostonHousing'])
+# plot_results(data['boston'])
 # plot_results(data['concrete'])
 # plot_results(data['kin8nm'])
 # plot_results(data['naval'])
 # plot_results(data['power'])
 # plot_results(data['protein'])
-# plot_results(data['wine-quality-red'], wine_data_multiply_results)
+# plot_results(data['wine'], wine_data_multiply_results)
 # plot_results(data['yacht'])
 
 ## Compare train curves
 
 ## Hypers sweeps
 
-fig_x = 4
-fig_y = 2
+fig_x = 5.6
+fig_y = 2.8
 
 def hyp_sweep(results_dir, data_set):
 
     print(f'Hidden sizes {data_set}')
 
-    layer_size_results = get_data(results_dir + 'sweep-hidden-sizes')
+    # layer_size_results = get_data(results_dir + 'sweep-hidden-sizes')
+    #
+    # dump_dir = base_dump_dir + f'{data_set}/'
+    # os.makedirs(dump_dir, exist_ok=True)
+    #
+    # pickle.dump(layer_size_results, open(dump_dir + 'sweep-hidden-sizes.pkl', 'wb'))
 
-    dump_dir = base_dump_dir + f'{data_set}/'
-    os.makedirs(dump_dir, exist_ok=True)
+    load_dir = base_load_dir + f'{data_set}/'
+    thesis_dir = base_thesis_dir + f'{data_set}/'
+    layer_size_results = pickle.load(open(load_dir + 'sweep-hidden-sizes.pkl', 'rb'))
 
-    pickle.dump(layer_size_results, open(dump_dir + 'sweep-hidden-sizes.pkl', 'wb'))
+    num_weights, layer_size, prior_var, final_ll, final_rmse, final_cost = group_by(layer_size_results,
+                                                                                    data[data_set],
+                                                                                    key='prior_var')
 
-    # num_weights, layer_size, prior_var, final_ll, final_rmse, final_cost = group_by(layer_size_results,
-    #                                                                                 data[data_set],
-    #                                                                                 key='prior_var')
-    #
-    # fig, ax = plot_dict(num_weights, final_rmse, 'Weights in network', 'Final RMSE', log_scale=True)
-    # fig.set_size_inches(fig_x, fig_y)
-    # plt.tight_layout()
-    # fig.savefig(save_dir + f'hyp-sweep/hidden-{data_set}-rmse.eps', dpi=fig_dpi, format='eps')
-    #
-    # fig, ax = plot_dict(num_weights, final_ll, 'Weights in network', 'Final Log Likelihood', log_scale=True)
-    # fig.set_size_inches(fig_x, fig_y)
-    # plt.tight_layout()
-    # fig.savefig(save_dir + f'hyp-sweep/hidden-{data_set}-logloss.eps', dpi=fig_dpi, format='eps')
-    #
-    #
+    fig, ax = plot_dict(layer_size, final_rmse, 'Layer width', 'Final RMSE', log_scale=True)
+    fig.set_size_inches(fig_x, fig_y)
+    plt.tight_layout()
+    savefig(load_dir + f'hidden-size-rmse')
+    savefig(thesis_dir + f'hidden-size-rmse', png=False, pdf=True)
+
+    fig, ax = plot_dict(layer_size, final_ll, 'Layer width', 'Final Log Likelihood', log_scale=True)
+    fig.set_size_inches(fig_x, fig_y)
+    plt.tight_layout()
+    savefig(load_dir + f'hidden-size-logloss')
+    savefig(thesis_dir + f'hidden-size-logloss', png=False, pdf=True)
 
     print(f'Prior vars {data_set}')
 
-    prior_var_results = get_data(results_dir + 'sweep-prior-var')
-    pickle.dump(prior_var_results, open(dump_dir + 'sweep-prior-var.pkl', 'wb'))
+    # prior_var_results = get_data(results_dir + 'sweep-prior-var')
+    # pickle.dump(prior_var_results, open(dump_dir + 'sweep-prior-var.pkl', 'wb'))
 
-    # num_weights, layer_size, prior_var, final_ll, final_rmse, final_cost = group_by(prior_var_results,
-    #                                                                                 data[data_set],
-    #                                                                                 key='hidden_size')
-    #
-    # fig, ax = plot_dict(prior_var, final_rmse, 'Prior variance', 'Final RMSE',  log_scale=True)
-    # fig.set_size_inches(fig_x, fig_y)
-    # plt.tight_layout()
+    prior_var_results = pickle.load(open(load_dir + 'sweep-prior-var.pkl', 'rb'))
+
+    num_weights, layer_size, prior_var, final_ll, final_rmse, final_cost = group_by(prior_var_results,
+                                                                                    data[data_set],
+                                                                                    key='hidden_size')
+
+    fig, ax = plot_dict(prior_var, final_rmse, 'Prior variance', 'Final RMSE',  log_scale=True)
+    fig.set_size_inches(fig_x, fig_y)
+    plt.tight_layout()
     # plt.ylim(0,3)
-    # fig.savefig(save_dir + f'hyp-sweep/prior-{data_set}-rmse.eps', dpi=fig_dpi, format='eps')
-    #
-    # fig, ax = plot_dict(prior_var, final_ll, 'Prior variance', 'Final Log Likelihood', log_scale=True)
-    # fig.set_size_inches(fig_x, fig_y)
-    # plt.tight_layout()
+    savefig(load_dir + f'prior-width-rmse')
+    savefig(thesis_dir + f'prior-width-rmse', png=False, pdf=True)
+
+    fig, ax = plot_dict(prior_var, final_ll, 'Prior variance', 'Final Log Likelihood', log_scale=True)
+    fig.set_size_inches(fig_x, fig_y)
+    plt.tight_layout()
     # plt.ylim(-2,0)
-    # fig.savefig(save_dir + f'hyp-sweep/prior-{data_set}-logloss.eps', dpi=fig_dpi, format='eps')
+    savefig(load_dir + f'prior-width-logloss')
+    savefig(thesis_dir + f'prior-width-logloss', png=False, pdf=True)
 
 
 if do_all or True:
-    hyp_sweep(bostonHousing_results_dir, 'bostonHousing')
+    hyp_sweep(bostonHousing_results_dir, 'boston')
     # hyp_sweep(concrete_results_dir, 'concrete')
     hyp_sweep(kin8nm_results_dir, 'kin8nm')
     # hyp_sweep(naval_results_dir, 'naval')
     # hyp_sweep(power_results_dir, 'power')
     # hyp_sweep(protein_dir, 'protein')
-    hyp_sweep(wine_results_dir, 'wine-quality-red')
+    hyp_sweep(wine_results_dir, 'wine')
     hyp_sweep(yacht_results_dir, 'yacht')
 
 
 
 ## Wine - data multiply
+fig_x = 5.6
+fig_y = 2.8
 
-fig_x = 3
-fig_y = 2
-
-if do_all or False:
-    def get_data_multiply_data(dir):
-        files = get_immediate_files(dir)
-        files = [f for f in files if f.split('.')[-1] == 'pkl']
-
-        results = []
-
-        for file in files:
-            r = pickle.load(open(f'{dir}/{file}', 'rb'))
-            r['data_multiply'] = float(file.split('_')[2])
-            results.append(r)
-
-        return results
+if do_all or True:
+    # def get_data_multiply_data(dir):
+    #     files = get_immediate_files(dir)
+    #     files = [f for f in files if f.split('.')[-1] == 'pkl']
+    #
+    #     results = []
+    #
+    #     for file in files:
+    #         r = pickle.load(open(f'{dir}/{file}', 'rb'))
+    #         r['data_multiply'] = float(file.split('_')[2])
+    #         results.append(r)
+    #
+    #     return results
 
     results_dir = wine_results_dir
-    data_set = 'wine-quality-red'
+    data_set = 'wine'
 
     print(f'Data multiply {data_set}')
+    #
+    # data_multiply_results = get_data_multiply_data(results_dir + 'data-multiply')
+    # data_multiply_results = sorted(data_multiply_results, key= lambda x: x['data_multiply'])
+    #
+    #
+    # dump_dir = base_dump_dir + f'{data_set}/'
+    # os.makedirs(dump_dir, exist_ok=True)
+    #
+    # pickle.dump(data_multiply_results, open(dump_dir + 'data-multiply.pkl', 'wb'))
 
-    data_multiply_results = get_data_multiply_data(results_dir + 'data-multiply')
-    data_multiply_results = sorted(data_multiply_results, key= lambda x: x['data_multiply'])
+    load_dir = base_load_dir + f'{data_set}/'
+    data_multiply_results = pickle.load(open(load_dir + 'data-multiply.pkl', 'rb'))
 
+    legend = [r['data_multiply'] for r in data_multiply_results]
 
-    dump_dir = base_dump_dir + f'{data_set}/'
-    os.makedirs(dump_dir, exist_ok=True)
+    fig, ax = plot_training_curves(data_multiply_results, val='elbo', title='Expected lower bound')
+    fig.set_size_inches(fig_x, fig_y)
+    plt.tight_layout()
+    savefig(load_dir + f'data-multiply-elbo')
+    savefig(thesis_dir + f'data-multiply-elbo', png=False, pdf=True)
 
-    pickle.dump(data_multiply_results, open(dump_dir + 'data-multiply.pkl', 'wb'))
+    fig, ax = plot_training_curves(data_multiply_results, val='test_rmse', title='RMSE')
+    fig.set_size_inches(fig_x, fig_y)
+    # plt.ylim(0.55, 0.8)
+    plt.tight_layout()
+    savefig(load_dir + f'data-multiply-rmse')
+    savefig(thesis_dir + f'data-multiply-rmse', png=False, pdf=True)
 
+    fig, ax = plot_training_curves(data_multiply_results, val='train_ll', title='Train log likelihood')
+    plt.ylim(-4, 1)
+    fig.set_size_inches(fig_x, fig_y)
+    plt.tight_layout()
+    savefig(load_dir + f'data-multiply-train_ll')
+    savefig(thesis_dir + f'data-multiply-train_ll', png=False, pdf=True)
 
-    # legend = [r['data_multiply'] for r in data_multiply_results]
-    #
-    # fig, ax = plot_training_curves(data_multiply_results, val='elbo', title='Expected lower bound')
-    # fig.set_size_inches(fig_x, fig_y)
-    # plt.tight_layout()
-    # fig.savefig(save_dir + 'data-multiply/elbo.eps', dpi=fig_dpi, format='eps')
-    #
-    # fig, ax = plot_training_curves(data_multiply_results, val='test_rmse', title='RMSE')
-    # fig.set_size_inches(fig_x, fig_y)
-    # # plt.ylim(0.55, 0.8)
-    # plt.tight_layout()
-    # fig.savefig(save_dir + 'data-multiply/rmse.eps', dpi=fig_dpi, format='eps')
-    #
-    # fig, ax = plot_training_curves(data_multiply_results, val='train_ll', title='Train log likelihood')
-    # plt.ylim(-4, 1)
-    # fig.set_size_inches(fig_x, fig_y)
-    # plt.tight_layout()
-    # fig.savefig(save_dir + 'data-multiply/train_ll.eps', dpi=fig_dpi, format='eps')
-    #
-    # fig, ax = plot_training_curves(data_multiply_results, val='test_ll', title='Test log likelihood')
-    # plt.ylim(-5, 0)
-    # fig.set_size_inches(fig_x, fig_y)
-    # plt.tight_layout()
-    # fig.savefig(save_dir + 'data-multiply/test_ll.eps', dpi=fig_dpi, format='eps')
-    #
-    # fig, ax = plot_training_curves(data_multiply_results, val='noise_sigma', title='Homoskedastic noise')
-    # fig.set_size_inches(fig_x, fig_y)
-    # plt.tight_layout()
-    # fig.savefig(save_dir + 'data-multiply/noise.eps', dpi=fig_dpi, format='eps')
-    #
-    # fig, ax = plot_training_curves(data_multiply_results, val='train_kl', title='KL divergence')
-    # fig.set_size_inches(fig_x, fig_y)
-    # plt.tight_layout()
-    # fig.savefig(save_dir + 'data-multiply/train_kl.eps', dpi=fig_dpi, format='eps')
-    #
-    # fig = plt.figure()
-    # fig_legend = plt.figure(figsize=(2, 1.25))
-    # ax = fig.add_subplot(111)
-    # lines = [range(2)] * len(legend)
-    # lines = ax.plot(*lines, *lines)
-    # fig_legend.legend(lines, legend, title='Data augmentation factor', loc='center', frameon=False)
-    # fig_legend.set_size_inches(fig_x, fig_y)
-    # plt.tight_layout()
-    # fig_legend.savefig(save_dir + 'data-multiply/legend.eps', dpi=fig_dpi, format='eps')
+    fig, ax = plot_training_curves(data_multiply_results, val='test_ll', title='Test log likelihood')
+    plt.ylim(-5, 0)
+    fig.set_size_inches(fig_x, fig_y)
+    plt.tight_layout()
+    savefig(load_dir + f'data-multiply-test_ll')
+    savefig(thesis_dir + f'data-multiply-test_ll', png=False, pdf=True)
+
+    fig, ax = plot_training_curves(data_multiply_results, val='noise_sigma', title='Homoskedastic noise')
+    fig.set_size_inches(fig_x, fig_y)
+    plt.tight_layout()
+    savefig(load_dir + f'data-multiply-noise')
+    savefig(thesis_dir + f'data-multiply-noise', png=False, pdf=True)
+
+    fig, ax = plot_training_curves(data_multiply_results, val='train_kl', title='KL divergence')
+    fig.set_size_inches(fig_x, fig_y)
+    plt.tight_layout()
+    savefig(load_dir + f'data-multiply-train-kl')
+    savefig(thesis_dir + f'data-multiply-train-kl', png=False, pdf=True)
+
+    fig = plt.figure()
+    fig_legend = plt.figure(figsize=(2, 1.25))
+    ax = fig.add_subplot(111)
+    lines = [range(2)] * len(legend)
+    lines = ax.plot(*lines, *lines)
+    fig_legend.legend(lines, legend, title='Data augmentation factor', loc='center', frameon=False)
+    fig_legend.set_size_inches(fig_x, fig_y)
+    plt.tight_layout()
+    savefig(load_dir + f'data-multiply-legend')
+    savefig(thesis_dir + f'data-multiply-legend', png=False, pdf=True)
+
+    fig, axes = plt.subplots(6,1, sharex=True, figsize=(text_width, text_height))
+    plot_training_curves(data_multiply_results, val='elbo', title='Expected lower bound', xlabel=False, ax=axes[0])
+    plot_training_curves(data_multiply_results, val='test_rmse', title='RMSE', xlabel=False, ax=axes[1])
+    plot_training_curves(data_multiply_results, val='train_ll', title='Train log likelihood', xlabel=False, ax=axes[2])
+    axes[2].set_ylim(-4, 1)
+    plot_training_curves(data_multiply_results, val='test_ll', title='Test log likelihood', xlabel=False, ax=axes[3])
+    axes[3].set_ylim(-5, 0)
+    plot_training_curves(data_multiply_results, val='noise_sigma', title='Homoskedastic noise', xlabel=False, ax=axes[4])
+    plot_training_curves(data_multiply_results, val='train_kl', title='KL divergence', ax=axes[5])
+
+    fig.tight_layout()
+    axes[0].legend(fontsize=7) # title='Data augmentation factor'
+
+    savefig(load_dir + f'data-multiply-combined')
+    savefig(thesis_dir + f'data-multiply-combined', png=False, pdf=True)
 
 
 ## Wine - sigma_init
@@ -372,14 +406,14 @@ def initial_sigma_plot(results_dir, data_set):
 
 
 if do_all or False:
-    initial_sigma_plot(bostonHousing_results_dir, 'bostonHousing')
+    initial_sigma_plot(bostonHousing_results_dir, 'boston')
     # initial_sigma_plot(concrete_results_dir, 'concrete')
     # initial_sigma_plot(kin8nm_results_dir, 'kin8nm')
     # initial_sigma_plot(naval_results_dir, 'naval')
     # initial_sigma_plot(power_results_dir, 'power')
     # initial_sigma_plot(protein_dir, 'protein')
-    initial_sigma_plot(wine_results_dir, 'wine-quality-red')
-    initial_sigma_plot(yacht_results_dir, 'yacht')
+    # initial_sigma_plot(wine_results_dir, 'wine')
+    # initial_sigma_plot(yacht_results_dir, 'yacht')
 
 
 
@@ -435,17 +469,18 @@ def multi_layer_plot(results_dir, data_set):
 
 
 if do_all or False:
-    multi_layer_plot(bostonHousing_results_dir, 'bostonHousing')
+    pass
+    # multi_layer_plot(bostonHousing_results_dir, 'boston')
     # multi_layer_plot(concrete_results_dir, 'concrete')
     # multi_layer_plot(kin8nm_results_dir, 'kin8nm')
     # multi_layer_plot(naval_results_dir, 'naval')
     # multi_layer_plot(power_results_dir, 'power')
     # multi_layer_plot(protein_dir, 'protein')
-    multi_layer_plot(wine_results_dir, 'wine-quality-red')
-    multi_layer_plot(yacht_results_dir, 'yacht')
+    # multi_layer_plot(wine_results_dir, 'wine')
+    # multi_layer_plot(yacht_results_dir, 'yacht')
 
 
 
 
 if not do_all:
-    plt.show()
+    plt.close('all')
