@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(description='Script for dispatching train runs 
 parser.add_argument('-c',  '--config', default='./config/data_multiply/kin8nm.yaml')
 parser.add_argument('-ds', '--dataset', default='kin8nm')
 parser.add_argument('-ld', '--logdir', default='./results')
-parser.add_argument('-dd', '--datadir', default='./data_dir')
+parser.add_argument('-dd', '--datadir', default='./data_dir/presplit/')
 parser.add_argument('-cm', '--commonname', default=None)
 parser.add_argument('-nd', '--nodatetime', action='store_true')
 args = parser.parse_args()

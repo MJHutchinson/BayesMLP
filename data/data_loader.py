@@ -118,6 +118,39 @@ class RegressionDataloaderFixedSplits(RegressionDataloader):
         super().__init__(X_train, X_test, Y_train, Y_test)
 
 
+class RegressionDataloaderFixedSplitsAugment(RegressionDataloader):
+    def __init__(self, pickle_name, data_multiply, data_dir='./data_dir'):
+        self.pickle_name = pickle_name
+
+        f = open(f'{data_dir}/{self.pickle_name}.pkl', 'rb')
+        train_set, valid_set, test_set = pickle.load(f)
+        f.close()
+
+        X_train = np.vstack((train_set[0], valid_set[0]))
+        Y_train = np.hstack((train_set[1], valid_set[1]))
+        X_test = test_set[0]
+        Y_test = test_set[1]
+
+        if data_multiply > 1:
+            X_train = np.tile(X_train, (int(data_multiply), 1))
+            Y_train = np.tile(Y_train, (int(data_multiply), 1))
+
+            inds = np.arange(len(X_train))
+            np.random.shuffle(inds)
+
+            X_train = X_train[inds]
+            Y_train = Y_train[inds]
+
+        elif data_multiply < 1:
+            inds = np.arange(len(X_train))
+            inds = np.random.choice(inds, int(len(X_train) * data_multiply), replace=False)
+
+            X_train = X_train[inds]
+            Y_train = Y_train[inds]
+
+        super().__init__(X_train, X_test, Y_train, Y_test)
+
+
 class RegressionDataloaderVariableSplits(RegressionDataloader):
 
     def __init__(self, data_path, data_set, split_number=0):
