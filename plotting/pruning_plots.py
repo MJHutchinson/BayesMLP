@@ -367,16 +367,16 @@ def do_plots(results_dir):
 
 
         savefig_handle(all_pruning_fig, os.path.join(results_dir, 'figs', f'pruning_kl'))
-        savefig_handle(all_rmse_fig, os.path.join(results_dir, 'figs', f'rmse'))
-        savefig_handle(all_log_lik_fig, os.path.join(results_dir, 'figs', f'log_likelihood'))
+        savefig_handle(all_rmse_fig, os.path.join(results_dir, 'figs', f'pruning_rmse'))
+        savefig_handle(all_log_lik_fig, os.path.join(results_dir, 'figs', f'pruning_log_likelihood'))
 
-        savefig_handle(combined_fig, os.path.join(results_dir, 'figs', f'combined'))
+        savefig_handle(combined_fig, os.path.join(results_dir, 'figs', f'pruning_combined'))
 
         savefig_handle(all_pruning_fig, os.path.join(final_thesis_dir, data_set, f'pruning_kl'), pdf=True, png=False)
-        savefig_handle(all_rmse_fig, os.path.join(final_thesis_dir, data_set, f'rmse'), pdf=True, png=False)
-        savefig_handle(all_log_lik_fig, os.path.join(final_thesis_dir, data_set, f'log_likelihood'), pdf=True, png=False)
+        savefig_handle(all_rmse_fig, os.path.join(final_thesis_dir, data_set, f'pruning_rmse'), pdf=True, png=False)
+        savefig_handle(all_log_lik_fig, os.path.join(final_thesis_dir, data_set, f'pruning_log_likelihood'), pdf=True, png=False)
 
-        savefig_handle(combined_fig, os.path.join(final_thesis_dir, data_set, f'combined'), pdf=True, png=False)
+        savefig_handle(combined_fig, os.path.join(final_thesis_dir, data_set, f'pruning_combined'), pdf=True, png=False)
 
     os.makedirs(os.path.join(results_dir, 'figs'), exist_ok=True)
 
@@ -420,7 +420,8 @@ dirs_regression = [
         '../remote_logs_clean/concrete/weight_pruning_hyperprior3',
         '../remote_logs_clean/energy/weight_pruning_hyperprior3',
         '../remote_logs_clean/kin8nm/weight_pruning_hyperprior3',
-        '../remote_logs_clean/power-plant/weight_pruning_hyperprior3',
+        '../remote_logs_clean/power-plant/weight_pruning_hyperprior3'
+        '../remote_logs_clean/wine-quality-red/weight_pruning_hyperprior3',
         # '../remote_logs_clean/protein-tertiary-structure/weight_pruning_hyperprior3',
         '../remote_logs_clean/yacht/weight_pruning_hyperprior3',
 ]

@@ -94,17 +94,24 @@ def plot_training_curves(input, val='accuracies', rolling_av_len=20, legend=None
     for results in input:
         if rolling_av_len is None:
             result = results['results']
-            ax.plot(result[val], label=results['data_multiply'])
+            if legend is None:
+                ax.plot(result[val]) # , label=results['data_multiply']
+            else:
+                ax.plot(result[val], label=results[legend])  # ,
             # legend.append(f'{results["hidden_size"]} lr: {results["lr"]} prior width: {results["prior_var"]}')
         else:
             vals = result = results['results'][val]
             smoothed_vals = [0] * (len(vals) - rolling_av_len)
             for i, _ in enumerate(smoothed_vals):
                 smoothed_vals[i] = sum(vals[i:i+rolling_av_len])/rolling_av_len
-            ax.plot(smoothed_vals, label=results['data_multiply'])
 
-    if legend is not None:
-        ax.legend(legend)
+            if legend is None:
+                ax.plot(smoothed_vals) # , label=results['data_multiply'] # Figure this out...
+            else:
+                ax.plot(smoothed_vals, label=results[legend])
+
+    # if legend is not None:
+    #     ax.legend(legend)
 
     return fig, ax
 
@@ -188,10 +195,13 @@ def plot_xy(x, y, x_lablel='', y_label='', legend=None):
         ax.legend(legend)
 
 
-def plot_dict(x_dict, y_dict, x_lablel='', y_label='', title=None,  log_scale=False, use_legend=True):
-    fig, ax = plt.subplots(1, 1)
-    ax.set_xlabel(x_lablel)
-    ax.set_ylabel(y_label)
+def plot_dict(x_dict, y_dict, x_label=None, y_label=None, title=None, log_scale=False, use_legend=True, ax=None):
+    if ax == None:
+        fig, ax = plt.subplots(1, 1)
+    else:
+        fig = None
+    if x_label is not None: ax.set_xlabel(x_label)
+    if y_label is not None: ax.set_ylabel(y_label)
 
     if log_scale: ax.set_xscale('log')
 

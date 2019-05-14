@@ -204,7 +204,7 @@ if do_all or True:
 fig_x = 3
 fig_y = 2
 
-if do_all or False:
+def data_multiply(results_dir, data_set):
     def get_data_multiply_data(dir):
         files = get_immediate_files(dir)
         files = [f for f in files if f.split('.')[-1] == 'pkl']
@@ -217,9 +217,6 @@ if do_all or False:
             results.append(r)
 
         return results
-
-    results_dir = wine_results_dir
-    data_set = 'wine-quality-red'
 
     print(f'Data multiply {data_set}')
 
@@ -278,6 +275,15 @@ if do_all or False:
     # plt.tight_layout()
     # fig_legend.savefig(save_dir + 'data-multiply/legend.eps', dpi=fig_dpi, format='eps')
 
+if do_all or False:
+    hyp_sweep(bostonHousing_results_dir, 'bostonHousing')
+    # hyp_sweep(concrete_results_dir, 'concrete')
+    hyp_sweep(kin8nm_results_dir, 'kin8nm')
+    # hyp_sweep(naval_results_dir, 'naval')
+    # hyp_sweep(power_results_dir, 'power')
+    # hyp_sweep(protein_dir, 'protein')
+    hyp_sweep(wine_results_dir, 'wine-quality-red')
+    hyp_sweep(yacht_results_dir, 'yacht')
 
 ## Wine - sigma_init
 
