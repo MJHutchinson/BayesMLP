@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 
 export CUDA_VISIBLE_DEVICES=0
-python data_multiply.py -c ./config/data_multiply/wine-quality-red.yaml           -ds wine-quality-red            -ld /scratch/mjh252/logs/clean -dd /scratch/mjh252/data/presplit/ -cm data-multiply -nd &
+python data_multiply.py -c ./config/data_multiply/wine-quality-red.yaml           -ds wine-quality-red            -ld /scratch/mjh252/logs/clean -dd /scratch/mjh252/data/presplit/ -cm data-multiply2 -nd &
 #python data_multiply.py -c ./config/data_multiply/energy.yaml                     -ds energy                      -ld /scratch/mjh252/logs/clean -dd /scratch/mjh252/data/presplit/ -cm data-multiply -nd &
-python data_multiply.py -c ./config/data_multiply/bostonHousing.yaml              -ds bostonHousing               -ld /scratch/mjh252/logs/clean -dd /scratch/mjh252/data/presplit/ -cm data-multiply -nd &
+python data_multiply.py -c ./config/data_multiply/bostonHousing.yaml              -ds bostonHousing               -ld /scratch/mjh252/logs/clean -dd /scratch/mjh252/data/presplit/ -cm data-multiply2 -nd &
 
 export CUDA_VISIBLE_DEVICES=1
 #python data_multiply.py -c ./config/data_multiply/concrete.yaml                   -ds concrete                    -ld /scratch/mjh252/logs/clean -dd /scratch/mjh252/data/presplit/ -cm data-multiply -nd &
-python data_multiply.py -c ./config/data_multiply/yacht.yaml                      -ds yacht                       -ld /scratch/mjh252/logs/clean -dd /scratch/mjh252/data/presplit/ -cm data-multiply -nd &
+python data_multiply.py -c ./config/data_multiply/yacht.yaml                      -ds yacht                       -ld /scratch/mjh252/logs/clean -dd /scratch/mjh252/data/presplit/ -cm data-multiply2 -nd &
 
 export CUDA_VISIBLE_DEVICES=1
-python data_multiply.py -c ./config/data_multiply/kin8nm.yaml                     -ds kin8nm                      -ld /scratch/mjh252/logs/clean -dd /scratch/mjh252/data/presplit/ -cm data-multiply -nd &
+python data_multiply.py -c ./config/data_multiply/kin8nm.yaml                     -ds kin8nm                      -ld /scratch/mjh252/logs/clean -dd /scratch/mjh252/data/presplit/ -cm data-multiply2 -nd &
 # python parameter_sweep.py -c ./config/naval-propulsion-plant.yaml     -ds naval-propulsion-plant      -ld /scratch/mjh252/logs/clean -dd /scratch/mjh252/data/UCL/ -cm sweep-1 &
 #python data_multiply.py -c ./config/data_multiply/power-plant.yaml                -ds power-plant                 -ld /scratch/mjh252/logs/clean -dd /scratch/mjh252/data/presplit/ -cm data-multiply -nd &
 

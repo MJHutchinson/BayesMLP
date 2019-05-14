@@ -90,17 +90,8 @@ for idx, (hidden_layer, hidden_size, lr, prior_var, data_multiple) in enumerate(
 
     print(f'{args.dataset} - running {model}. Parameter set {idx+1} of {len(param_space)}')
 
-    name = f'data_multiply_{data_multiple}_{model}'
-    log_dir = f'{results_dir}/logs/{name}'
+    name_prefix = f'data_multiply_{data_multiple}_'
 
-    result = test_model_regression(model, data_loader, epochs, batch_size, log_freq=100, log_dir=log_dir, verbose=False)
+    result = test_model_regression(model, data_loader, epochs, batch_size, log_freq=100, results_dir=results_dir, name_prefix=name_prefix, accuracy_plots=False, KL_pruning_plots=False, SNR_pruning_plots=False, verbose=False)
     model.close_session()
     tf.reset_default_graph()
-
-    model_config = model.get_config()
-    train_config = {'batch_size': batch_size, 'epochs': epochs, 'results': result}
-    output = {**model_config, **train_config, 'results': result}
-
-    result_file = f'{results_dir}/{name}.pkl'
-    with open(result_file, 'wb') as h:
-        pickle.dump(output, h)
