@@ -217,7 +217,7 @@ if do_all or False:
 fig_x = 5.6
 fig_y = 2.8
 
-if do_all or False:
+def data_multiply(results_dir, data_set):
     # def get_data_multiply_data(dir):
     #     files = get_immediate_files(dir)
     #     files = [f for f in files if f.split('.')[-1] == 'pkl']
@@ -230,9 +230,6 @@ if do_all or False:
     #         results.append(r)
     #
     #     return results
-
-    results_dir = wine_results_dir
-    data_set = 'wine-quality-red'
 
     print(f'Data multiply {data_set}')
     #
@@ -265,14 +262,14 @@ if do_all or False:
     savefig(thesis_dir + f'data-multiply-rmse', png=False, pdf=True)
 
     fig, ax = plot_training_curves(data_multiply_results, val='train_ll', title='Train log likelihood')
-    plt.ylim(-4, 1)
+    # plt.ylim(-4, 1)
     fig.set_size_inches(fig_x, fig_y)
     plt.tight_layout()
     savefig(load_dir + f'data-multiply-train_ll')
     savefig(thesis_dir + f'data-multiply-train_ll', png=False, pdf=True)
 
     fig, ax = plot_training_curves(data_multiply_results, val='test_ll', title='Test log likelihood')
-    plt.ylim(-5, 0)
+    # plt.ylim(-5, 0)
     fig.set_size_inches(fig_x, fig_y)
     plt.tight_layout()
     savefig(load_dir + f'data-multiply-test_ll')
@@ -305,11 +302,17 @@ if do_all or False:
     plot_training_curves(data_multiply_results, val='elbo', title='Expected lower bound', xlabel=False, ax=axes[0], legend='data_multiply')
     plot_training_curves(data_multiply_results, val='test_rmse', title='RMSE', xlabel=False, ax=axes[1])
     plot_training_curves(data_multiply_results, val='train_ll', title='Train log likelihood', xlabel=False, ax=axes[2])
-    axes[2].set_ylim(-4, 1)
+    # axes[2].set_ylim(-4, 1)
     plot_training_curves(data_multiply_results, val='test_ll', title='Test log likelihood', xlabel=False, ax=axes[3])
-    axes[3].set_ylim(-5, 0)
+    # axes[3].set_ylim(-5, 0)
     plot_training_curves(data_multiply_results, val='noise_sigma', title='Homoskedastic noise', xlabel=False, ax=axes[4])
     plot_training_curves(data_multiply_results, val='train_kl', title='KL divergence', ax=axes[5])
+
+    axes[0].set_ylim(top=200)
+    axes[1].set_ylim(top=20)
+    axes[2].set_ylim(bottom=-200)
+    axes[3].set_ylim(bottom=-200)
+    # axes[4].set_ylim(top=20)
 
     fig.tight_layout()
     axes[0].legend(fontsize=7) # title='Data augmentation factor'
@@ -317,6 +320,15 @@ if do_all or False:
     savefig(load_dir + f'data-multiply-combined')
     savefig(thesis_dir + f'data-multiply-combined', png=False, pdf=True)
 
+if do_all or True:
+    data_multiply(bostonHousing_results_dir, 'bostonHousing')
+    # data_multiply(concrete_results_dir, 'concrete')
+    data_multiply(kin8nm_results_dir, 'kin8nm')
+    # data_multiply(naval_results_dir, 'naval')
+    # data_multiply(power_results_dir, 'power')
+    # data_multiply(protein_dir, 'protein')
+    data_multiply(wine_results_dir, 'wine-quality-red')
+    data_multiply(yacht_results_dir, 'yacht')
 
 ## Wine - sigma_init
 
@@ -524,7 +536,7 @@ def multi_layer_plot(results_dir, data_set):
     savefig(load_dir + f'variable-layer-second-layer-logloss')
     savefig(thesis_dir + f'variable-layer-second-layer-logloss', png=False, pdf=True)
 
-if do_all or True:
+if do_all or False:
     multi_layer_plot(bostonHousing_results_dir, 'bostonHousing')
     # multi_layer_plot(concrete_results_dir, 'concrete')
     # multi_layer_plot(kin8nm_results_dir, 'kin8nm')

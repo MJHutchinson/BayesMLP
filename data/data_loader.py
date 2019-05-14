@@ -133,7 +133,7 @@ class RegressionDataloaderFixedSplitsAugment(RegressionDataloader):
 
         if data_multiply > 1:
             X_train = np.tile(X_train, (int(data_multiply), 1))
-            Y_train = np.tile(Y_train, (int(data_multiply), 1))
+            Y_train = np.tile(Y_train, int(data_multiply))
 
             inds = np.arange(len(X_train))
             np.random.shuffle(inds)
