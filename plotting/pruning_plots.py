@@ -9,33 +9,6 @@ from utils.plot_utils import *
 from utils.results_utils import ExperimentResults
 
 
-# results_dir = '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior'
-# results_dir = '../remote_logs_clean/bostonHousing/weight_pruning_prior_1'
-
-# results_dir = '../remote_logs_clean/wine-quality-red/weight_pruning_hyperprior'
-# results_dir = '../remote_logs_clean/wine-quality-red/weight_pruning_prior_1'
-
-# results_dir = '../remote_logs_clean/yacht/weight_pruning_hyperprior'
-# results_dir = '../remote_logs_clean/yacht/weight_pruning_prior_1'
-
-# results_dir = '../remote_logs_clean/protein-tertiary-structure/weight_pruning_hyperprior'
-# results_dir = '../remote_logs_clean/protein-tertiary-structure/weight_pruning_prior_1'
-
-# results_dir = '../remote_logs_clean/concrete/weight_pruning_hyperprior'
-# results_dir = '../remote_logs_clean/concrete/weight_pruning_prior_1'
-#
-# results_dir = '../remote_logs_clean/energy/weight_pruning_hyperprior'
-# results_dir = '../remote_logs_clean/energy/weight_pruning_prior_1'
-#
-# results_dir = '../remote_logs_clean/kin8nm/weight_pruning_hyperprior'
-# results_dir = '../remote_logs_clean/kin8nm/weight_pruning_prior_1'
-#
-# results_dir = '../remote_logs_clean/naval-propulsion-plant/weight_pruning_hyperprior'
-# results_dir = '../remote_logs_clean/naval-propulsion-plant/weight_pruning_prior_1'
-#
-# results_dir = '../remote_logs_clean/power-plant/weight_pruning_hyperprior'
-# results_dir = '../remote_logs_clean/power-plant/weight_pruning_prior_1'
-
 def do_plots(results_dir):
     # thresholds = [[1], [0.002, 0.005], [1, 0.2, 0.2]]  # Hyperprior
 

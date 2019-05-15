@@ -187,7 +187,7 @@ def hyp_sweep(results_dir, data_set):
     # fig.savefig(save_dir + f'hyp-sweep/prior-{data_set}-logloss.eps', dpi=fig_dpi, format='eps')
 
 
-if do_all or True:
+if do_all or False:
     hyp_sweep(bostonHousing_results_dir, 'bostonHousing')
     # hyp_sweep(concrete_results_dir, 'concrete')
     hyp_sweep(kin8nm_results_dir, 'kin8nm')
@@ -220,7 +220,7 @@ def data_multiply(results_dir, data_set):
 
     print(f'Data multiply {data_set}')
 
-    data_multiply_results = get_data_multiply_data(results_dir + 'data-multiply')
+    data_multiply_results = get_data_multiply_data(results_dir + 'data-multiply2')
     data_multiply_results = sorted(data_multiply_results, key= lambda x: x['data_multiply'])
 
 
@@ -276,14 +276,14 @@ def data_multiply(results_dir, data_set):
     # fig_legend.savefig(save_dir + 'data-multiply/legend.eps', dpi=fig_dpi, format='eps')
 
 if do_all or False:
-    hyp_sweep(bostonHousing_results_dir, 'bostonHousing')
+    data_multiply(bostonHousing_results_dir, 'bostonHousing')
     # hyp_sweep(concrete_results_dir, 'concrete')
-    hyp_sweep(kin8nm_results_dir, 'kin8nm')
+    data_multiply(kin8nm_results_dir, 'kin8nm')
     # hyp_sweep(naval_results_dir, 'naval')
     # hyp_sweep(power_results_dir, 'power')
     # hyp_sweep(protein_dir, 'protein')
-    hyp_sweep(wine_results_dir, 'wine-quality-red')
-    hyp_sweep(yacht_results_dir, 'yacht')
+    data_multiply(wine_results_dir, 'wine-quality-red')
+    data_multiply(yacht_results_dir, 'yacht')
 
 ## Wine - sigma_init
 
