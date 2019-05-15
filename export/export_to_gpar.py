@@ -20,7 +20,8 @@ def export(results_file):
     f_test_rmse = None
 
     for result in results.results:
-        f_samples = list(range(1000, 5000 + 1000, 1000)) + list(range(10000, len(result['results']['test_ll_true'])+f_sample_rate, f_sample_rate))
+        #f_samples = list(range(1000, 5000 + 1000, 1000)) + list(range(10000, len(result['results']['test_ll_true'])+f_sample_rate, f_sample_rate))
+        f_samples = [1000, 4000, len(result['results']['test_ll_true'])]
 
         _x_test_ll = np.array([f(result) for f in x_funcs])[:, np.newaxis].T
         _f_test_ll = np.array([np.mean(result['results']['test_ll_true'][i-51:i-1]) for i in f_samples])[:, np.newaxis].T
@@ -48,7 +49,7 @@ def export(results_file):
         else:
             f_test_rmse = np.concatenate((f_test_rmse, _f_test_rmse), axis=0)
 
-    export_dir = os.path.join(os.curdir, *results_file.split('/')[2:])
+    export_dir = os.path.join(os.curdir, *results_file.split('/')[2:]) + '-3-output'
     os.makedirs(export_dir, exist_ok=True)
 
     np.savetxt(os.path.join(export_dir, 'x_loglik.txt'), x_test_ll, fmt='%i')

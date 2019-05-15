@@ -163,17 +163,26 @@ def hyp_sweep(results_dir, data_set):
                                                                                     data[data_set],
                                                                                     key='prior_var')
 
-    fig, ax = plot_dict(layer_size, final_rmse, 'Layer width', 'Final RMSE', log_scale=True)
-    fig.set_size_inches(fig_x, fig_y)
-    plt.tight_layout()
-    savefig(load_dir + f'hidden-size-rmse')
-    savefig(thesis_dir + f'hidden-size-rmse', png=False, pdf=True)
+    hidden_size_fig, hidden_size_axes = plt.subplots(2,1, figsize=(text_width, text_height/2))
 
-    fig, ax = plot_dict(layer_size, final_ll, 'Layer width', 'Final Log Likelihood', log_scale=True)
-    fig.set_size_inches(fig_x, fig_y)
-    plt.tight_layout()
-    savefig(load_dir + f'hidden-size-logloss')
-    savefig(thesis_dir + f'hidden-size-logloss', png=False, pdf=True)
+    # fig, ax = plot_dict(layer_size, final_rmse, 'Layer width', 'Final RMSE', log_scale=True)
+    # fig.set_size_inches(fig_x, fig_y)
+    # plt.tight_layout()
+    # savefig(load_dir + f'hidden-size-rmse')
+    # savefig(thesis_dir + f'hidden-size-rmse', png=False, pdf=True)
+    #
+    # fig, ax = plot_dict(layer_size, final_ll, 'Layer width', 'Final Log Likelihood', log_scale=True)
+    # fig.set_size_inches(fig_x, fig_y)
+    # plt.tight_layout()
+    # savefig(load_dir + f'hidden-size-logloss')
+    # savefig(thesis_dir + f'hidden-size-logloss', png=False, pdf=True)
+
+    plot_dict(layer_size, final_rmse, 'Layer width', 'Final RMSE', log_scale=True, ax=hidden_size_axes[0])
+    plot_dict(layer_size, final_ll, 'Layer width', 'Final Log Likelihood', log_scale=True, ax=hidden_size_axes[1])
+    hidden_size_fig.tight_layout()
+
+    savefig(load_dir + f'hidden-size')
+    savefig(thesis_dir + f'hidden-size', png=False, pdf=True)
 
     print(f'Prior vars {data_set}')
 
@@ -186,19 +195,29 @@ def hyp_sweep(results_dir, data_set):
                                                                                     data[data_set],
                                                                                     key='hidden_size')
 
-    fig, ax = plot_dict(prior_var, final_rmse, 'Prior variance', 'Final RMSE',  log_scale=True)
-    fig.set_size_inches(fig_x, fig_y)
-    plt.tight_layout()
-    # plt.ylim(0,3)
-    savefig(load_dir + f'prior-width-rmse')
-    savefig(thesis_dir + f'prior-width-rmse', png=False, pdf=True)
+    prior_var_fig, prior_var_axes = plt.subplots(2, 1, figsize=(text_width, text_height / 2))
 
-    fig, ax = plot_dict(prior_var, final_ll, 'Prior variance', 'Final Log Likelihood', log_scale=True)
-    fig.set_size_inches(fig_x, fig_y)
-    plt.tight_layout()
-    # plt.ylim(-2,0)
-    savefig(load_dir + f'prior-width-logloss')
-    savefig(thesis_dir + f'prior-width-logloss', png=False, pdf=True)
+    # fig, ax = plot_dict(prior_var, final_rmse, 'Prior variance', 'Final RMSE',  log_scale=True)
+    # fig.set_size_inches(fig_x, fig_y)
+    # plt.tight_layout()
+    # # plt.ylim(0,3)
+    # savefig(load_dir + f'prior-width-rmse')
+    # savefig(thesis_dir + f'prior-width-rmse', png=False, pdf=True)
+    #
+    # fig, ax = plot_dict(prior_var, final_ll, 'Prior variance', 'Final Log Likelihood', log_scale=True)
+    # fig.set_size_inches(fig_x, fig_y)
+    # plt.tight_layout()
+    # # plt.ylim(-2,0)
+    # savefig(load_dir + f'prior-width-logloss')
+    # savefig(thesis_dir + f'prior-width-logloss', png=False, pdf=True)
+
+    plot_dict(prior_var, final_rmse, 'Prior variance', 'Final RMSE', log_scale=True, ax=prior_var_axes[0])
+    plot_dict(prior_var, final_ll, 'Prior variance', 'Final Log Likelihood', log_scale=True, ax=prior_var_axes[1])
+
+    prior_var_fig.tight_layout()
+
+    savefig(load_dir + f'prior-width')
+    savefig(thesis_dir + f'prior-width', png=False, pdf=True)
 
 
 if do_all or False:
@@ -248,55 +267,55 @@ def data_multiply(results_dir, data_set):
 
     legend = [r['data_multiply'] for r in data_multiply_results]
 
-    fig, ax = plot_training_curves(data_multiply_results, val='elbo', title='Expected lower bound')
-    fig.set_size_inches(fig_x, fig_y)
-    plt.tight_layout()
-    savefig(load_dir + f'data-multiply-elbo')
-    savefig(thesis_dir + f'data-multiply-elbo', png=False, pdf=True)
-
-    fig, ax = plot_training_curves(data_multiply_results, val='test_rmse', title='RMSE')
-    fig.set_size_inches(fig_x, fig_y)
-    # plt.ylim(0.55, 0.8)
-    plt.tight_layout()
-    savefig(load_dir + f'data-multiply-rmse')
-    savefig(thesis_dir + f'data-multiply-rmse', png=False, pdf=True)
-
-    fig, ax = plot_training_curves(data_multiply_results, val='train_ll', title='Train log likelihood')
-    # plt.ylim(-4, 1)
-    fig.set_size_inches(fig_x, fig_y)
-    plt.tight_layout()
-    savefig(load_dir + f'data-multiply-train_ll')
-    savefig(thesis_dir + f'data-multiply-train_ll', png=False, pdf=True)
-
-    fig, ax = plot_training_curves(data_multiply_results, val='test_ll', title='Test log likelihood')
-    # plt.ylim(-5, 0)
-    fig.set_size_inches(fig_x, fig_y)
-    plt.tight_layout()
-    savefig(load_dir + f'data-multiply-test_ll')
-    savefig(thesis_dir + f'data-multiply-test_ll', png=False, pdf=True)
-
-    fig, ax = plot_training_curves(data_multiply_results, val='noise_sigma', title='Homoskedastic noise')
-    fig.set_size_inches(fig_x, fig_y)
-    plt.tight_layout()
-    savefig(load_dir + f'data-multiply-noise')
-    savefig(thesis_dir + f'data-multiply-noise', png=False, pdf=True)
-
-    fig, ax = plot_training_curves(data_multiply_results, val='train_kl', title='KL divergence')
-    fig.set_size_inches(fig_x, fig_y)
-    plt.tight_layout()
-    savefig(load_dir + f'data-multiply-train-kl')
-    savefig(thesis_dir + f'data-multiply-train-kl', png=False, pdf=True)
-
-    fig = plt.figure()
-    fig_legend = plt.figure(figsize=(2, 1.25))
-    ax = fig.add_subplot(111)
-    lines = [range(2)] * len(legend)
-    lines = ax.plot(*lines, *lines)
-    fig_legend.legend(lines, legend, title='Data augmentation factor', loc='center', frameon=False)
-    fig_legend.set_size_inches(fig_x, fig_y)
-    plt.tight_layout()
-    savefig(load_dir + f'data-multiply-legend')
-    savefig(thesis_dir + f'data-multiply-legend', png=False, pdf=True)
+    # fig, ax = plot_training_curves(data_multiply_results, val='elbo', title='Expected lower bound')
+    # fig.set_size_inches(fig_x, fig_y)
+    # plt.tight_layout()
+    # savefig(load_dir + f'data-multiply-elbo')
+    # savefig(thesis_dir + f'data-multiply-elbo', png=False, pdf=True)
+    #
+    # fig, ax = plot_training_curves(data_multiply_results, val='test_rmse', title='RMSE')
+    # fig.set_size_inches(fig_x, fig_y)
+    # # plt.ylim(0.55, 0.8)
+    # plt.tight_layout()
+    # savefig(load_dir + f'data-multiply-rmse')
+    # savefig(thesis_dir + f'data-multiply-rmse', png=False, pdf=True)
+    #
+    # fig, ax = plot_training_curves(data_multiply_results, val='train_ll', title='Train log likelihood')
+    # # plt.ylim(-4, 1)
+    # fig.set_size_inches(fig_x, fig_y)
+    # plt.tight_layout()
+    # savefig(load_dir + f'data-multiply-train_ll')
+    # savefig(thesis_dir + f'data-multiply-train_ll', png=False, pdf=True)
+    #
+    # fig, ax = plot_training_curves(data_multiply_results, val='test_ll', title='Test log likelihood')
+    # # plt.ylim(-5, 0)
+    # fig.set_size_inches(fig_x, fig_y)
+    # plt.tight_layout()
+    # savefig(load_dir + f'data-multiply-test_ll')
+    # savefig(thesis_dir + f'data-multiply-test_ll', png=False, pdf=True)
+    #
+    # fig, ax = plot_training_curves(data_multiply_results, val='noise_sigma', title='Homoskedastic noise')
+    # fig.set_size_inches(fig_x, fig_y)
+    # plt.tight_layout()
+    # savefig(load_dir + f'data-multiply-noise')
+    # savefig(thesis_dir + f'data-multiply-noise', png=False, pdf=True)
+    #
+    # fig, ax = plot_training_curves(data_multiply_results, val='train_kl', title='KL divergence')
+    # fig.set_size_inches(fig_x, fig_y)
+    # plt.tight_layout()
+    # savefig(load_dir + f'data-multiply-train-kl')
+    # savefig(thesis_dir + f'data-multiply-train-kl', png=False, pdf=True)
+    #
+    # fig = plt.figure()
+    # fig_legend = plt.figure(figsize=(2, 1.25))
+    # ax = fig.add_subplot(111)
+    # lines = [range(2)] * len(legend)
+    # lines = ax.plot(*lines, *lines)
+    # fig_legend.legend(lines, legend, title='Data augmentation factor', loc='center', frameon=False)
+    # fig_legend.set_size_inches(fig_x, fig_y)
+    # plt.tight_layout()
+    # savefig(load_dir + f'data-multiply-legend')
+    # savefig(thesis_dir + f'data-multiply-legend', png=False, pdf=True)
 
     fig, axes = plt.subplots(6,1, sharex=True, figsize=(text_width, text_height))
     plot_training_curves(data_multiply_results, val='elbo', title='Expected lower bound', xlabel=False, ax=axes[0], legend='data_multiply')
@@ -320,7 +339,7 @@ def data_multiply(results_dir, data_set):
     savefig(load_dir + f'data-multiply-combined')
     savefig(thesis_dir + f'data-multiply-combined', png=False, pdf=True)
 
-if do_all or True:
+if do_all or False:
     data_multiply(bostonHousing_results_dir, 'bostonHousing')
     # data_multiply(concrete_results_dir, 'concrete')
     data_multiply(kin8nm_results_dir, 'kin8nm')
@@ -367,72 +386,72 @@ def initial_sigma_plot(results_dir, data_set):
 
     legend = [r['sigma_init'] for r in sigma_init_results]
 
-    fig, ax = plot_training_curves(sigma_init_results, val='elbo', title='Expected lower bound')
-    fig.set_size_inches(fig_x, fig_y)
-    plt.tight_layout()
-    savefig(load_dir + f'sigma-init-elbo')
-    savefig(thesis_dir + f'sigma-init-elbo', png=False, pdf=True)
-
-    fig, ax = plot_training_curves(sigma_init_results, val='test_rmse', title='RMSE')
-    fig.set_size_inches(fig_x, fig_y)
-    # plt.ylim(0.6, 0.8)
-    plt.tight_layout()
-    savefig(load_dir + f'sigma-init-rmse')
-    savefig(thesis_dir + f'sigma-init-rmse', png=False, pdf=True)
-
-    fig, ax = plot_training_curves(sigma_init_results, val='train_ll', title='Train log likelihood')
-    # plt.ylim(-4, 1)
-    fig.set_size_inches(fig_x, fig_y)
-    plt.tight_layout()
-    savefig(load_dir + f'sigma-init-train-ll')
-    savefig(thesis_dir + f'sigma-init-train-ll', png=False, pdf=True)
-
-    fig, ax = plot_training_curves(sigma_init_results, val='test_ll', title='Test log likelihood')
-    # plt.ylim(-5, 0)
-    fig.set_size_inches(fig_x, fig_y)
-    plt.tight_layout()
-    savefig(load_dir + f'sigma-init-test-ll')
-    savefig(thesis_dir + f'sigma-init-test-ll', png=False, pdf=True)
-
-    fig, ax = plot_training_curves(sigma_init_results, val='noise_sigma', title='Homoskedastic noise')
-    fig.set_size_inches(fig_x, fig_y)
-    plt.tight_layout()
-    savefig(load_dir + f'sigma-init-noise')
-    savefig(thesis_dir + f'sigma-init-noise', png=False, pdf=True)
-
-    fig, ax = plot_training_curves(sigma_init_results, val='train_kl', title='KL divergence')
-    fig.set_size_inches(fig_x, fig_y)
-    plt.tight_layout()
-    savefig(load_dir + f'sigma-init-train-kl')
-    savefig(thesis_dir + f'sigma-init-train-kl', png=False, pdf=True)
-
-    fig = plt.figure()
-    fig_legend = plt.figure(figsize=(2, 1.25))
-    ax = fig.add_subplot(111)
-    lines = [range(2)] * len(legend)
-    lines = ax.plot(*lines, *lines)
-    fig_legend.legend(lines, legend, title='Initial noise value', loc='center', frameon=False)
-    fig_legend.set_size_inches(fig_x, fig_y)
-    plt.tight_layout()
-    savefig(load_dir + f'sigma-init-legend')
-    savefig(thesis_dir + f'sigma-init-legend', png=False, pdf=True)
+    # fig, ax = plot_training_curves(sigma_init_results, val='elbo', title='Expected lower bound')
+    # fig.set_size_inches(fig_x, fig_y)
+    # plt.tight_layout()
+    # savefig(load_dir + f'sigma-init-elbo')
+    # savefig(thesis_dir + f'sigma-init-elbo', png=False, pdf=True)
+    #
+    # fig, ax = plot_training_curves(sigma_init_results, val='test_rmse', title='RMSE')
+    # fig.set_size_inches(fig_x, fig_y)
+    # # plt.ylim(0.6, 0.8)
+    # plt.tight_layout()
+    # savefig(load_dir + f'sigma-init-rmse')
+    # savefig(thesis_dir + f'sigma-init-rmse', png=False, pdf=True)
+    #
+    # fig, ax = plot_training_curves(sigma_init_results, val='train_ll', title='Train log likelihood')
+    # # plt.ylim(-4, 1)
+    # fig.set_size_inches(fig_x, fig_y)
+    # plt.tight_layout()
+    # savefig(load_dir + f'sigma-init-train-ll')
+    # savefig(thesis_dir + f'sigma-init-train-ll', png=False, pdf=True)
+    #
+    # fig, ax = plot_training_curves(sigma_init_results, val='test_ll', title='Test log likelihood')
+    # # plt.ylim(-5, 0)
+    # fig.set_size_inches(fig_x, fig_y)
+    # plt.tight_layout()
+    # savefig(load_dir + f'sigma-init-test-ll')
+    # savefig(thesis_dir + f'sigma-init-test-ll', png=False, pdf=True)
+    #
+    # fig, ax = plot_training_curves(sigma_init_results, val='noise_sigma', title='Homoskedastic noise')
+    # fig.set_size_inches(fig_x, fig_y)
+    # plt.tight_layout()
+    # savefig(load_dir + f'sigma-init-noise')
+    # savefig(thesis_dir + f'sigma-init-noise', png=False, pdf=True)
+    #
+    # fig, ax = plot_training_curves(sigma_init_results, val='train_kl', title='KL divergence')
+    # fig.set_size_inches(fig_x, fig_y)
+    # plt.tight_layout()
+    # savefig(load_dir + f'sigma-init-train-kl')
+    # savefig(thesis_dir + f'sigma-init-train-kl', png=False, pdf=True)
+    #
+    # fig = plt.figure()
+    # fig_legend = plt.figure(figsize=(2, 1.25))
+    # ax = fig.add_subplot(111)
+    # lines = [range(2)] * len(legend)
+    # lines = ax.plot(*lines, *lines)
+    # fig_legend.legend(lines, legend, title='Initial noise value', loc='center', frameon=False)
+    # fig_legend.set_size_inches(fig_x, fig_y)
+    # plt.tight_layout()
+    # savefig(load_dir + f'sigma-init-legend')
+    # savefig(thesis_dir + f'sigma-init-legend', png=False, pdf=True)
 
     num_weights, layer_size, prior_var, final_ll, final_rmse, final_cost = group_by(sigma_init_results,
                                                                                     data[data_set],
                                                                                     key='sigma_init')
     sigmas = {repr(sigma): [sigma] for sigma in legend}
 
-    fig, ax = plot_dict(sigmas, final_rmse, 'Initial noise value', 'Final RMSE', use_legend=None, log_scale=True)
-    fig.set_size_inches(fig_x, fig_y)
-    plt.tight_layout()
-    savefig(load_dir + f'sigma-init-rmse-final')
-    savefig(thesis_dir + f'sigma-init-rmse-final', png=False, pdf=True)
-
-    fig, ax = plot_dict(sigmas, final_ll, 'Initial noise value', 'Final Log Likelihood', use_legend=None, log_scale=True)
-    fig.set_size_inches(fig_x, fig_y)
-    plt.tight_layout()
-    savefig(load_dir + f'sigma-init-logloss-final')
-    savefig(thesis_dir + f'sigma-init-logloss-final', png=False, pdf=True)
+    # fig, ax = plot_dict(sigmas, final_rmse, 'Initial noise value', 'Final RMSE', use_legend=None, log_scale=True)
+    # fig.set_size_inches(fig_x, fig_y)
+    # plt.tight_layout()
+    # savefig(load_dir + f'sigma-init-rmse-final')
+    # savefig(thesis_dir + f'sigma-init-rmse-final', png=False, pdf=True)
+    #
+    # fig, ax = plot_dict(sigmas, final_ll, 'Initial noise value', 'Final Log Likelihood', use_legend=None, log_scale=True)
+    # fig.set_size_inches(fig_x, fig_y)
+    # plt.tight_layout()
+    # savefig(load_dir + f'sigma-init-logloss-final')
+    # savefig(thesis_dir + f'sigma-init-logloss-final', png=False, pdf=True)
 
 
     fig, axes = plt.subplots(5, 1, sharex=False, figsize=(text_width, text_height))
