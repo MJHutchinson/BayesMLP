@@ -163,7 +163,7 @@ def hyp_sweep(results_dir, data_set):
                                                                                     data[data_set],
                                                                                     key='prior_var')
 
-    hidden_size_fig, hidden_size_axes = plt.subplots(2,1, figsize=(text_width, text_height/2))
+    hidden_size_fig, hidden_size_axes = plt.subplots(2,1, figsize=(text_width, text_height/2.1))
 
     # fig, ax = plot_dict(layer_size, final_rmse, 'Layer width', 'Final RMSE', log_scale=True)
     # fig.set_size_inches(fig_x, fig_y)
@@ -195,7 +195,7 @@ def hyp_sweep(results_dir, data_set):
                                                                                     data[data_set],
                                                                                     key='hidden_size')
 
-    prior_var_fig, prior_var_axes = plt.subplots(2, 1, figsize=(text_width, text_height / 2))
+    prior_var_fig, prior_var_axes = plt.subplots(2, 1, figsize=(text_width, text_height / 2.1))
 
     # fig, ax = plot_dict(prior_var, final_rmse, 'Prior variance', 'Final RMSE',  log_scale=True)
     # fig.set_size_inches(fig_x, fig_y)
@@ -220,7 +220,7 @@ def hyp_sweep(results_dir, data_set):
     savefig(thesis_dir + f'prior-width', png=False, pdf=True)
 
 
-if do_all or False:
+if do_all or True:
     hyp_sweep(bostonHousing_results_dir, 'bostonHousing')
     # hyp_sweep(concrete_results_dir, 'concrete')
     hyp_sweep(kin8nm_results_dir, 'kin8nm')
@@ -317,7 +317,7 @@ def data_multiply(results_dir, data_set):
     # savefig(load_dir + f'data-multiply-legend')
     # savefig(thesis_dir + f'data-multiply-legend', png=False, pdf=True)
 
-    fig, axes = plt.subplots(6,1, sharex=True, figsize=(text_width, text_height))
+    fig, axes = plt.subplots(6,1, sharex=True, figsize=(text_width, text_height/1.1))
     plot_training_curves(data_multiply_results, val='elbo', title='Expected lower bound', xlabel=False, ax=axes[0], legend='data_multiply')
     plot_training_curves(data_multiply_results, val='test_rmse', title='RMSE', xlabel=False, ax=axes[1])
     plot_training_curves(data_multiply_results, val='train_ll', title='Train log likelihood', xlabel=False, ax=axes[2])
