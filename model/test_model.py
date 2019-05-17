@@ -9,7 +9,7 @@ from utils.plot_utils import plot_KL_pruning, plot_SNP_pruning
 
 
 def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, results_dir='./results', name_prefix=None,
-                          accuracy_plots=True, KL_pruning_plots=True, SNR_pruning_plots=True, verbose=True):
+                          accuracy_plots=False, KL_pruning_plots=False, SNR_pruning_plots=False, verbose=True):
 
     if name_prefix is None:
         name = f'{model}'
