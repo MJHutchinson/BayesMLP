@@ -4,6 +4,6 @@ learning_rates: [0.001]
 prior_vars: [0.01, 0.05, 0.1, 0.5, 1., 5., 10.]
 hyperprior: False
 
-epochs: 10000
+epochs: 30000
 search_space: 'small'
 batch_size: 1000

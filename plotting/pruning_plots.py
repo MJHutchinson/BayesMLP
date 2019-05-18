@@ -220,11 +220,13 @@ def do_plots(results_dir):
 
         groups = len(layer_groups)
 
-        all_pruning_fig, all_pruning_ax = plt.subplots(1,1,figsize=(5.6, 2.8))
-        all_rmse_fig, all_rmse_ax = plt.subplots(1,1,figsize=(5.6, 2.8))
-        all_log_lik_fig, all_log_lik_ax = plt.subplots(1,1,figsize=(5.6, 2.8))
+        # all_pruning_fig, all_pruning_ax = plt.subplots(1,1,figsize=(5.6, 2.8))
+        # all_rmse_fig, all_rmse_ax = plt.subplots(1,1,figsize=(5.6, 2.8))
+        # all_log_lik_fig, all_log_lik_ax = plt.subplots(1,1,figsize=(5.6, 2.8))
 
         combined_fig, combined_ax = plt.subplots(3, 1, sharex=True, figsize=(5.6, 5.6+2.8))
+
+        combined_ax[2].set_xscale('log')
 
         for i, group in enumerate(layer_groups):
 
@@ -283,9 +285,9 @@ def do_plots(results_dir):
             metric_axs[0].scatter(points, final_rmse, color='tab:blue')
             metric_axs[1].scatter(points, final_test_loglik, color='tab:blue')
 
-            all_pruning_ax.scatter(points, active_weights, label=f'{layers} layers')
-            all_rmse_ax.scatter(points, final_rmse, label=f'{layers} layers')
-            all_log_lik_ax.scatter(points, final_test_loglik, label=f'{layers} layers')
+            # all_pruning_ax.scatter(points, active_weights, label=f'{layers} layers')
+            # all_rmse_ax.scatter(points, final_rmse, label=f'{layers} layers')
+            # all_log_lik_ax.scatter(points, final_test_loglik, label=f'{layers} layers')
 
             combined_ax[0].scatter(points, active_weights, label=f'{layers} layers')
             combined_ax[2].scatter(points, final_rmse, label=f'{layers} layers')
@@ -300,27 +302,27 @@ def do_plots(results_dir):
             savefig_handle(prune_fig, os.path.join(final_thesis_dir, data_set, f'pruning_kl_{layers}_layers'), pdf=True, png=False)
             savefig_handle(metric_fig, os.path.join(final_thesis_dir, data_set, f'metircs_{layers}_layers'), pdf=True, png=False)
 
-        all_pruning_ax.legend()
-        all_rmse_ax.legend()
-        all_log_lik_ax.legend()
-
-        all_pruning_ax.set_xlabel('Layer size')
-        all_rmse_ax.set_xlabel('Layer size')
-        all_log_lik_ax.set_xlabel('Layer size')
-
-        all_pruning_ax.set_ylabel('Total active neurons')
-        all_rmse_ax.set_ylabel('Final RMSE')
-        all_log_lik_ax.set_ylabel('Final Log Likelihood')
-
-        all_pruning_ax.set_xscale('log')
-        all_rmse_ax.set_xscale('log')
-        all_log_lik_ax.set_xscale('log')
-
-        all_pruning_ax.yaxis.set_major_locator(MaxNLocator(integer=True))
-
-        all_pruning_fig.tight_layout()
-        all_rmse_fig.tight_layout()
-        all_log_lik_fig.tight_layout()
+        # all_pruning_ax.legend()
+        # all_rmse_ax.legend()
+        # all_log_lik_ax.legend()
+        #
+        # all_pruning_ax.set_xlabel('Layer size')
+        # all_rmse_ax.set_xlabel('Layer size')
+        # all_log_lik_ax.set_xlabel('Layer size')
+        #
+        # all_pruning_ax.set_ylabel('Total active neurons')
+        # all_rmse_ax.set_ylabel('Final RMSE')
+        # all_log_lik_ax.set_ylabel('Final Log Likelihood')
+        #
+        # all_pruning_ax.set_xscale('log')
+        # all_rmse_ax.set_xscale('log')
+        # all_log_lik_ax.set_xscale('log')
+        #
+        # all_pruning_ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+        #
+        # all_pruning_fig.tight_layout()
+        # all_rmse_fig.tight_layout()
+        # all_log_lik_fig.tight_layout()
 
         combined_ax[0].legend()
         combined_ax[2].legend()
@@ -332,24 +334,24 @@ def do_plots(results_dir):
         combined_ax[2].set_ylabel('Final RMSE')
         combined_ax[1].set_ylabel('Final Log Likelihood')
 
-        combined_ax[2].set_xscale('log')
-
         combined_ax[0].yaxis.set_major_locator(MaxNLocator(integer=True))
 
         combined_fig.tight_layout()
 
 
-        savefig_handle(all_pruning_fig, os.path.join(results_dir, 'figs', f'pruning_kl'))
-        savefig_handle(all_rmse_fig, os.path.join(results_dir, 'figs', f'pruning_rmse'))
-        savefig_handle(all_log_lik_fig, os.path.join(results_dir, 'figs', f'pruning_log_likelihood'))
+        # savefig_handle(all_pruning_fig, os.path.join(results_dir, 'figs', f'pruning_kl'))
+        # savefig_handle(all_rmse_fig, os.path.join(results_dir, 'figs', f'pruning_rmse'))
+        # savefig_handle(all_log_lik_fig, os.path.join(results_dir, 'figs', f'pruning_log_likelihood'))
 
         savefig_handle(combined_fig, os.path.join(results_dir, 'figs', f'pruning_combined'))
 
-        savefig_handle(all_pruning_fig, os.path.join(final_thesis_dir, data_set, f'pruning_kl'), pdf=True, png=False)
-        savefig_handle(all_rmse_fig, os.path.join(final_thesis_dir, data_set, f'pruning_rmse'), pdf=True, png=False)
-        savefig_handle(all_log_lik_fig, os.path.join(final_thesis_dir, data_set, f'pruning_log_likelihood'), pdf=True, png=False)
+        # savefig_handle(all_pruning_fig, os.path.join(final_thesis_dir, data_set, f'pruning_kl'), pdf=True, png=False)
+        # savefig_handle(all_rmse_fig, os.path.join(final_thesis_dir, data_set, f'pruning_rmse'), pdf=True, png=False)
+        # savefig_handle(all_log_lik_fig, os.path.join(final_thesis_dir, data_set, f'pruning_log_likelihood'), pdf=True, png=False)
 
         savefig_handle(combined_fig, os.path.join(final_thesis_dir, data_set, f'pruning_combined'), pdf=True, png=False)
+
+        plt.close('all')
 
     os.makedirs(os.path.join(results_dir, 'figs'), exist_ok=True)
 
@@ -389,14 +391,14 @@ def do_plots(results_dir):
 final_thesis_dir = '/home/mjhutchinson/Documents/University/4th Year/4th Year Project/Final Thesis/Thesis-LaTeX/Chapter5/Figs'
 
 dirs_regression = [
-        '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior3',
-        '../remote_logs_clean/concrete/weight_pruning_hyperprior3',
-        '../remote_logs_clean/energy/weight_pruning_hyperprior3',
-        '../remote_logs_clean/kin8nm/weight_pruning_hyperprior3',
-        '../remote_logs_clean/power-plant/weight_pruning_hyperprior3'
+        # '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior3',
+        # '../remote_logs_clean/concrete/weight_pruning_hyperprior3',
+        # '../remote_logs_clean/energy/weight_pruning_hyperprior3',
+        # '../remote_logs_clean/kin8nm/weight_pruning_hyperprior3',
+        # '../remote_logs_clean/power-plant/weight_pruning_hyperprior3'
         '../remote_logs_clean/wine-quality-red/weight_pruning_hyperprior3',
         # '../remote_logs_clean/protein-tertiary-structure/weight_pruning_hyperprior3',
-        '../remote_logs_clean/yacht/weight_pruning_hyperprior3',
+        # '../remote_logs_clean/yacht/weight_pruning_hyperprior3',
 ]
 
 dirs_classification = [
