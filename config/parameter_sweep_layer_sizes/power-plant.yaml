@@ -6,4 +6,4 @@ hyperprior: False
 
 epochs: 30000
 search_space: 'small'
-batch_size: 5000
+batch_size: 6000
