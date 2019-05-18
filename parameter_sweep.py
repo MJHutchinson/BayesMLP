@@ -34,16 +34,18 @@ experiment_config = yaml.load(open(args.config, 'rb'))
 # Set up logging directory and grab the config file
 date_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-if args.commonname is not None :
-    if args.nodatetime:
-        folder_name = args.commonname
-    else:
-        folder_name = ''#f'{args.commonname}-{date_time}'
-else:
-    if not args.nodatetime:
-        folder_name = f'{date_time}'
-    else:
-        raise ValueError('Must supply a common name, or set ude datetime to True')
+folder_name = args.commonname
+
+# if args.commonname is not None :
+#     if args.nodatetime:
+#         folder_name = args.commonname
+#     else:
+#         folder_name = ''#f'{args.commonname}-{date_time}'
+# else:
+#     if not args.nodatetime:
+#         folder_name = ''# f'{date_time}'
+#     else:
+#         raise ValueError('Must supply a common name, or set ude datetime to True')
 
 results_dir = f'{args.logdir}/{args.dataset}/{folder_name}'
 
