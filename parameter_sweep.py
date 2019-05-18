@@ -38,7 +38,7 @@ if args.commonname is not None :
     if args.nodatetime:
         folder_name = args.commonname
     else:
-        folder_name = f'{args.commonname}-{date_time}'
+        folder_name = ''#f'{args.commonname}-{date_time}'
 else:
     if not args.nodatetime:
         folder_name = f'{date_time}'
