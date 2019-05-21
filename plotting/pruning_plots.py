@@ -277,6 +277,7 @@ def do_plots(results_dir):
 
                 active_weights.append(sum(active_neurons))
 
+
             prune_axs[1].scatter(points, active_weights, c='tab:blue')
             for i in range(layers):
                 prune_axs[0].scatter(points, active_weights_layers[i], label=f'layer {i + 1}')
@@ -289,9 +290,16 @@ def do_plots(results_dir):
             # all_rmse_ax.scatter(points, final_rmse, label=f'{layers} layers')
             # all_log_lik_ax.scatter(points, final_test_loglik, label=f'{layers} layers')
 
-            combined_ax[0].scatter(points, active_weights, label=f'{layers} layers')
-            combined_ax[2].scatter(points, final_rmse, label=f'{layers} layers')
-            combined_ax[1].scatter(points, final_test_loglik, label=f'{layers} layers')
+
+            combined_ax[0].scatter(points, active_weights, label=f'{layers} layers', c=colors[layers-1])
+            combined_ax[2].scatter(points, final_rmse, label=f'{layers} layers', c=colors[layers-1])
+            combined_ax[1].scatter(points, final_test_loglik, label=f'{layers} layers', c=colors[layers-1])
+
+            lims = combined_ax[0].get_ylim()
+
+            points = sorted(points)
+            combined_ax[0].plot(points, [point * layers for point in points], c=colors[layers-1])
+            combined_ax[0].set_ylim(lims)
 
             prune_fig.tight_layout()  # rect=[0, 0.03, 1.0, 0.95]
             metric_fig.tight_layout()
@@ -396,8 +404,8 @@ dirs_regression = [
         # '../remote_logs_clean/energy/weight_pruning_hyperprior3',
         # '../remote_logs_clean/kin8nm/weight_pruning_hyperprior3',
         # '../remote_logs_clean/power-plant/weight_pruning_hyperprior3'
-        '../remote_logs_clean/wine-quality-red/weight_pruning_hyperprior3',
-        # '../remote_logs_clean/protein-tertiary-structure/weight_pruning_hyperprior3',
+        # '../remote_logs_clean/wine-quality-red/weight_pruning_hyperprior3',
+        '../remote_logs_clean/protein-tertiary-structure/weight_pruning_hyperprior3',
         # '../remote_logs_clean/yacht/weight_pruning_hyperprior3',
 ]
 

@@ -124,15 +124,13 @@ def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, r
               'noise_sigma_true': noise_sigma_true,
               'train_time': total_train_time}
 
-    if KL_pruning_plots:
-        pruning_measure = [weight.pruning_from_KL() for weight in model.W]
-        pruning_measure = model.sess.run(pruning_measure)
-        result['KL_pruning'] = pruning_measure
+    pruning_measure = [weight.pruning_from_KL() for weight in model.W]
+    pruning_measure = model.sess.run(pruning_measure)
+    result['KL_pruning'] = pruning_measure
 
-    if SNR_pruning_plots:
-        pruning_measure = [weight.pruning_from_SNR() for weight in model.W]
-        pruning_measure = model.sess.run(pruning_measure)
-        result['SNR_pruning'] = pruning_measure
+    pruning_measure = [weight.pruning_from_SNR() for weight in model.W]
+    pruning_measure = model.sess.run(pruning_measure)
+    result['SNR_pruning'] = pruning_measure
 
     model_config = model.get_config()
     train_config = {'batch_size': batch_size, 'epochs': epochs, 'results': result}
