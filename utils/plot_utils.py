@@ -316,13 +316,13 @@ def plot_KL_pruning_post(pruning_measure, fig_dir, name):
     fig, axs = plt.subplots(len(pruning_measure), 1, figsize=(6.4, 2.4 * len(pruning_measure)))
     axs[0].set_title('PDF of weight pruning by KL')
     for i, (x, ax) in enumerate(zip(pruning_measure, axs)):
-        ax.hist(np.log(x), bins=100, density=False, cumulative=False, label=f'Layer {i}',
+        ax.hist(np.log10(x), bins=100, density=False, cumulative=False, label=f'Layer {i}',
                 histtype='step', alpha=1.0)
 
         # mu = float(np.mean(x))
         # std = float(np.std(x))
-
-        thresholds = [[0.5], [0.5, 0.05], [0.5, 0.05, 0.05], [0.5, 0.05, 0.05, 0.05], [0.5, 0.05, 0.05, 0.05, 0.05]]
+        thresholds = [[0.3], [0.3, 1e-2], [0.3, 1e-2, 1e-2], [0.3, 1e-2, 1e-2, 1e-2], [0.3, 1e-2, 1e-2, 1e-2, 1e-2]]
+        thresholds = [[-0.5], [-0.5, -2], [-0.5, -2, -2], [-0.5, -2, -2, -2], [-0.5, -2, -2, -2, -2]]
         # print(len(pruning_measure), i)
         # print(len(thresholds), len(thresholds[len(pruning_measure)]))
         threshold = thresholds[len(pruning_measure)][i]

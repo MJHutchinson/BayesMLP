@@ -220,7 +220,7 @@ def hyp_sweep(results_dir, data_set):
     savefig(thesis_dir + f'prior-width', png=False, pdf=True)
 
 
-if do_all or True:
+if do_all or False:
     hyp_sweep(bostonHousing_results_dir, 'bostonHousing')
     # hyp_sweep(concrete_results_dir, 'concrete')
     hyp_sweep(kin8nm_results_dir, 'kin8nm')
@@ -317,29 +317,29 @@ def data_multiply(results_dir, data_set):
     # savefig(load_dir + f'data-multiply-legend')
     # savefig(thesis_dir + f'data-multiply-legend', png=False, pdf=True)
 
-    fig, axes = plt.subplots(6,1, sharex=True, figsize=(text_width, text_height/1.1))
-    plot_training_curves(data_multiply_results, val='elbo', title='Expected lower bound', xlabel=False, ax=axes[0], legend='data_multiply')
-    plot_training_curves(data_multiply_results, val='test_rmse', title='RMSE', xlabel=False, ax=axes[1])
-    plot_training_curves(data_multiply_results, val='train_ll', title='Train log likelihood', xlabel=False, ax=axes[2])
+    fig, axes = plt.subplots(2,1, sharex=True, figsize=(text_width, text_height/2.1))
+    # plot_training_curves(data_multiply_results, val='elbo', title='Expected lower bound', xlabel=False, ax=axes[0], legend='data_multiply')
+    # plot_training_curves(data_multiply_results, val='test_rmse', title='RMSE', xlabel=False, ax=axes[1])
+    plot_training_curves(data_multiply_results, val='train_ll', title='Train log likelihood', xlabel=False, ax=axes[0])
     # axes[2].set_ylim(-4, 1)
-    plot_training_curves(data_multiply_results, val='test_ll', title='Test log likelihood', xlabel=False, ax=axes[3])
+    plot_training_curves(data_multiply_results, val='test_ll', title='Test log likelihood', xlabel=False, ax=axes[1])
     # axes[3].set_ylim(-5, 0)
-    plot_training_curves(data_multiply_results, val='noise_sigma', title='Homoskedastic noise', xlabel=False, ax=axes[4])
-    plot_training_curves(data_multiply_results, val='train_kl', title='KL divergence', ax=axes[5])
+    # plot_training_curves(data_multiply_results, val='noise_sigma', title='Homoskedastic noise', xlabel=False, ax=axes[4])
+    # plot_training_curves(data_multiply_results, val='train_kl', title='KL divergence', ax=axes[5])
 
-    axes[0].set_ylim(top=200)
-    axes[1].set_ylim(top=20)
-    axes[2].set_ylim(bottom=-200)
-    axes[3].set_ylim(bottom=-200)
+    # axes[0].set_ylim(top=200)
+    axes[1].set_ylim(axes[0].get_ylim())
+    # axes[2].set_ylim(bottom=-200)
+    # axes[3].set_ylim(bottom=-200)
     # axes[4].set_ylim(top=20)
 
     fig.tight_layout()
-    axes[0].legend(fontsize=7) # title='Data augmentation factor'
+    axes[0].legend(legend, title='Data augmentation factor', fontsize=7) # title='Data augmentation factor'
 
     savefig(load_dir + f'data-multiply-combined')
     savefig(thesis_dir + f'data-multiply-combined', png=False, pdf=True)
 
-if do_all or False:
+if do_all or True:
     data_multiply(bostonHousing_results_dir, 'bostonHousing')
     # data_multiply(concrete_results_dir, 'concrete')
     data_multiply(kin8nm_results_dir, 'kin8nm')

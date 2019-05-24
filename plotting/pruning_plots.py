@@ -8,13 +8,24 @@ from utils.plot_utils import *
 
 from utils.results_utils import ExperimentResults
 
+data = {
+    'bostonHousing':   {'dim':13,  'data_size':430},
+    'concrete': {'dim':8,   'data_size':875},
+    'kin8nm':   {'dim':8,   'data_size':652},
+    'naval':    {'dim':8,   'data_size':6963},
+    'power':    {'dim':16,  'data_size':10143},
+    'protein':  {'dim':9,   'data_size':38870},
+    'wine-quality-red':     {'dim':11,  'data_size':1359},
+    'yacht':    {'dim':6,   'data_size':261}
+}
+
 
 def do_plots(results_dir):
     # thresholds = [[1], [0.002, 0.005], [1, 0.2, 0.2]]  # Hyperprior
 
     # thresholds = [[1], [1, 0.5], [1, 0.5, 0.5]] # Fixed Prior
 
-    thresholds = [[0.5], [0.5, 0.05], [0.5, 0.05, 0.05], [0.5, 0.05, 0.05, 0.05], [0.5, 0.05, 0.05, 0.05, 0.05]]
+    thresholds = [[0.3], [0.3, 1e-2], [0.3, 1e-2, 1e-2], [0.3, 1e-2, 1e-2, 1e-2], [0.3, 1e-2, 1e-2, 1e-2, 1e-2]]
     data_set = results_dir.split('/')[-2]
 
     def plot_all_pruning(layer_groups):
@@ -224,7 +235,10 @@ def do_plots(results_dir):
         # all_rmse_fig, all_rmse_ax = plt.subplots(1,1,figsize=(5.6, 2.8))
         # all_log_lik_fig, all_log_lik_ax = plt.subplots(1,1,figsize=(5.6, 2.8))
 
-        combined_fig, combined_ax = plt.subplots(3, 1, sharex=True, figsize=(5.6, 5.6+2.8))
+        # data_set = results_dir.split('/')[2]
+        # input_size = data[data_set]['dim']
+
+        combined_fig, combined_ax = plt.subplots(3, 1, sharex=True, figsize=(text_width, text_height/1.2))
 
         combined_ax[2].set_xscale('log')
 
@@ -261,7 +275,15 @@ def do_plots(results_dir):
             final_test_loglik = []
 
             for i, r in enumerate(results):
+
+                # net_shape = [input_size] + r['hidden_sizes'][1:-2] + [1]
+                #
+                # weights = 0
+                # for i in range(len(net_shape)-1):
+                #     weights += (net_shape[i] * net_shape[i+1])
+
                 points.append(r['hidden_sizes'][1])
+                # points.append(weights)
 
                 active_neurons = [
                     sum(neuron_kl > thresholds[layers - 1][layer] for neuron_kl in r['results']['KL_pruning'][layer])
@@ -299,6 +321,7 @@ def do_plots(results_dir):
 
             points = sorted(points)
             combined_ax[0].plot(points, [point * layers for point in points], c=colors[layers-1])
+            # combined_ax[0].plot(points, points, c=colors[layers - 1])
             combined_ax[0].set_ylim(lims)
 
             prune_fig.tight_layout()  # rect=[0, 0.03, 1.0, 0.95]
@@ -373,10 +396,10 @@ def do_plots(results_dir):
     # plot_metric_actual_grouped(layer_groups, 'test_rmse_true')
     # plot_metric_actual_grouped(layer_groups, 'test_ll_true')
     # plot_metric_vs_metric(layer_groups, 'test_rmse_true', 'test_ll_true')
-    # from utils.plot_utils import plot_KL_pruning_post
-    # for group in layer_groups:
-    #     for result in layer_groups[group]:
-    #         plot_KL_pruning_post(result['results']['KL_pruning'], os.path.join(results_dir, 'figs'), str(result['hidden_sizes']))
+    from utils.plot_utils import plot_KL_pruning_post
+    for group in layer_groups:
+        for result in layer_groups[group]:
+            plot_KL_pruning_post(result['results']['KL_pruning'], os.path.join(results_dir, 'figs'), str(result['hidden_sizes']))
 
 
     # for step in [0] + list(range(1000, len(layer_groups[1][0]['results']['test_ll_true']), 1000)):
@@ -402,10 +425,10 @@ dirs_regression = [
         # '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior3',
         # '../remote_logs_clean/concrete/weight_pruning_hyperprior3',
         # '../remote_logs_clean/energy/weight_pruning_hyperprior3',
-        # '../remote_logs_clean/kin8nm/weight_pruning_hyperprior3',
+        '../remote_logs_clean/kin8nm/weight_pruning_hyperprior3',
         # '../remote_logs_clean/power-plant/weight_pruning_hyperprior3'
         # '../remote_logs_clean/wine-quality-red/weight_pruning_hyperprior3',
-        '../remote_logs_clean/protein-tertiary-structure/weight_pruning_hyperprior3',
+        # '../remote_logs_clean/protein-tertiary-structure/weight_pruning_hyperprior3',
         # '../remote_logs_clean/yacht/weight_pruning_hyperprior3',
 ]
 
