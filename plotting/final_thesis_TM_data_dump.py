@@ -191,7 +191,7 @@ if do_all or False:
     hyp_sweep(bostonHousing_results_dir, 'bostonHousing')
     hyp_sweep(concrete_results_dir, 'concrete')
     hyp_sweep(kin8nm_results_dir, 'kin8nm')
-    hyp_sweep(naval_results_dir, 'naval')
+    # hyp_sweep(naval_results_dir, 'naval')
     hyp_sweep(power_results_dir, 'power')
     hyp_sweep(protein_dir, 'protein')
     hyp_sweep(wine_results_dir, 'wine-quality-red')
