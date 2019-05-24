@@ -25,7 +25,7 @@ def do_plots(results_dir):
 
     # thresholds = [[1], [1, 0.5], [1, 0.5, 0.5]] # Fixed Prior
 
-    thresholds = [[0.3], [0.3, 1e-2], [0.3, 1e-2, 1e-2], [0.3, 1e-2, 1e-2, 1e-2], [0.3, 1e-2, 1e-2, 1e-2, 1e-2]]
+    thresholds = [[0.3], [0.3, 1e-1], [0.3, 1e-1, 1e-1], [0.3, 1e-1, 1e-1, 1e-1], [0.3, 1e-2, 1e-2, 1e-2, 1e-2]]
     data_set = results_dir.split('/')[-2]
 
     def plot_all_pruning(layer_groups):
@@ -291,6 +291,12 @@ def do_plots(results_dir):
                     in range(layers)
                 ]
 
+                # active_neurons = [
+                #     sum(neuron_kl for neuron_kl in r['results']['KL_pruning'][layer])
+                #     for layer
+                #     in range(layers)
+                # ]
+
                 final_rmse.append(sum(r['results']['test_rmse_true'][-20:]) / 20)
                 final_test_loglik.append(sum(r['results']['test_ll_true'][-20:]) / 20)
 
@@ -396,10 +402,12 @@ def do_plots(results_dir):
     # plot_metric_actual_grouped(layer_groups, 'test_rmse_true')
     # plot_metric_actual_grouped(layer_groups, 'test_ll_true')
     # plot_metric_vs_metric(layer_groups, 'test_rmse_true', 'test_ll_true')
-    from utils.plot_utils import plot_KL_pruning_post
-    for group in layer_groups:
-        for result in layer_groups[group]:
-            plot_KL_pruning_post(result['results']['KL_pruning'], os.path.join(results_dir, 'figs'), str(result['hidden_sizes']))
+
+
+    # from utils.plot_utils import plot_KL_pruning_post
+    # for group in layer_groups:
+    #     for result in layer_groups[group]:
+    #         plot_KL_pruning_post(result['results']['KL_pruning'], os.path.join(results_dir, 'figs'), str(result['hidden_sizes']))
 
 
     # for step in [0] + list(range(1000, len(layer_groups[1][0]['results']['test_ll_true']), 1000)):
@@ -422,9 +430,9 @@ def do_plots(results_dir):
 final_thesis_dir = '/home/mjhutchinson/Documents/University/4th Year/4th Year Project/Final Thesis/Thesis-LaTeX/Chapter5/Figs'
 
 dirs_regression = [
-        # '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior3',
-        # '../remote_logs_clean/concrete/weight_pruning_hyperprior3',
-        # '../remote_logs_clean/energy/weight_pruning_hyperprior3',
+        '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior3',
+        '../remote_logs_clean/concrete/weight_pruning_hyperprior3',
+        '../remote_logs_clean/energy/weight_pruning_hyperprior3',
         '../remote_logs_clean/kin8nm/weight_pruning_hyperprior3',
         # '../remote_logs_clean/power-plant/weight_pruning_hyperprior3'
         # '../remote_logs_clean/wine-quality-red/weight_pruning_hyperprior3',

@@ -189,11 +189,11 @@ def hyp_sweep(results_dir, data_set):
 
 if do_all or False:
     hyp_sweep(bostonHousing_results_dir, 'bostonHousing')
-    # hyp_sweep(concrete_results_dir, 'concrete')
+    hyp_sweep(concrete_results_dir, 'concrete')
     hyp_sweep(kin8nm_results_dir, 'kin8nm')
-    # hyp_sweep(naval_results_dir, 'naval')
-    # hyp_sweep(power_results_dir, 'power')
-    # hyp_sweep(protein_dir, 'protein')
+    hyp_sweep(naval_results_dir, 'naval')
+    hyp_sweep(power_results_dir, 'power')
+    hyp_sweep(protein_dir, 'protein')
     hyp_sweep(wine_results_dir, 'wine-quality-red')
     hyp_sweep(yacht_results_dir, 'yacht')
 
@@ -377,15 +377,15 @@ def initial_sigma_plot(results_dir, data_set):
     # fig.savefig(save_dir + f'sigma-init/{data_set}-sigma-logloss.eps', dpi=fig_dpi, format='eps')
 
 
-if do_all or False:
-    initial_sigma_plot(bostonHousing_results_dir, 'bostonHousing')
+# if do_all or False:
+    # initial_sigma_plot(bostonHousing_results_dir, 'bostonHousing')
     # initial_sigma_plot(concrete_results_dir, 'concrete')
     # initial_sigma_plot(kin8nm_results_dir, 'kin8nm')
     # initial_sigma_plot(naval_results_dir, 'naval')
     # initial_sigma_plot(power_results_dir, 'power')
     # initial_sigma_plot(protein_dir, 'protein')
-    initial_sigma_plot(wine_results_dir, 'wine-quality-red')
-    initial_sigma_plot(yacht_results_dir, 'yacht')
+    # initial_sigma_plot(wine_results_dir, 'wine-quality-red')
+    # initial_sigma_plot(yacht_results_dir, 'yacht')
 
 
 
@@ -440,15 +440,15 @@ def multi_layer_plot(results_dir, data_set):
     # fig.savefig(save_dir + f'variable-layer-size/second-layer-{data_set}-logloss.eps', dpi=fig_dpi, format='eps')
 
 
-if do_all or False:
-    multi_layer_plot(bostonHousing_results_dir, 'bostonHousing')
+# if do_all or False:
+    # multi_layer_plot(bostonHousing_results_dir, 'bostonHousing')
     # multi_layer_plot(concrete_results_dir, 'concrete')
     # multi_layer_plot(kin8nm_results_dir, 'kin8nm')
     # multi_layer_plot(naval_results_dir, 'naval')
     # multi_layer_plot(power_results_dir, 'power')
     # multi_layer_plot(protein_dir, 'protein')
-    multi_layer_plot(wine_results_dir, 'wine-quality-red')
-    multi_layer_plot(yacht_results_dir, 'yacht')
+    # multi_layer_plot(wine_results_dir, 'wine-quality-red')
+    # multi_layer_plot(yacht_results_dir, 'yacht')
 
 
 
