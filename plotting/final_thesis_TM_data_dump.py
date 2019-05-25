@@ -279,12 +279,12 @@ def data_multiply(results_dir, data_set):
 
 if do_all or False:
     data_multiply(bostonHousing_results_dir, 'bostonHousing')
-    hyp_sweep(concrete_results_dir, 'concrete')
+    data_multiply(concrete_results_dir, 'concrete')
     data_multiply(energy_results_dir, 'energy')
     data_multiply(kin8nm_results_dir, 'kin8nm')
     # hyp_sweep(naval_results_dir, 'naval')
-    hyp_sweep(power_results_dir, 'power')
-    hyp_sweep(protein_dir, 'protein')
+    data_multiply(power_results_dir, 'power')
+    data_multiply(protein_dir, 'protein')
     data_multiply(wine_results_dir, 'wine-quality-red')
     data_multiply(yacht_results_dir, 'yacht')
 
