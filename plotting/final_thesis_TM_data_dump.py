@@ -18,6 +18,7 @@ metric_keys = ['elbo', 'test_ll', 'test_rmse', 'noise_sigma', 'train_kl', 'train
 
 bostonHousing_results_dir = '/scratch/mjh252/logs/clean/bostonHousing/'
 concrete_results_dir = '/scratch/mjh252/logs/clean/concrete/'
+energy_results_dir = '/scratch/mjh252/logs/clean/energy/'
 kin8nm_results_dir = '/scratch/mjh252/logs/clean/kin8nm/'
 naval_results_dir = '/scratch/mjh252/logs/clean/naval-propulsion-plant/'
 power_results_dir = '/scratch/mjh252/logs/clean/power-plant/'
@@ -190,6 +191,7 @@ def hyp_sweep(results_dir, data_set):
 if do_all or False:
     hyp_sweep(bostonHousing_results_dir, 'bostonHousing')
     hyp_sweep(concrete_results_dir, 'concrete')
+    hyp_sweep(energy_results_dir, 'energy')
     hyp_sweep(kin8nm_results_dir, 'kin8nm')
     # hyp_sweep(naval_results_dir, 'naval')
     hyp_sweep(power_results_dir, 'power')
@@ -277,11 +279,12 @@ def data_multiply(results_dir, data_set):
 
 if do_all or False:
     data_multiply(bostonHousing_results_dir, 'bostonHousing')
-    # hyp_sweep(concrete_results_dir, 'concrete')
+    hyp_sweep(concrete_results_dir, 'concrete')
+    data_multiply(energy_results_dir, 'energy')
     data_multiply(kin8nm_results_dir, 'kin8nm')
     # hyp_sweep(naval_results_dir, 'naval')
-    # hyp_sweep(power_results_dir, 'power')
-    # hyp_sweep(protein_dir, 'protein')
+    hyp_sweep(power_results_dir, 'power')
+    hyp_sweep(protein_dir, 'protein')
     data_multiply(wine_results_dir, 'wine-quality-red')
     data_multiply(yacht_results_dir, 'yacht')
 

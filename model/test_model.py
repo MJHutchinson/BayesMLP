@@ -125,7 +125,7 @@ def test_model_regression(model, data_gen, epochs, batch_size=100, log_freq=1, r
               'train_time': total_train_time}
     #
     # pruning_measure = [weight.pruning_from_KL() for weight in model.W]
-    # pruning_measure = model.sess.run(pruning_measure)
+    # pruning_measure = model.ses   s.run(pruning_measure)
     # result['KL_pruning'] = pruning_measure
     #
     # pruning_measure = [weight.pruning_from_SNR() for weight in model.W]
