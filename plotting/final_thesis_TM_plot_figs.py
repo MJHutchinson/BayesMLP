@@ -18,6 +18,7 @@ metric_keys = ['elbo', 'test_ll', 'test_rmse', 'noise_sigma', 'train_kl', 'train
 
 bostonHousing_results_dir = '/scratch/mjh252/logs/clean/bostonHousing/'
 concrete_results_dir = '/scratch/mjh252/logs/clean/concrete/'
+energy_results_dir = '/scratch/mjh252/logs/clean/energy/'
 kin8nm_results_dir = '/scratch/mjh252/logs/clean/kin8nm/'
 naval_results_dir = '/scratch/mjh252/logs/clean/naval-propulsion-plant/'
 power_results_dir = '/scratch/mjh252/logs/clean/power-plant/'
@@ -35,8 +36,8 @@ data = {
     'concrete': {'dim':8,   'data_size':875},
     'kin8nm':   {'dim':8,   'data_size':652},
     'naval':    {'dim':8,   'data_size':6963},
-    'power':    {'dim':16,  'data_size':10143},
-    'protein':  {'dim':9,   'data_size':38870},
+    'power-plant':    {'dim':16,  'data_size':10143},
+    'protein-tertiary-structure':  {'dim':9,   'data_size':38870},
     'wine-quality-red':     {'dim':11,  'data_size':1359},
     'yacht':    {'dim':6,   'data_size':261}
 }
@@ -105,10 +106,13 @@ def group_by(results, data, key):
     final_cost = defaultdict(list)
 
     for result in results:
-        h = result['hidden_size']
+        h = list(result['hidden_sizes'][1:-2])
         h = [dim] + h + [1]
 
-        key_var = repr(result[key])
+        if isinstance(result[key], np.ndarray):
+            key_var = repr(list(result[key])[1:-2])
+        else:
+            key_var = repr(result[key])
 
         weights = 0.
         for idx in range(len(h) - 1):
@@ -193,7 +197,7 @@ def hyp_sweep(results_dir, data_set):
 
     num_weights, layer_size, prior_var, final_ll, final_rmse, final_cost = group_by(prior_var_results,
                                                                                     data[data_set],
-                                                                                    key='hidden_size')
+                                                                                    key='hidden_sizes')
 
     prior_var_fig, prior_var_axes = plt.subplots(2, 1, figsize=(text_width, text_height / 2.1))
 
@@ -220,15 +224,16 @@ def hyp_sweep(results_dir, data_set):
     savefig(thesis_dir + f'prior-width', png=False, pdf=True)
 
 
-if do_all or False:
-    hyp_sweep(bostonHousing_results_dir, 'bostonHousing')
-    # hyp_sweep(concrete_results_dir, 'concrete')
-    hyp_sweep(kin8nm_results_dir, 'kin8nm')
+if do_all or True:
+    # hyp_sweep(bostonHousing_results_dir, 'bostonHousing')
+    hyp_sweep(concrete_results_dir, 'concrete')
+    # hyp_sweep(energy_results_dir, 'energy')
+    # hyp_sweep(kin8nm_results_dir, 'kin8nm')
     # hyp_sweep(naval_results_dir, 'naval')
-    # hyp_sweep(power_results_dir, 'power')
-    # hyp_sweep(protein_dir, 'protein')
-    hyp_sweep(wine_results_dir, 'wine-quality-red')
-    hyp_sweep(yacht_results_dir, 'yacht')
+    hyp_sweep(power_results_dir, 'power-plant')
+    hyp_sweep(protein_dir, 'protein-tertiary-structure')
+    # hyp_sweep(wine_results_dir, 'wine-quality-red')
+    # hyp_sweep(yacht_results_dir, 'yacht')
 
 
 
@@ -339,13 +344,14 @@ def data_multiply(results_dir, data_set):
     savefig(load_dir + f'data-multiply-combined')
     savefig(thesis_dir + f'data-multiply-combined', png=False, pdf=True)
 
-if do_all or True:
+if do_all or False:
     data_multiply(bostonHousing_results_dir, 'bostonHousing')
-    # data_multiply(concrete_results_dir, 'concrete')
+    data_multiply(concrete_results_dir, 'concrete')
+    data_multiply(energy_results_dir, 'energy')
     data_multiply(kin8nm_results_dir, 'kin8nm')
     # data_multiply(naval_results_dir, 'naval')
-    # data_multiply(power_results_dir, 'power')
-    # data_multiply(protein_dir, 'protein')
+    data_multiply(power_results_dir, 'power-plant')
+    data_multiply(protein_dir, 'protein-tertiary-structure')
     data_multiply(wine_results_dir, 'wine-quality-red')
     data_multiply(yacht_results_dir, 'yacht')
 

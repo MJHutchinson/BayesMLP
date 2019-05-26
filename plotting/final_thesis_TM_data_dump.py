@@ -12,7 +12,7 @@ fig_x = 3
 fig_y = 2
 fig_dpi = 400
 
-do_all = True
+do_all = False
 
 metric_keys = ['elbo', 'test_ll', 'test_rmse', 'noise_sigma', 'train_kl', 'train_ll']
 
@@ -277,7 +277,7 @@ def data_multiply(results_dir, data_set):
     # plt.tight_layout()
     # fig_legend.savefig(save_dir + 'data-multiply/legend.eps', dpi=fig_dpi, format='eps')
 
-if do_all or False:
+if do_all or True:
     data_multiply(bostonHousing_results_dir, 'bostonHousing')
     data_multiply(concrete_results_dir, 'concrete')
     data_multiply(energy_results_dir, 'energy')
