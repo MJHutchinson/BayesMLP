@@ -34,6 +34,7 @@ base_load_dir = '../summary_data/'
 data = {
     'bostonHousing':   {'dim':13,  'data_size':430},
     'concrete': {'dim':8,   'data_size':875},
+    'energy': {'dim':9,   'data_size':768},
     'kin8nm':   {'dim':8,   'data_size':652},
     'naval':    {'dim':8,   'data_size':6963},
     'power-plant':    {'dim':16,  'data_size':10143},
@@ -226,12 +227,12 @@ def hyp_sweep(results_dir, data_set):
 
 if do_all or True:
     # hyp_sweep(bostonHousing_results_dir, 'bostonHousing')
-    hyp_sweep(concrete_results_dir, 'concrete')
-    # hyp_sweep(energy_results_dir, 'energy')
+    # hyp_sweep(concrete_results_dir, 'concrete')
+    hyp_sweep(energy_results_dir, 'energy')
     # hyp_sweep(kin8nm_results_dir, 'kin8nm')
     # hyp_sweep(naval_results_dir, 'naval')
-    hyp_sweep(power_results_dir, 'power-plant')
-    hyp_sweep(protein_dir, 'protein-tertiary-structure')
+    # hyp_sweep(power_results_dir, 'power-plant')
+    # hyp_sweep(protein_dir, 'protein-tertiary-structure')
     # hyp_sweep(wine_results_dir, 'wine-quality-red')
     # hyp_sweep(yacht_results_dir, 'yacht')
 
@@ -322,7 +323,7 @@ def data_multiply(results_dir, data_set):
     # savefig(load_dir + f'data-multiply-legend')
     # savefig(thesis_dir + f'data-multiply-legend', png=False, pdf=True)
 
-    fig, axes = plt.subplots(2,1, sharex=True, figsize=(text_width, text_height/2.1))
+    fig, axes = plt.subplots(2,1, sharex=True, figsize=(text_width, text_height/2.2))
     # plot_training_curves(data_multiply_results, val='elbo', title='Expected lower bound', xlabel=False, ax=axes[0], legend='data_multiply')
     # plot_training_curves(data_multiply_results, val='test_rmse', title='RMSE', xlabel=False, ax=axes[1])
     plot_training_curves(data_multiply_results, val='train_ll', title='Train log likelihood', xlabel=False, ax=axes[0])

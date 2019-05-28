@@ -430,9 +430,9 @@ def do_plots(results_dir):
 final_thesis_dir = '/home/mjhutchinson/Documents/University/4th Year/4th Year Project/Final Thesis/Thesis-LaTeX/Chapter5/Figs'
 
 dirs_regression = [
-        '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior3',
-        '../remote_logs_clean/concrete/weight_pruning_hyperprior3',
-        '../remote_logs_clean/energy/weight_pruning_hyperprior3',
+        # '../remote_logs_clean/bostonHousing/weight_pruning_hyperprior3',
+        # '../remote_logs_clean/concrete/weight_pruning_hyperprior3',
+        # '../remote_logs_clean/energy/weight_pruning_hyperprior3',
         '../remote_logs_clean/kin8nm/weight_pruning_hyperprior3',
         # '../remote_logs_clean/power-plant/weight_pruning_hyperprior3'
         # '../remote_logs_clean/wine-quality-red/weight_pruning_hyperprior3',
